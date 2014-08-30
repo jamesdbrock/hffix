@@ -1,4 +1,4 @@
-﻿/*******************************************************************************************
+/*******************************************************************************************
 Copyright 2011, T3 IP, LLC. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are
@@ -533,6 +533,8 @@ conversions will be supported for the various FIX date and time field types.
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #endif // HFFIX_NO_BOOST_DATETIME
+
+#include <hffix_fields.hpp>
 
 /*!
 \brief Namespace for all types and functions of High Frequency FIX Parser.
@@ -1250,7 +1252,7 @@ Satisfies the const Input Iterator Concept for an immutable hffix::message_reade
 
         typedef ::std::input_iterator_tag iterator_category;
         typedef message_reader_value_type value_type;
-        typedef ptrdiff_t difference_type;
+        typedef std::ptrdiff_t difference_type;
         typedef message_reader_value_type* pointer;
         typedef message_reader_value_type& reference;
 
@@ -1550,7 +1552,7 @@ If this message !is_complete(), no-op.
                 const char* b = buffer_ + 1;
                 while(b < buffer_end_ - 10)
                 {
-                    if (!std::memcmp(b, "8=FIX.4.2\x01", 10))
+                    if (!std::memcmp(b, "8=FIX", 5))
                         break;
                     ++b;
                 }
@@ -1567,52 +1569,71 @@ If this message !is_complete(), no-op.
     
         void init()
         {
-            if (buffer_end_ - buffer_ < 21) // 8=FIX.4.2 9=1 10=000 
-            {
-                is_complete_ = false; 
-                return;
+            // Skip the prefix "8=FIX.4.2" or "8=FIXT.1.1", et cetera
+
+            const char* b = buffer_ + 9; // look for the first '\x01'
+            const char* prefixend;
+
+            while(true) {
+                if (b >= buffer_end_) {
+                    is_complete_ = false;
+                    return;
+                }
+                if (*b == '\x01') {
+                    prefixend = b;
+                    break;
+                }
+                if (b - buffer_ > 11) {
+                    malformed();
+                    return;
+                }
+                ++b;
             }
 
-            const char* b = buffer_ + 12;
-
-            if (*b == '\x01')
+            if (b + 1 >= buffer_end_) {
+                is_complete_ = false;
+                return;
+            }
+            if (b[1] != '9') // next field must be tag 9 BodyLength
             {
                 malformed();
                 return;
             }
+            b += 3; // skip the " 9=" for tag 9 BodyLength
 
-            size_t bodylength(0);
+            size_t bodylength(0); // the value of tag 9 BodyLength
 
-            while(*b != '\x01')
+            while(true)
             {
+                if (b >= buffer_end_)
+                {
+                    is_complete_ = false;
+                    return;
+                }
+                if (*b == '\x01') break;
                 if (*b < '0' || *b > '9') // this is the only time we need to check for numeric ascii.
                 {
                     malformed();
                     return;
                 }
                 bodylength *= 10;
-                bodylength += *b++ - '0';
-                if (b > buffer_end_)
-                {
-                    is_complete_ = false;
-                    return;
-                }
+                bodylength += *b++ - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
             }
+
             ++b;
+            if (b + 3 >= buffer_end_)
+            {
+                is_complete_ = false;
+                return;
+            }
 
-            if (bodylength > 1 << 12) // max body size allowed is 4KB, otherwise we assume message corruption.
+            if (*b != '3' || b[1] != '5') // next field must be tag 35 MsgType
             {
                 malformed();
                 return;
             }
 
-            if (*b != '3' || b[1] != '5')
-            {
-                malformed();
-                return;
-            }
-
-            const char* checksum = b + bodylength; // be careful that b + bodylength is legit before we try to dereference it.
+            const char* checksum = b + bodylength; 
 
             if (checksum + 7 > buffer_end_)
             {
@@ -1655,6 +1676,19 @@ If this message !is_complete(), no-op.
             is_valid_ = false;
         }
     };
+
+    //!
+    // \brief A predicate constructed with a FIX tag which returns true if the tag of the field passed to the predicate is equal.
+    //
+    struct tag_predicate {
+      tag_predicate(int tag) : tag(tag) {}
+      int tag;
+      inline bool operator()(message_reader::value_type const& v) const {
+        return v.tag() == tag;
+      }
+    };
+      
+      
 
 /*! @cond EXCLUDE */
 namespace details {
@@ -2251,967 +2285,48 @@ For most of the data fields in FIX 4.2, it is true that tag_data = tag_data_leng
         char* next_;
     };
 
-/*!
-\brief Namespace for all of the integer codes for the FIX 4.2 tags. Convenient for use in C++ code.
-*/
-    namespace tag
-    {
-        const int Account = 1;
-        const int AdvId = 2;
-        const int AdvRefID = 3;
-        const int AdvSide = 4;
-        const int AdvTransType = 5;
-        const int AvgPx = 6;
-        const int BeginSeqNo = 7;
-        const int BeginString = 8;
-        const int BodyLength = 9;
-        const int CheckSum = 10;
-        const int ClOrdID = 11;
-        const int Commission = 12;
-        const int CommType = 13;
-        const int CumQty = 14;
-        const int Currency = 15;
-        const int EndSeqNo = 16;
-        const int ExecID = 17;
-        const int ExecInst = 18;
-        const int ExecRefID = 19;
-        const int ExecTransType = 20;
-        const int HandlInst = 21;
-        const int IDSource = 22;
-        const int IOIid = 23;
-        const int IOIOthSvc = 24;
-        const int IOIQltyInd = 25;
-        const int IOIRefID = 26;
-        const int IOIShares = 27;
-        const int IOITransType = 28;
-        const int LastCapacity = 29;
-        const int LastMkt = 30;
-        const int LastPx = 31;
-        const int LastShares = 32;
-        const int LinesOfText = 33;
-        const int MsgSeqNum = 34;
-        const int MsgType = 35;
-        const int NewSeqNo = 36;
-        const int OrderID = 37;
-        const int OrderQty = 38;
-        const int OrdStatus = 39;
-        const int OrdType = 40;
-        const int OrigClOrdID = 41;
-        const int OrigTime = 42;
-        const int PossDupFlag = 43;
-        const int Price = 44;
-        const int RefSeqNum = 45;
-        const int RelatdSym = 46;
-        const int Rule80A = 47;
-        const int SecurityID = 48;
-        const int SenderCompID = 49;
-        const int SenderSubID = 50;
-        const int SendingDate = 51;
-        const int SendingTime = 52;
-        const int Shares = 53;
-        const int Side = 54;
-        const int Symbol = 55;
-        const int TargetCompID = 56;
-        const int TargetSubID = 57;
-        const int Text = 58;
-        const int TimeInForce = 59;
-        const int TransactTime = 60;
-        const int Urgency = 61;
-        const int ValidUntilTime = 62;
-        const int SettlmntTyp = 63;
-        const int FutSettDate = 64;
-        const int SymbolSfx = 65;
-        const int ListID = 66;
-        const int ListSeqNo = 67;
-        const int TotNoOrders = 68;
-        const int ListExecInst = 69;
-        const int AllocID = 70;
-        const int AllocTransType = 71;
-        const int RefAllocID = 72;
-        const int NoOrders = 73;
-        const int AvgPrxPrecision = 74;
-        const int TradeDate = 75;
-        const int ExecBroker = 76;
-        const int OpenClose = 77;
-        const int NoAllocs = 78;
-        const int AllocAccount = 79;
-        const int AllocShares = 80;
-        const int ProcessCode = 81;
-        const int NoRpts = 82;
-        const int RptSeq = 83;
-        const int CxlQty = 84;
-        const int NoDlvyInst = 85;
-        const int DlvyInst = 86;
-        const int AllocStatus = 87;
-        const int AllocRejCode = 88;
-        const int Signature = 89;
-        const int SecureDataLen = 90;
-        const int SecureData = 91;
-        const int BrokerOfCredit = 92;
-        const int SignatureLength = 93;
-        const int EmailType = 94;
-        const int RawDataLength = 95; //sic
-        const int RawData = 96;
-        const int PossResend = 97;
-        const int EncryptMethod = 98;
-        const int StopPx = 99;
-        const int ExDestination = 100;
-        const int CxlRejReason = 102;
-        const int OrdRejReason = 103;
-        const int IOIQualifier = 104;
-        const int WaveNo = 105;
-        const int Issuer = 106;
-        const int SecurityDesc = 107;
-        const int HeartBtInt = 108;
-        const int ClientID = 109;
-        const int MinQty = 110;
-        const int MaxFloor = 111;
-        const int TestReqID = 112;
-        const int ReportToExch = 113;
-        const int LocateReqd = 114;
-        const int OnBehalfOfCompID = 115;
-        const int OnBehalfOfSubID = 116;
-        const int QuoteID = 117;
-        const int NetMoney = 118;
-        const int SettlCurrAmt = 119;
-        const int SettlCurrency = 120;
-        const int ForexReq = 121;
-        const int OrigSendingTime = 122;
-        const int GapFillFlag = 123;
-        const int NoExecs = 124;
-        const int CxlType = 125;
-        const int ExpireTime = 126;
-        const int DKReason = 127;
-        const int DeliverToCompID = 128;
-        const int DeliverToSubID = 129;
-        const int IOINaturalFlag = 130;
-        const int QuoteReqID = 131;
-        const int BidPx = 132;
-        const int OfferPx = 133;
-        const int BidSize = 134;
-        const int OfferSize = 135;
-        const int NoMiscFees = 136;
-        const int MiscFeeAmt = 137;
-        const int MiscFeeCurr = 138;
-        const int MiscFeeType = 139;
-        const int PrevClosePx = 140;
-        const int ResetSeqNumFlag = 141;
-        const int SenderLocationID = 142;
-        const int TargetLocationID = 143;
-        const int OnBehalfOfLocationID = 144;
-        const int DeliverToLocationID = 145;
-        const int NoRelatedSym = 146;
-        const int Subject = 147;
-        const int Headline = 148;
-        const int URLLink = 149;
-        const int ExecType = 150;
-        const int LeavesQty = 151;
-        const int CashOrderQty = 152;
-        const int AllocAvgPx = 153;
-        const int AllocNetMoney = 154;
-        const int SettlCurrFxRate = 155;
-        const int SettlCurrFxRateCalc = 156;
-        const int NumDaysInterest = 157;
-        const int AccruedInterestRate = 158;
-        const int AccruedInterestAmt = 159;
-        const int SettlInstMode = 160;
-        const int AllocText = 161;
-        const int SettlInstID = 162;
-        const int SettlInstTransType = 163;
-        const int EmailThreadID = 164;
-        const int SettlInstSource = 165;
-        const int SettlLocation = 166;
-        const int SecurityType = 167;
-        const int EffectiveTime = 168;
-        const int StandInstDbType = 169;
-        const int StandInstDbName = 170;
-        const int StandInstDbID = 171;
-        const int SettlDeliveryType = 172;
-        const int SettlDepositoryCode = 173;
-        const int SettlBrkrCode = 174;
-        const int SettlInstCode = 175;
-        const int SecuritySettlAgentName = 176;
-        const int SecuritySettlAgentCode = 177;
-        const int SecuritySettlAgentAcctNum = 178;
-        const int SecuritySettlAgentAcctName = 179;
-        const int SecuritySettlAgentContactName = 180;
-        const int SecuritySettlAgentContactPhone = 181;
-        const int CashSettlAgentName = 182;
-        const int CashSettlAgentCode = 183;
-        const int CashSettlAgentAcctNum = 184;
-        const int CashSettlAgentAcctName = 185;
-        const int CashSettlAgentContactName = 186;
-        const int CashSettlAgentContactPhone = 187;
-        const int BidSpotRate = 188;
-        const int BidForwardPoints = 189;
-        const int OfferSpotRate = 190;
-        const int OfferForwardPoints = 191;
-        const int OrderQty2 = 192;
-        const int FutSettDate2 = 193;
-        const int LastSpotRate = 194;
-        const int LastForwardPoints = 195;
-        const int AllocLinkID = 196;
-        const int AllocLinkType = 197;
-        const int SecondaryOrderID = 198;
-        const int NoIOIQualifiers = 199;
-        const int MaturityMonthYear = 200;
-        const int PutOrCall = 201;
-        const int StrikePrice = 202;
-        const int CoveredOrUncovered = 203;
-        const int CustomerOrFirm = 204;
-        const int MaturityDay = 205;
-        const int OptAttribute = 206;
-        const int SecurityExchange = 207;
-        const int NotifyBrokerOfCredit = 208;
-        const int AllocHandlInst = 209;
-        const int MaxShow = 210;
-        const int PegDifference = 211;
-        const int XmlDataLen = 212;
-        const int XmlData = 213;
-        const int SettlInstRefID = 214;
-        const int NoRoutingIDs = 215;
-        const int RoutingType = 216;
-        const int RoutingID = 217;
-        const int SpreadToBenchmark = 218;
-        const int Benchmark = 219;
-        const int CouponRate = 223;
-        const int ContractMultiplier = 231;
-        const int MDReqID = 262;
-        const int SubscriptionRequestType = 263;
-        const int MarketDepth = 264;
-        const int MDUpdateType = 265;
-        const int AggregatedBook = 266;
-        const int NoMDEntryTypes = 267;
-        const int NoMDEntries = 268;
-        const int MDEntryType = 269;
-        const int MDEntryPx = 270;
-        const int MDEntrySize = 271;
-        const int MDEntryDate = 272;
-        const int MDEntryTime = 273;
-        const int TickDirection = 274;
-        const int MDMkt = 275;
-        const int QuoteCondition = 276;
-        const int TradeCondition = 277;
-        const int MDEntryID = 278;
-        const int MDUpdateAction = 279;
-        const int MDEntryRefID = 280;
-        const int MDReqRejReason = 281;
-        const int MDEntryOriginator = 282;
-        const int LocationID = 283;
-        const int DeskID = 284;
-        const int DeleteReason = 285;
-        const int OpenCloseSettleFlag = 286;
-        const int SellerDays = 287;
-        const int MDEntryBuyer = 288;
-        const int MDEntrySeller = 289;
-        const int MDEntryPositionNo = 290;
-        const int FinancialStatus = 291;
-        const int CorporateAction = 292;
-        const int DefBidSize = 293;
-        const int DefOfferSize = 294;
-        const int NoQuoteEntries = 295;
-        const int NoQuoteSets = 296;
-        const int QuoteAckStatus = 297;
-        const int QuoteCancelType = 298;
-        const int QuoteEntryID = 299;
-        const int QuoteRejectReason = 300;
-        const int QuoteResponseLevel = 301;
-        const int QuoteSetID = 302;
-        const int QuoteRequestType = 303;
-        const int TotQuoteEntries = 304;
-        const int UnderlyingIDSource = 305;
-        const int UnderlyingIssuer = 306;
-        const int UnderlyingSecurityDesc = 307;
-        const int UnderlyingSecurityExchange = 308;
-        const int UnderlyingSecurityID = 309;
-        const int UnderlyingSecurityType = 310;
-        const int UnderlyingSymbol = 311;
-        const int UnderlyingSymbolSfx = 312;
-        const int UnderlyingMaturityMonthYear = 313;
-        const int UnderlyingMaturityDay = 314;
-        const int UnderlyingPutOrCall = 315;
-        const int UnderlyingStrikePrice = 316;
-        const int UnderlyingOptAttribute = 317;
-        const int UnderlyingCurrency = 318;
-        const int RatioQty = 319;
-        const int SecurityReqID = 320;
-        const int SecurityRequestType = 321;
-        const int SecurityResponseID = 322;
-        const int SecurityResponseType = 323;
-        const int SecurityStatusReqID = 324;
-        const int UnsolicitedIndicator = 325;
-        const int SecurityTradingStatus = 326;
-        const int HaltReason = 327;
-        const int InViewOfCommon = 328;
-        const int DueToRelated = 329;
-        const int BuyVolume = 330;
-        const int SellVolume = 331;
-        const int HighPx = 332;
-        const int LowPx = 333;
-        const int Adjustment = 334;
-        const int TradSesReqID = 335;
-        const int TradingSessionID = 336;
-        const int ContraTrader = 337;
-        const int TradSesMethod = 338;
-        const int TradSesMode = 339;
-        const int TradSesStatus = 340;
-        const int TradSesStartTime = 341;
-        const int TradSesOpenTime = 342;
-        const int TradSesPreCloseTime = 343;
-        const int TradSesCloseTime = 344;
-        const int TradSesEndTime = 345;
-        const int NumberOfOrders = 346;
-        const int MessageEncoding = 347;
-        const int EncodedIssuerLen = 348;
-        const int EncodedIssuer = 349;
-        const int EncodedSecurityDescLen = 350;
-        const int EncodedSecurityDesc = 351;
-        const int EncodedListExecInstLen = 352;
-        const int EncodedListExecInst = 353;
-        const int EncodedTextLen = 354;
-        const int EncodedText = 355;
-        const int EncodedSubjectLen = 356;
-        const int EncodedSubject = 357;
-        const int EncodedHeadlineLen = 358;
-        const int EncodedHeadline = 359;
-        const int EncodedAllocTextLen = 360;
-        const int EncodedAllocText = 361;
-        const int EncodedUnderlyingIssuerLen = 362;
-        const int EncodedUnderlyingIssuer = 363;
-        const int EncodedUnderlyingSecurityDescLen = 364;
-        const int EncodedUnderlyingSecurityDesc = 365;
-        const int AllocPrice = 366;
-        const int QuoteSetValidUntilTime = 367;
-        const int QuoteEntryRejectReason = 368;
-        const int LastMsgSeqNumProcessed = 369;
-        const int OnBehalfOfSendingTime = 370;
-        const int RefTagID = 371;
-        const int RefMsgType = 372;
-        const int SessionRejectReason = 373;
-        const int BidRequestTransType = 374;
-        const int ContraBroker = 375;
-        const int ComplianceID = 376;
-        const int SolicitedFlag = 377;
-        const int ExecRestatementReason = 378;
-        const int BusinessRejectRefID = 379;
-        const int BusinessRejectReason = 380;
-        const int GrossTradeAmt = 381;
-        const int NoContraBrokers = 382;
-        const int MaxMessageSize = 383;
-        const int NoMsgTypes = 384;
-        const int MsgDirection = 385;
-        const int NoTradingSessions = 386;
-        const int TotalVolumeTraded = 387;
-        const int DiscretionInst = 388;
-        const int DiscretionOffset = 389;
-        const int BidID = 390;
-        const int ClientBidID = 391;
-        const int ListName = 392;
-        const int TotalNumSecurities = 393;
-        const int BidType = 394;
-        const int NumTickets = 395;
-        const int SideValue1 = 396;
-        const int SideValue2 = 397;
-        const int NoBidDescriptors = 398;
-        const int BidDescriptorType = 399;
-        const int BidDescriptor = 400;
-        const int SideValueInd = 401;
-        const int LiquidityPctLow = 402;
-        const int LiquidityPctHigh = 403;
-        const int LiquidityValue = 404;
-        const int EFPTrackingError = 405;
-        const int FairValue = 406;
-        const int OutsideIndexPct = 407;
-        const int ValueOfFutures = 408;
-        const int LiquidityIndType = 409;
-        const int WtAverageLiquidity = 410;
-        const int ExchangeForPhysical = 411;
-        const int OutMainCntryUIndex = 412;
-        const int CrossPercent = 413;
-        const int ProgRptReqs = 414;
-        const int ProgPeriodInterval = 415;
-        const int IncTaxInd = 416;
-        const int NumBidders = 417;
-        const int TradeType = 418;
-        const int BasisPxType = 419;
-        const int NoBidComponents = 420;
-        const int Country = 421;
-        const int TotNoStrikes = 422;
-        const int PriceType = 423;
-        const int DayOrderQty = 424;
-        const int DayCumQty = 425;
-        const int DayAvgPx = 426;
-        const int GTBookingInst = 427;
-        const int NoStrikes = 428;
-        const int ListStatusType = 429;
-        const int NetGrossInd = 430;
-        const int ListOrderStatus = 431;
-        const int ExpireDate = 432;
-        const int ListExecInstType = 433;
-        const int CxlRejResponseTo = 434;
-        const int UnderlyingCouponRate = 435;
-        const int UnderlyingContractMultiplier = 436;
-        const int ContraTradeQty = 437;
-        const int ContraTradeTime = 438;
-        const int ClearingFirm = 439;
-        const int ClearingAccount = 440;
-        const int LiquidityNumSecurities = 441;
-        const int MultiLegReportingType = 442;
-        const int StrikeTime = 443;
-        const int ListStatusText = 444;
-        const int EncodedListStatusTextLen = 445;
-        const int EncodedListStatusText = 446;
-    } // namespace tag
-
 /* @cond EXCLUDE */
 
 namespace details {
     inline bool is_tag_a_data_length(int tag)
     {
-        const static int tag_data_length_[13] = {
-            tag::SecureDataLen,
-            tag::RawDataLength, 
-            tag::XmlDataLen,
-            tag::EncodedIssuerLen,
-            tag::EncodedSecurityDescLen,
-            tag::EncodedListExecInstLen,
-            tag::EncodedTextLen,
-            tag::EncodedSubjectLen,
-            tag::EncodedHeadlineLen,
-            tag::EncodedAllocTextLen,
-            tag::EncodedUnderlyingIssuerLen,
-            tag::EncodedUnderlyingSecurityDescLen,
-            tag::EncodedListStatusTextLen
-        };
-
-        return std::binary_search(tag_data_length_, tag_data_length_ + 13, tag); // is this faster than a linear search over 13 elements?
+        return std::binary_search(length_fields, length_fields + (sizeof(length_fields)/sizeof(length_fields[0])), tag); // is this faster than a linear search over 13 elements?
     }
 }
 /* @endcond */
 
 
-/*!
-\brief Dictionary to look up FIX 4.2 field names by tag at run-time. Convenient for debugging.
+//!
+// \brief std::ostream-able type returned by hffix::field_name function.
+//
+template <typename AssociativeContainer> struct field_name_streamer {
+  int tag;
+  AssociativeContainer const& field_dictionary;
 
-Constructing an instance of the tag_name_dictionary is expensive. If you want a global tag_name_dictionary 
-that you can use from all over your program, consider using Scott Meyers' Singleton pattern:
+  field_name_streamer(int tag, AssociativeContainer const& field_dictionary) : tag(tag), field_dictionary(field_dictionary) {}
 
-\code
-#include "hffix.hpp"
+  friend std::ostream& operator<<(std::ostream& os, field_name_streamer that) {
+    typename AssociativeContainer::const_iterator i = that.field_dictionary.find(that.tag);
+    if (i == that.field_dictionary.end())
+      os << that.tag;
+    else
+      os << i->second;
+  }
+};
 
-hffix::tag_name_dictionary& dictionary() // Meyers' Singleton
-{
-    static hffix::tag_name_dictionary instance;
-    return instance;
-}
-
-int main(int argc, const char **argv)
-{
-    std::cout << dictionary()(hffix::tag::MsgType) << std::endl; // Will output "MsgType".
-    return 0;
-}
-\endcode
-*/
-    class tag_name_dictionary
-    {
-    public:
-        tag_name_dictionary()
-        {
-            init();
-        }
-
-/*!
-\brief Look up a tag name, return tag number string if not found.
-
-Not safe for concurrent calls.
-
-\return Reference to a tag name. If the tag name is not in the dictionary, will return the string representation of the tag integer.
-\throw std::bad_alloc
-*/
-        const std::string& operator()(int tag)
-        {
-            std::map<int, std::string>::iterator i = dictionary_.find(tag);
-            if (i != dictionary_.end())
-            {
-                return i->second;
-            }
-            else
-            {
-                std::stringstream ss;
-                ss << tag;
-
-                std::pair<std::map<int, std::string>::iterator, bool> result = dictionary_.insert(make_pair(tag, ss.str()));
-                return result.first->second;
-            }
-        }
-/*!
-\brief Look up a tag name, return empty string if not found.
-
-Safe for concurrent calls.
-
-\return Reference to a tag name. If the tag name is not in the dictionary, will return a reference to an empty string.
-*/
-        const std::string& operator[](int tag) const
-        {
-            static std::string empty_string;
-
-            std::map<int, std::string>::const_iterator i = dictionary_.find(tag);
-            if (i != dictionary_.end())
-            {
-                return i->second;
-            }
-            else
-            {
-                return empty_string;
-            }
-        }
-
-/*!
-\brief Look up a tag name, return null if not found.
-
-Safe for concurrent calls.
-
-\return Pointer to a tag name, or null pointer if the tag is not in the dictionary.
-*/
-        const std::string* lookup(int tag) const
-        {
-            std::map<int, std::string>::const_iterator i = dictionary_.find(tag);
-            if (i != dictionary_.end())
-            {
-                return &(i->second);
-            }
-            else
-            {
-                return 0;
-            }
-        }
-
-/*!
-\brief Insert a tag name in the dictionary.
-
-Not safe for concurrent calls.
-
-If the tag is already present, the tag name for that tag will be overwritten.
-\throw std::bad_alloc
-*/
-        void insert(int tag, const std::string& tagname)
-        {
-            dictionary_[tag] = tagname;
-        }
-
-    private:
-        tag_name_dictionary(const tag_name_dictionary& that) {}
-        std::map<int, std::string> dictionary_;
-
-        void init()
-        {
-            dictionary_[1] = "Account";
-            dictionary_[2] = "AdvId";
-            dictionary_[3] = "AdvRefID";
-            dictionary_[4] = "AdvSide";
-            dictionary_[5] = "AdvTransType";
-            dictionary_[6] = "AvgPx";
-            dictionary_[7] = "BeginSeqNo";
-            dictionary_[8] = "BeginString";
-            dictionary_[9] = "BodyLength";
-            dictionary_[10] = "CheckSum";
-            dictionary_[11] = "ClOrdID";
-            dictionary_[12] = "Commission";
-            dictionary_[13] = "CommType";
-            dictionary_[14] = "CumQty";
-            dictionary_[15] = "Currency";
-            dictionary_[16] = "EndSeqNo";
-            dictionary_[17] = "ExecID";
-            dictionary_[18] = "ExecInst";
-            dictionary_[19] = "ExecRefID";
-            dictionary_[20] = "ExecTransType";
-            dictionary_[21] = "HandlInst";
-            dictionary_[22] = "IDSource";
-            dictionary_[23] = "IOIid";
-            dictionary_[24] = "IOIOthSvc";
-            dictionary_[25] = "IOIQltyInd";
-            dictionary_[26] = "IOIRefID";
-            dictionary_[27] = "IOIShares";
-            dictionary_[28] = "IOITransType";
-            dictionary_[29] = "LastCapacity";
-            dictionary_[30] = "LastMkt";
-            dictionary_[31] = "LastPx";
-            dictionary_[32] = "LastShares";
-            dictionary_[33] = "LinesOfText";
-            dictionary_[34] = "MsgSeqNum";
-            dictionary_[35] = "MsgType";
-            dictionary_[36] = "NewSeqNo";
-            dictionary_[37] = "OrderID";
-            dictionary_[38] = "OrderQty";
-            dictionary_[39] = "OrdStatus";
-            dictionary_[40] = "OrdType";
-            dictionary_[41] = "OrigClOrdID";
-            dictionary_[42] = "OrigTime";
-            dictionary_[43] = "PossDupFlag";
-            dictionary_[44] = "Price";
-            dictionary_[45] = "RefSeqNum";
-            dictionary_[46] = "RelatdSym";
-            dictionary_[47] = "Rule80A";
-            dictionary_[48] = "SecurityID";
-            dictionary_[49] = "SenderCompID";
-            dictionary_[50] = "SenderSubID";
-            dictionary_[51] = "SendingDate";
-            dictionary_[52] = "SendingTime";
-            dictionary_[53] = "Shares";
-            dictionary_[54] = "Side";
-            dictionary_[55] = "Symbol";
-            dictionary_[56] = "TargetCompID";
-            dictionary_[57] = "TargetSubID";
-            dictionary_[58] = "Text";
-            dictionary_[59] = "TimeInForce";
-            dictionary_[60] = "TransactTime";
-            dictionary_[61] = "Urgency";
-            dictionary_[62] = "ValidUntilTime";
-            dictionary_[63] = "SettlmntTyp";
-            dictionary_[64] = "FutSettDate";
-            dictionary_[65] = "SymbolSfx";
-            dictionary_[66] = "ListID";
-            dictionary_[67] = "ListSeqNo";
-            dictionary_[68] = "TotNoOrders";
-            dictionary_[69] = "ListExecInst";
-            dictionary_[70] = "AllocID";
-            dictionary_[71] = "AllocTransType";
-            dictionary_[72] = "RefAllocID";
-            dictionary_[73] = "NoOrders";
-            dictionary_[74] = "AvgPrxPrecision";
-            dictionary_[75] = "TradeDate";
-            dictionary_[76] = "ExecBroker";
-            dictionary_[77] = "OpenClose";
-            dictionary_[78] = "NoAllocs";
-            dictionary_[79] = "AllocAccount";
-            dictionary_[80] = "AllocShares";
-            dictionary_[81] = "ProcessCode";
-            dictionary_[82] = "NoRpts";
-            dictionary_[83] = "RptSeq";
-            dictionary_[84] = "CxlQty";
-            dictionary_[85] = "NoDlvyInst";
-            dictionary_[86] = "DlvyInst";
-            dictionary_[87] = "AllocStatus";
-            dictionary_[88] = "AllocRejCode";
-            dictionary_[89] = "Signature";
-            dictionary_[90] = "SecureDataLen";
-            dictionary_[91] = "SecureData";
-            dictionary_[92] = "BrokerOfCredit";
-            dictionary_[93] = "SignatureLength";
-            dictionary_[94] = "EmailType";
-            dictionary_[95] = "RawDataLength";
-            dictionary_[96] = "RawData";
-            dictionary_[97] = "PossResend";
-            dictionary_[98] = "EncryptMethod";
-            dictionary_[99] = "StopPx";
-            dictionary_[100] = "ExDestination";
-            dictionary_[102] = "CxlRejReason";
-            dictionary_[103] = "OrdRejReason";
-            dictionary_[104] = "IOIQualifier";
-            dictionary_[105] = "WaveNo";
-            dictionary_[106] = "Issuer";
-            dictionary_[107] = "SecurityDesc";
-            dictionary_[108] = "HeartBtInt";
-            dictionary_[109] = "ClientID";
-            dictionary_[110] = "MinQty";
-            dictionary_[111] = "MaxFloor";
-            dictionary_[112] = "TestReqID";
-            dictionary_[113] = "ReportToExch";
-            dictionary_[114] = "LocateReqd";
-            dictionary_[115] = "OnBehalfOfCompID";
-            dictionary_[116] = "OnBehalfOfSubID";
-            dictionary_[117] = "QuoteID";
-            dictionary_[118] = "NetMoney";
-            dictionary_[119] = "SettlCurrAmt";
-            dictionary_[120] = "SettlCurrency";
-            dictionary_[121] = "ForexReq";
-            dictionary_[122] = "OrigSendingTime";
-            dictionary_[123] = "GapFillFlag";
-            dictionary_[124] = "NoExecs";
-            dictionary_[125] = "CxlType";
-            dictionary_[126] = "ExpireTime";
-            dictionary_[127] = "DKReason";
-            dictionary_[128] = "DeliverToCompID";
-            dictionary_[129] = "DeliverToSubID";
-            dictionary_[130] = "IOINaturalFlag";
-            dictionary_[131] = "QuoteReqID";
-            dictionary_[132] = "BidPx";
-            dictionary_[133] = "OfferPx";
-            dictionary_[134] = "BidSize";
-            dictionary_[135] = "OfferSize";
-            dictionary_[136] = "NoMiscFees";
-            dictionary_[137] = "MiscFeeAmt";
-            dictionary_[138] = "MiscFeeCurr";
-            dictionary_[139] = "MiscFeeType";
-            dictionary_[140] = "PrevClosePx";
-            dictionary_[141] = "ResetSeqNumFlag";
-            dictionary_[142] = "SenderLocationID";
-            dictionary_[143] = "TargetLocationID";
-            dictionary_[144] = "OnBehalfOfLocationID";
-            dictionary_[145] = "DeliverToLocationID";
-            dictionary_[146] = "NoRelatedSym";
-            dictionary_[147] = "Subject";
-            dictionary_[148] = "Headline";
-            dictionary_[149] = "URLLink";
-            dictionary_[150] = "ExecType";
-            dictionary_[151] = "LeavesQty";
-            dictionary_[152] = "CashOrderQty";
-            dictionary_[153] = "AllocAvgPx";
-            dictionary_[154] = "AllocNetMoney";
-            dictionary_[155] = "SettlCurrFxRate";
-            dictionary_[156] = "SettlCurrFxRateCalc";
-            dictionary_[157] = "NumDaysInterest";
-            dictionary_[158] = "AccruedInterestRate";
-            dictionary_[159] = "AccruedInterestAmt";
-            dictionary_[160] = "SettlInstMode";
-            dictionary_[161] = "AllocText";
-            dictionary_[162] = "SettlInstID";
-            dictionary_[163] = "SettlInstTransType";
-            dictionary_[164] = "EmailThreadID";
-            dictionary_[165] = "SettlInstSource";
-            dictionary_[166] = "SettlLocation";
-            dictionary_[167] = "SecurityType";
-            dictionary_[168] = "EffectiveTime";
-            dictionary_[169] = "StandInstDbType";
-            dictionary_[170] = "StandInstDbName";
-            dictionary_[171] = "StandInstDbID";
-            dictionary_[172] = "SettlDeliveryType";
-            dictionary_[173] = "SettlDepositoryCode";
-            dictionary_[174] = "SettlBrkrCode";
-            dictionary_[175] = "SettlInstCode";
-            dictionary_[176] = "SecuritySettlAgentName";
-            dictionary_[177] = "SecuritySettlAgentCode";
-            dictionary_[178] = "SecuritySettlAgentAcctNum";
-            dictionary_[179] = "SecuritySettlAgentAcctName";
-            dictionary_[180] = "SecuritySettlAgentContactName";
-            dictionary_[181] = "SecuritySettlAgentContactPhone";
-            dictionary_[182] = "CashSettlAgentName";
-            dictionary_[183] = "CashSettlAgentCode";
-            dictionary_[184] = "CashSettlAgentAcctNum";
-            dictionary_[185] = "CashSettlAgentAcctName";
-            dictionary_[186] = "CashSettlAgentContactName";
-            dictionary_[187] = "CashSettlAgentContactPhone";
-            dictionary_[188] = "BidSpotRate";
-            dictionary_[189] = "BidForwardPoints";
-            dictionary_[190] = "OfferSpotRate";
-            dictionary_[191] = "OfferForwardPoints";
-            dictionary_[192] = "OrderQty2";
-            dictionary_[193] = "FutSettDate2";
-            dictionary_[194] = "LastSpotRate";
-            dictionary_[195] = "LastForwardPoints";
-            dictionary_[196] = "AllocLinkID";
-            dictionary_[197] = "AllocLinkType";
-            dictionary_[198] = "SecondaryOrderID";
-            dictionary_[199] = "NoIOIQualifiers";
-            dictionary_[200] = "MaturityMonthYear";
-            dictionary_[201] = "PutOrCall";
-            dictionary_[202] = "StrikePrice";
-            dictionary_[203] = "CoveredOrUncovered";
-            dictionary_[204] = "CustomerOrFirm";
-            dictionary_[205] = "MaturityDay";
-            dictionary_[206] = "OptAttribute";
-            dictionary_[207] = "SecurityExchange";
-            dictionary_[208] = "NotifyBrokerOfCredit";
-            dictionary_[209] = "AllocHandlInst";
-            dictionary_[210] = "MaxShow";
-            dictionary_[211] = "PegDifference";
-            dictionary_[212] = "XmlDataLen";
-            dictionary_[213] = "XmlData";
-            dictionary_[214] = "SettlInstRefID";
-            dictionary_[215] = "NoRoutingIDs";
-            dictionary_[216] = "RoutingType";
-            dictionary_[217] = "RoutingID";
-            dictionary_[218] = "SpreadToBenchmark";
-            dictionary_[219] = "Benchmark";
-            dictionary_[223] = "CouponRate";
-            dictionary_[231] = "ContractMultiplier";
-            dictionary_[262] = "MDReqID";
-            dictionary_[263] = "SubscriptionRequestType";
-            dictionary_[264] = "MarketDepth";
-            dictionary_[265] = "MDUpdateType";
-            dictionary_[266] = "AggregatedBook";
-            dictionary_[267] = "NoMDEntryTypes";
-            dictionary_[268] = "NoMDEntries";
-            dictionary_[269] = "MDEntryType";
-            dictionary_[270] = "MDEntryPx";
-            dictionary_[271] = "MDEntrySize";
-            dictionary_[272] = "MDEntryDate";
-            dictionary_[273] = "MDEntryTime";
-            dictionary_[274] = "TickDirection";
-            dictionary_[275] = "MDMkt";
-            dictionary_[276] = "QuoteCondition";
-            dictionary_[277] = "TradeCondition";
-            dictionary_[278] = "MDEntryID";
-            dictionary_[279] = "MDUpdateAction";
-            dictionary_[280] = "MDEntryRefID";
-            dictionary_[281] = "MDReqRejReason";
-            dictionary_[282] = "MDEntryOriginator";
-            dictionary_[283] = "LocationID";
-            dictionary_[284] = "DeskID";
-            dictionary_[285] = "DeleteReason";
-            dictionary_[286] = "OpenCloseSettleFlag";
-            dictionary_[287] = "SellerDays";
-            dictionary_[288] = "MDEntryBuyer";
-            dictionary_[289] = "MDEntrySeller";
-            dictionary_[290] = "MDEntryPositionNo";
-            dictionary_[291] = "FinancialStatus";
-            dictionary_[292] = "CorporateAction";
-            dictionary_[293] = "DefBidSize";
-            dictionary_[294] = "DefOfferSize";
-            dictionary_[295] = "NoQuoteEntries";
-            dictionary_[296] = "NoQuoteSets";
-            dictionary_[297] = "QuoteAckStatus";
-            dictionary_[298] = "QuoteCancelType";
-            dictionary_[299] = "QuoteEntryID";
-            dictionary_[300] = "QuoteRejectReason";
-            dictionary_[301] = "QuoteResponseLevel";
-            dictionary_[302] = "QuoteSetID";
-            dictionary_[303] = "QuoteRequestType";
-            dictionary_[304] = "TotQuoteEntries";
-            dictionary_[305] = "UnderlyingIDSource";
-            dictionary_[306] = "UnderlyingIssuer";
-            dictionary_[307] = "UnderlyingSecurityDesc";
-            dictionary_[308] = "UnderlyingSecurityExchange";
-            dictionary_[309] = "UnderlyingSecurityID";
-            dictionary_[310] = "UnderlyingSecurityType";
-            dictionary_[311] = "UnderlyingSymbol";
-            dictionary_[312] = "UnderlyingSymbolSfx";
-            dictionary_[313] = "UnderlyingMaturityMonthYear";
-            dictionary_[314] = "UnderlyingMaturityDay";
-            dictionary_[315] = "UnderlyingPutOrCall";
-            dictionary_[316] = "UnderlyingStrikePrice";
-            dictionary_[317] = "UnderlyingOptAttribute";
-            dictionary_[318] = "UnderlyingCurrency";
-            dictionary_[319] = "RatioQty";
-            dictionary_[320] = "SecurityReqID";
-            dictionary_[321] = "SecurityRequestType";
-            dictionary_[322] = "SecurityResponseID";
-            dictionary_[323] = "SecurityResponseType";
-            dictionary_[324] = "SecurityStatusReqID";
-            dictionary_[325] = "UnsolicitedIndicator";
-            dictionary_[326] = "SecurityTradingStatus";
-            dictionary_[327] = "HaltReason";
-            dictionary_[328] = "InViewOfCommon";
-            dictionary_[329] = "DueToRelated";
-            dictionary_[330] = "BuyVolume";
-            dictionary_[331] = "SellVolume";
-            dictionary_[332] = "HighPx";
-            dictionary_[333] = "LowPx";
-            dictionary_[334] = "Adjustment";
-            dictionary_[335] = "TradSesReqID";
-            dictionary_[336] = "TradingSessionID";
-            dictionary_[337] = "ContraTrader";
-            dictionary_[338] = "TradSesMethod";
-            dictionary_[339] = "TradSesMode";
-            dictionary_[340] = "TradSesStatus";
-            dictionary_[341] = "TradSesStartTime";
-            dictionary_[342] = "TradSesOpenTime";
-            dictionary_[343] = "TradSesPreCloseTime";
-            dictionary_[344] = "TradSesCloseTime";
-            dictionary_[345] = "TradSesEndTime";
-            dictionary_[346] = "NumberOfOrders";
-            dictionary_[347] = "MessageEncoding";
-            dictionary_[348] = "EncodedIssuerLen";
-            dictionary_[349] = "EncodedIssuer";
-            dictionary_[350] = "EncodedSecurityDescLen";
-            dictionary_[351] = "EncodedSecurityDesc";
-            dictionary_[352] = "EncodedListExecInstLen";
-            dictionary_[353] = "EncodedListExecInst";
-            dictionary_[354] = "EncodedTextLen";
-            dictionary_[355] = "EncodedText";
-            dictionary_[356] = "EncodedSubjectLen";
-            dictionary_[357] = "EncodedSubject";
-            dictionary_[358] = "EncodedHeadlineLen";
-            dictionary_[359] = "EncodedHeadline";
-            dictionary_[360] = "EncodedAllocTextLen";
-            dictionary_[361] = "EncodedAllocText";
-            dictionary_[362] = "EncodedUnderlyingIssuerLen";
-            dictionary_[363] = "EncodedUnderlyingIssuer";
-            dictionary_[364] = "EncodedUnderlyingSecurityDescLen";
-            dictionary_[365] = "EncodedUnderlyingSecurityDesc";
-            dictionary_[366] = "AllocPrice";
-            dictionary_[367] = "QuoteSetValidUntilTime";
-            dictionary_[368] = "QuoteEntryRejectReason";
-            dictionary_[369] = "LastMsgSeqNumProcessed";
-            dictionary_[370] = "OnBehalfOfSendingTime";
-            dictionary_[371] = "RefTagID";
-            dictionary_[372] = "RefMsgType";
-            dictionary_[373] = "SessionRejectReason";
-            dictionary_[374] = "BidRequestTransType";
-            dictionary_[375] = "ContraBroker";
-            dictionary_[376] = "ComplianceID";
-            dictionary_[377] = "SolicitedFlag";
-            dictionary_[378] = "ExecRestatementReason";
-            dictionary_[379] = "BusinessRejectRefID";
-            dictionary_[380] = "BusinessRejectReason";
-            dictionary_[381] = "GrossTradeAmt";
-            dictionary_[382] = "NoContraBrokers";
-            dictionary_[383] = "MaxMessageSize";
-            dictionary_[384] = "NoMsgTypes";
-            dictionary_[385] = "MsgDirection";
-            dictionary_[386] = "NoTradingSessions";
-            dictionary_[387] = "TotalVolumeTraded";
-            dictionary_[388] = "DiscretionInst";
-            dictionary_[389] = "DiscretionOffset";
-            dictionary_[390] = "BidID";
-            dictionary_[391] = "ClientBidID";
-            dictionary_[392] = "ListName";
-            dictionary_[393] = "TotalNumSecurities";
-            dictionary_[394] = "BidType";
-            dictionary_[395] = "NumTickets";
-            dictionary_[396] = "SideValue1";
-            dictionary_[397] = "SideValue2";
-            dictionary_[398] = "NoBidDescriptors";
-            dictionary_[399] = "BidDescriptorType";
-            dictionary_[400] = "BidDescriptor";
-            dictionary_[401] = "SideValueInd";
-            dictionary_[402] = "LiquidityPctLow";
-            dictionary_[403] = "LiquidityPctHigh";
-            dictionary_[404] = "LiquidityValue";
-            dictionary_[405] = "EFPTrackingError";
-            dictionary_[406] = "FairValue";
-            dictionary_[407] = "OutsideIndexPct";
-            dictionary_[408] = "ValueOfFutures";
-            dictionary_[409] = "LiquidityIndType";
-            dictionary_[410] = "WtAverageLiquidity";
-            dictionary_[411] = "ExchangeForPhysical";
-            dictionary_[412] = "OutMainCntryUIndex";
-            dictionary_[413] = "CrossPercent";
-            dictionary_[414] = "ProgRptReqs";
-            dictionary_[415] = "ProgPeriodInterval";
-            dictionary_[416] = "IncTaxInd";
-            dictionary_[417] = "NumBidders";
-            dictionary_[418] = "TradeType";
-            dictionary_[419] = "BasisPxType";
-            dictionary_[420] = "NoBidComponents";
-            dictionary_[421] = "Country";
-            dictionary_[422] = "TotNoStrikes";
-            dictionary_[423] = "PriceType";
-            dictionary_[424] = "DayOrderQty";
-            dictionary_[425] = "DayCumQty";
-            dictionary_[426] = "DayAvgPx";
-            dictionary_[427] = "GTBookingInst";
-            dictionary_[428] = "NoStrikes";
-            dictionary_[429] = "ListStatusType";
-            dictionary_[430] = "NetGrossInd";
-            dictionary_[431] = "ListOrderStatus";
-            dictionary_[432] = "ExpireDate";
-            dictionary_[433] = "ListExecInstType";
-            dictionary_[434] = "CxlRejResponseTo";
-            dictionary_[435] = "UnderlyingCouponRate";
-            dictionary_[436] = "UnderlyingContractMultiplier";
-            dictionary_[437] = "ContraTradeQty";
-            dictionary_[438] = "ContraTradeTime";
-            dictionary_[439] = "ClearingFirm";
-            dictionary_[440] = "ClearingAccount";
-            dictionary_[441] = "LiquidityNumSecurities";
-            dictionary_[442] = "MultiLegReportingType";
-            dictionary_[443] = "StrikeTime";
-            dictionary_[444] = "ListStatusText";
-            dictionary_[445] = "EncodedListStatusTextLen";
-            dictionary_[446] = "EncodedListStatusText";
-        }
-    };
+//!
+// \brief Given a field and a field name dictionary, returns a type which provides operator<< to write the name of the field to an std::ostream.
+// \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept AssociativeContainer<int, std::string>, for example std::map<int, std::string> or std::unordered_map<int, std::string>.
+// \param tag The field number.
+// \param field_dictionary The field dictionary.
+// 
+// Example usage:
+// std::map<int, std::string> dictionary;
+// hffix::field_dictionary_init(dictionary);
+// std::cout << field_name(hffix:SenderCompID, dictionary) << '\n'; // Will print "SenderCompID" and a newline.
+template <typename AssociativeContainer> field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary) {
+  return field_name_streamer<AssociativeContainer>(tag, field_dictionary);
+};
 
 } // namespace hffix
 
