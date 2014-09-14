@@ -58,4 +58,15 @@ void thread_safe_send(hffix::message_writer const& w) {
 # TODO
 
 Make all members public, eliminate all accessor methods.
-No /*-style comments
+No /**/-style comments
+fixprint --color
+
+Make a find_with_hint function
+
+message_reader::const_iterator i = reader.begin();
+if ((i = find_with_hint(reader.begin(), reader.end(), i, tag_predicate(MsgSeqNum))) != reader.end()) {
+  int seqnum = i->cast_int();
+}
+if ((i = find_with_hint(reader.begin(), reader.end(), i, tag_predicate(TargetCompID))) != reader.end()) {
+  std::string targetcompid = i->cast_string();
+}

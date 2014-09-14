@@ -1,3 +1,6 @@
+
+CXXFLAGS = -ggdb -Iinclude
+
 all : specs doc fixprint
 
 doc : doc/html/index.html
@@ -48,7 +51,8 @@ fixprint : util/bin/fixprint
 
 util/bin/fixprint : util/src/fixprint.cpp include/hffix.hpp include/hffix_fields.hpp
 	mkdir -p util/bin
-	g++ -Iinclude -o util/bin/fixprint util/src/fixprint.cpp
+	# g++ -ggdb -Iinclude -o util/bin/fixprint util/src/fixprint.cpp
+	$(CXX) $(CXXFLAGS) -o util/bin/fixprint util/src/fixprint.cpp
 	@echo "*** Built fixprint utility util/bin/fixprint"
 
 .PHONY : help doc all clean install uninstall fixprint specs

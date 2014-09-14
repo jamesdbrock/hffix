@@ -42,18 +42,18 @@ Just include "hffix.hpp" to use High
 Frequency FIX in your project.
 */
 
-/*! \mainpage High Frequency FIX Parser (Financial Information Exchange 4.2)
+/*! \mainpage High Frequency FIX Parser (Financial Information Exchange)
 
 The High Frequency FIX Parser library is an open source implementation of 
-<a href="http://www.fixprotocol.org/specifications/FIX.4.2">Financial Information Exchange protocol version 4.2</a> 
+<a href=""http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> 
 intended for use by developers of high frequency, low latency financial software. 
-The purpose of the library is to do fast, efficient encoding and decoding of FIX 4.2 in place, 
+The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, 
 at the location of the I/O buffer, without using intermediate objects or allocating on the free store.
 
 High Frequency FIX Parser follows the 
 <a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>. 
 It is modern platform-independent C++98 and depends only on the C++ Standard Library. 
-It is patterned after the C++ Standard Template Library, and it models each FIX 4.2 message with 
+It is patterned after the C++ Standard Template Library, and it models each FIX message with 
 Container and Iterator concepts. It employs compile-time polymorphism (templates) but not
 run-time polymorphism (object-oriented inheritance).
 
@@ -61,10 +61,10 @@ High Frequency FIX Parser is a one-header-only library, so there are no binaries
 <tt>#include "hffix.hpp"</tt> to use High Frequency FIX Parser in your application.
 It also plays well with Boost. If you are using 
 <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your 
-application, High Frequency FIX Parser will support conversion between FIX 4.2 fields
+application, High Frequency FIX Parser will support conversion between FIX fields
 and Boost Date_Time types.
 
-The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX 4.2 hosts
+The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts
 for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>.
 
 High Frequency FIX Parser was developed with \em fix-42_with_errata_20010501.pdf. A copy of that document can be obtained
@@ -79,13 +79,13 @@ For support and discussion of High Frequency FIX Parser, see the
 
 \section difference Features
 
-\subsection others Other FIX 4.2 Implementations
+\subsection others Other FIX Implementations
 
-Typical FIX 4.2 implementations model a FIX 4.2 message either as an associative key-value container of
+Typical FIX implementations model a FIX message either as an associative key-value container of
 strongly typed objects that inherit from some field superclass, 
 or as a class type for each message type with member variables for every possible field in the message. Both of
 these approaches are inflexible and inefficient. The advantage of doing it this way is that you get 
-random access reads and writes to the fields of the FIX 4.2 message.
+random access reads and writes to the fields of the FIX message.
 
 Every high frequency trading application already has an object model
 in the application that provides random access to properties of trading objects, however. 
@@ -109,19 +109,19 @@ as <tt>const char* begin(), const char* end()</tt>, and High Frequency FIX Parse
 a complete set of conversion functions for ints, 
 decimal floats, dates and times, et cetera for the developer to call at his discretion.
 
-\section session FIX 4.2 Sessions
+\section session FIX Sessions
 
 Managing sessions requires making choices about sockets and threads. 
 High Frequency FIX Parser does not manage sessions. 
-It is intended for developers who want a FIX 4.2 parser with which to build a session manager
+It is intended for developers who want a FIX parser with which to build a session manager
 for a high-performance trading system that already has a carefully crafted socket and 
 threading architecture.
 
-FIX 4.2 has transport-layer features mixed in with the messages, and most FIX 4.2 hosts
-have various quirks in the way they employ the administrative messages. To manage a FIX 4.2 
+FIX has transport-layer features mixed in with the messages, and most FIX hosts
+have various quirks in the way they employ the administrative messages. To manage a FIX 
 session your application will need to match the the transport-layer and administrative features 
-of the other FIX 4.2 host. High Frequency FIX Parser has the flexibility to express any subset or
-proprietary superset of FIX 4.2.
+of the other FIX host. High Frequency FIX Parser has the flexibility to express any subset or
+proprietary superset of FIX.
 
 \subsection encryption Encryption
 
@@ -130,7 +130,7 @@ implement any of the EncryptMethods suggested by \em fix-42_with_errata_20010501
 
 If you want to encrypt or decrypt some data you'll have to do the encryption or decryption yourself. Once you've
 created the functions for encryption and decryption, it is easy to
-use High Frequency FIX Parser to read and write encrypted data within FIX 4.2 messages.
+use High Frequency FIX Parser to read and write encrypted data within FIX messages.
 
 \subsection checksum CheckSum
 
@@ -139,7 +139,7 @@ It does not validate the CheckSum of messages decoded.
 
 \subsection sequence Sequence Numbers
 
-The MsgSeqNum field in the FIX 4.2 Standard Header is exposed for reading and writing.
+The MsgSeqNum field in the FIX Standard Header is exposed for reading and writing.
 
 \subsection administrative Administrative Messages
 
@@ -151,7 +151,7 @@ can be encoded or decoded like any other message.
 \subsection customtags User-Defined Fields and Custom Tags
 
 High Frequency FIX Parser does not enforce the data type ("Format") of the Field Definitions for 
-content fields in the FIX 4.2 spec, so the developer is free to read or write any field data type with any tag number.
+content fields in the FIX spec, so the developer is free to read or write any field data type with any tag number.
 
 \section usage Using High Frequency FIX Parser
 
@@ -177,20 +177,20 @@ the collection and are not thread safe.
 hffix::message_reader and hffix::message_writer have no storage of their own, they read and write fields directly
 on the buffer with which they are constructed. You must be sure the buffer endures until they are destroyed.
 
-\subsection reading Reading a FIX 4.2 Message
+\subsection reading Reading a FIX Message
 
 Here is a simple example of how use hffix::message_reader 
-to read a FIX 4.2 message from a buffer and print each field to \c std::cout.
+to read a FIX message from a buffer and print each field to \c std::cout.
 
 During construction, hffix::message_reader checks to make sure there is a complete,
-valid FIX 4.2 message in the buffer. It looks only at the header and trailer transport fields in the message,
+valid FIX message in the buffer. It looks only at the header and trailer transport fields in the message,
 not at the content fields, so construction is O(1).
 
 If hffix::message_reader is complete and valid after construction,
 hffix::message_reader::begin() returns an iterator that points to the MsgType field
-in the FIX 4.2 Standard Message Header, and 
+in the FIX Standard Message Header, and 
 hffix::message_reader::end() returns an iterator that points to the CheckSum field in the 
-FIX 4.2 Standard Message Trailer.
+FIX Standard Message Trailer.
 
 \code
 #include "hffix.hpp"
@@ -222,9 +222,9 @@ Read 75 bytes from buffer.
 MsgType=0 SenderCompID=AAAA TargetCompID=BBBB MsgSeqNum=1 SendingTime=20110130-19:14:21.056
 \endcode
 
-\subsection writing Writing a FIX 4.2 Message
+\subsection writing Writing a FIX Message
 
-Here is a simple example of how to use hffix::message_writer to write a FIX 4.2 Heartbeat message to a buffer.
+Here is a simple example of how to use hffix::message_writer to write a FIX Heartbeat message to a buffer.
 The hffix::message_writer::push_back_header() and hffix::message_writer::push_back_trailer() methods will
 write the BeginString, BodyLength, and CheckSum transport fields for us.
 
@@ -296,7 +296,7 @@ int main(int argc, const char** argv)
     char buffer[512];
 
 
-    // We'll put a FIX 4.2 Logon message in the buffer.
+    // We'll put a FIX Logon message in the buffer.
     hffix::message_writer logon_message(buffer, buffer + 512);
 
     logon_message.push_back_header(); // Write BeginString and BodyLength.
@@ -317,7 +317,7 @@ int main(int argc, const char** argv)
     // Now the Logon message is ready to send. It occupies the buffer. 
     std::cout << "Wrote Logon to the buffer, " << logon_message.message_size() << " bytes." << std::endl;
 
-    // We can print the FIX 4.2 Logon message to std::cout. It contains lots of non-printing
+    // We can print the FIX Logon message to std::cout. It contains lots of non-printing
     // characters, so it'll look strange. At this point we could also send it out a network socket.
     std::cout << std::string(logon_message.message_begin(), logon_message.message_end()) << std::endl;
 
@@ -325,7 +325,7 @@ int main(int argc, const char** argv)
 
 
 
-    // Add a FIX 4.2 New Order - Single message to the buffer, after the Logon message.
+    // Add a FIX New Order - Single message to the buffer, after the Logon message.
     hffix::message_writer new_order_message(logon_message.message_end(), buffer + 512);
 
     new_order_message.push_back_header();
@@ -352,14 +352,14 @@ int main(int argc, const char** argv)
     //Now the New Order message is in the buffer after the Logon message.
     std::cout << "Wrote New Order to the buffer, " << new_order_message.message_size() << " bytes." << std::endl;
 
-    // Print the FIX 4.2 New Order message to std::cout. 
+    // Print the FIX New Order message to std::cout. 
     std::cout << std::string(new_order_message.message_begin(), new_order_message.message_end()) << std::endl;
 
 
 
 
 
-    //Now we'll parse the FIX 4.2 messages out of the buffer that we've just written.
+    //Now we'll parse the FIX messages out of the buffer that we've just written.
 
     hffix::message_reader reader(buffer, new_order_message.message_end());
 
@@ -370,12 +370,12 @@ int main(int argc, const char** argv)
         {
             std::cout << "Reading message of size " << reader.message_size() << " bytes." << std::endl;
         
-            // Get a peek at this message before we parse it by printing the raw FIX 4.2 to std::cout.
+            // Get a peek at this message before we parse it by printing the raw FIX to std::cout.
             std::cout << std::string(reader.message_begin(), reader.message_end()) << std::endl;
 
             // Check if this is a New Order MsgType. 
             // We can't use switch(reader.message_type()->value().as_char()) here because 
-            // some FIX 4.2 message types have multiple characters.
+            // some FIX message types have multiple characters.
             // Use the overloaded hffix::operator==(const message_reader_value_type_value &, const char *) instead.
             if (reader.message_type()->value() == "D") 
             {
@@ -496,7 +496,7 @@ This example also shows how to handle invalid, corrupt messages.
                 // but the end of the invalid message is unknown (because it's invalid).
                 // Stay in this for loop, because the messager_reader::operator++()
                 // will see that this message is invalid and it will search the remainder of the buffer
-                // for the text "8=FIX.4.2\x01", to see if there might be a complete or partial valid message
+                // for the text "8=FIX", to see if there might be a complete or partial valid message
                 // anywhere else in the remainder of the buffer.
             }
         }
@@ -853,7 +853,7 @@ Parses ascii and returns a time.
     class message_reader_const_iterator;
 
 /*! 
-\brief FIX 4.2 field value, weakly-typed as an array of chars, with type conversion methods.
+\brief FIX field value, weakly-typed as an array of chars, with type conversion methods.
 */
     class message_reader_value_type_value
     {
@@ -1193,7 +1193,7 @@ Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BO
     };
 
 /*!
-\brief A FIX 4.2 field for reading, with tag and field value. This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
+\brief A FIX field for reading, with tag and field value. This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
 */
     class message_reader_value_type
     {
@@ -1324,14 +1324,14 @@ Satisfies the const Input Iterator Concept for an immutable hffix::message_reade
 
 
 /*!
-\brief One FIX 4.2 message for reading. 
+\brief One FIX message for reading. 
 
-An immutable Forward Container of FIX fields. Given a buffer containing a FIX 4.2 message, the hffix::message_reader
+An immutable Forward Container of FIX fields. Given a buffer containing a FIX message, the hffix::message_reader
 will provide an Iterator for iterating over the fields in the message without modifying the buffer. The buffer
 used to construct the hffix::message_reader must outlive the hffix::message_reader.
 
 The message_reader will only iterate over content fields of the message, and will skip over all of the meta-fields
-for transport that are mixed in with the content fields in FIX 4.2. Here is the list of skipped fields:
+for transport that are mixed in with the content fields in FIX. Here is the list of skipped fields:
 
 - BeginString
 - BodyLength
@@ -1350,7 +1350,7 @@ for transport that are mixed in with the content fields in FIX 4.2. Here is the 
 - EncodedUnderlyingSecurityDescLen
 - EncodedListStatusTextLen
 
-Fields of binary data type are content fields, and will be iterated over like any other field. The special FIX 4.2 
+Fields of binary data type are content fields, and will be iterated over like any other field. The special FIX 
 binary data length fields will be skipped, but the length of the binary data is accessible from 
 hffix::message_reader::value_type::value().size().
 */
@@ -1414,7 +1414,7 @@ hffix::message_reader::value_type::value().size().
         }
 
 /*!
-\brief An iterator to the MsgType field in the FIX 4.2 message. Same as hffix::message_reader::message_type().
+\brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::message_type().
 \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
 */
         const const_iterator& begin() const
@@ -1424,7 +1424,7 @@ hffix::message_reader::value_type::value().size().
         }
 
 /*!
-\brief An iterator to the CheckSum field in the FIX 4.2 message. Same as hffix::message_reader::check_sum().
+\brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::check_sum().
 \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
 */
         const const_iterator& end() const
@@ -1434,7 +1434,7 @@ hffix::message_reader::value_type::value().size().
         }
 
 /*!
-\brief An iterator to the MsgType field in the FIX 4.2 message. Same as hffix::message_reader::begin().
+\brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::begin().
 \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
 */
         const const_iterator& message_type() const
@@ -1444,7 +1444,7 @@ hffix::message_reader::value_type::value().size().
         }
 
 /*!
-\brief An iterator to the CheckSum field in the FIX 4.2 message. Same as hffix::message_reader::end().
+\brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::end().
 \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
 */        
         const const_iterator& check_sum() const
@@ -1478,7 +1478,7 @@ buffer_begin() == message_begin()
         }
 
 /*!
-\brief A pointer to the beginning of the FIX 4.2 message in the buffer.
+\brief A pointer to the beginning of the FIX message in the buffer.
  buffer_begin() == message_begin()
 */
         const char* message_begin() const
@@ -1486,7 +1486,7 @@ buffer_begin() == message_begin()
             return buffer_;
         }
 /*!
-\brief A pointer to past-the-end of the FIX 4.2 message in the buffer.
+\brief A pointer to past-the-end of the FIX message in the buffer.
 \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
 */
         const char* message_end() const
@@ -1506,16 +1506,16 @@ buffer_begin() == message_begin()
         }
 
 /*!
-\brief True if the buffer contains a complete FIX 4.2 message.
+\brief True if the buffer contains a complete FIX message.
 */
         bool is_complete() const
         {
             return is_complete_;
         }
 /*!
-\brief True if the message is correct FIX 4.2.
+\brief True if the message is correct FIX.
 
-If false, there was an error parsing the FIX 4.2 message and the message cannot be read.
+If false, there was an error parsing the FIX message and the message cannot be read.
 
 fix-42_with_errata_20010501.pdf p.17:
 "Valid FIX Message is a message that is properly formed according to this specification and contains a
@@ -1528,12 +1528,12 @@ valid body length and checksum field"
 
 
 /*!
-\brief Moves this message_reader to the next FIX 4.2 message in the buffer.
+\brief Moves this message_reader to the next FIX message in the buffer.
 
 If this message is_valid() and is_complete(), assume that the next message comes immediately after this one.
 
 If this message !is_valid(), will search the remainder of the buffer
-for the text "8=FIX.4.2\x01", to see if there might be a complete or partial valid message
+for the text "8=FIX", to see if there might be a complete or partial valid message
 anywhere else in the remainder of the buffer.
 
 If this message !is_complete(), no-op.
@@ -1739,13 +1739,13 @@ namespace details {
 
 
 /*! 
-\brief One FIX 4.2 message for writing.
+\brief One FIX message for writing.
 
-Given a buffer, the message_writer will write a FIX 4.2 message to the buffer. The interface is patterned after
-Back Insertion Sequence Containers, with overloads of push_back for different FIX 4.2 field data types.
+Given a buffer, the message_writer will write a FIX message to the buffer. The interface is patterned after
+Back Insertion Sequence Containers, with overloads of push_back for different FIX field data types.
 
 The push_back_header() method will write the BeginString and BodyLength fields to the message, 
-but the FIX 4.2 Standard Message Header requires also MsgType, SenderCompID, TargetCompID, MsgSeqNum and SendingTime. 
+but the FIX Standard Message Header requires also MsgType, SenderCompID, TargetCompID, MsgSeqNum and SendingTime. 
 You must write those fields yourself, starting with MsgType.
 
 After calling all other push_back methods and before sending the message, you must call push_back_trailer(), 
@@ -1785,11 +1785,21 @@ which will write the CheckSum field for you.
 This method must be called before any other push_back() method. It may only be called once for each message_writer.
 
 \pre No other push_back method has yet been called.
+\param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
 */
-        void push_back_header()
+        void push_back_header(char* begin_string_version)
         {
-            memcpy(next_, "8=FIX.4.2\x01" "9=", 12);
-            next_ += 16; // 12 + 4 characters reserved for BodyLength. &BodyLength = buffer_ + 12.
+            memcpy(next_, "8=", 2);
+            next_ += 2;
+            memcpy(next_, begin_string_version, std::strlen(begin_string_version) - 1);
+            next_ += std::strlen(begin_string_version) - 1;
+            *(next_++) = '\x01';
+            memcpy(next_, "9=", 2);
+            next_ += 2;
+            // memcpy(next_, "8=FIX.4.2\x01" "9=", 12);
+            //next_ += 16; // 12 + 4 characters reserved for BodyLength. &BodyLength = buffer_ + 12.
+            body_length_ = next_;
+            next_ += 6; // 6 characters reserved for BodyLength.
             *next_++ = '\x01';
         }
 /*!
@@ -1797,26 +1807,26 @@ This method must be called before any other push_back() method. It may only be c
 
 This function must be called after all other push_back functions. It may only be called once for each message_writer.
 
-\post There is a complete and valid FIX 4.2 message in the buffer.
+\post There is a complete and valid FIX message in the buffer.
 
 \param calculate_checksum If this flag is set to false, then instead of iterating over the entire message and 
 calculating the CheckSum, the standard trailer will simply write CheckSum=000. This is fine if you're sending
-the message to a FIX 4.2 parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
+the message to a FIX parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
 */
         void push_back_trailer(bool calculate_checksum = true)
         {
             // calculate and write out the BodyLength
-            int bodylength = next_ - (buffer_ + 17);
-            for(char* b = buffer_ + 15; b > buffer_ + 11; --b)
+            size_t bodylength = next_ - (buffer_ + 17);
+            for(char* b = body_length_ + 5; b >= body_length_; --b)
             {
                 *b = '0' + (bodylength % 10);
                 bodylength /= 10;
             }
 
-            // write out the checksum after optionally calculating it
+            // write out the CheckSum after optionally calculating it
             if (calculate_checksum)
             {
-                int checksum(0);
+                size_t checksum(0);
                 char* b = buffer_;
                 while(b < next_) checksum += *b++;
                 checksum = checksum % 256;
@@ -2239,12 +2249,12 @@ Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BO
 \brief Append a data length field and a data field to the message.
 
 Note that this method will append two fields to the message. The first field is an integer equal to 
-the content length of the second field. FIX 4.2 does this so that the content of the second field may contain 
+the content length of the second field. FIX does this so that the content of the second field may contain 
 Ascii NULL or SOH or other strange characters. 
 
 High Frequency FIX Parser calculates the content length for you
 and writes out both fields, you just have to provide both tags and pointers to the data.
-For most of the data fields in FIX 4.2, it is true that tag_data = tag_data_length + 1, but we daren't assume that.
+For most of the data fields in FIX, it is true that tag_data = tag_data_length + 1, but we daren't assume that.
 
 \param tag_data_length FIX tag for the data length field.
 \param tag_data FIX tag for the data field.
@@ -2276,13 +2286,14 @@ For most of the data fields in FIX 4.2, it is true that tag_data = tag_data_leng
             }
         }
 
-        message_writer() {} // no default construction allowed
-        message_writer(const message_writer& that) {} // no copying allowed
-        message_writer& operator=(const message_writer& that) { return *this; } // no assignment allowed
+        // message_writer() {} // no default construction allowed
+        // message_writer(const message_writer& that) {} // no copying allowed
+        // message_writer& operator=(const message_writer& that) { return *this; } // no assignment allowed
 
         char* buffer_;
         char* buffer_end_;
         char* next_;
+        char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
     };
 
 /* @cond EXCLUDE */
@@ -2290,7 +2301,8 @@ For most of the data fields in FIX 4.2, it is true that tag_data = tag_data_leng
 namespace details {
     inline bool is_tag_a_data_length(int tag)
     {
-        return std::binary_search(length_fields, length_fields + (sizeof(length_fields)/sizeof(length_fields[0])), tag); // is this faster than a linear search over 13 elements?
+        int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
+        return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
     }
 }
 /* @endcond */
