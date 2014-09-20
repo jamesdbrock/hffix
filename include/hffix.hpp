@@ -509,25 +509,24 @@ This example also shows how to handle invalid, corrupt messages.
 
 */
 
+//! 
+// \def HFFIX_NO_BOOST_DATETIME
+// 
+// \brief If defined, High Frequency FIX Parser will not include Boost Date_Time support.
+// 
+// If the Boost Date_Time library is available in your build environment, boost::posix_time::ptime,
+// boost::posix_time::time_duration, and boost::gregorian::date
+// conversions will be supported for the various FIX date and time field types.
 
-/*! 
-\def HFFIX_NO_BOOST_DATETIME
-
-\brief If defined, High Frequency FIX Parser will not include Boost Date_Time support.
-
-If the Boost Date_Time library is available in your build environment, boost::posix_time::ptime,
-boost::posix_time::time_duration, and boost::gregorian::date
-conversions will be supported for the various FIX date and time field types.
-*/
-
-#include <cstring> /* for memcpy */
-#include <string>  /* for tag_name_dictionary */
-#include <map> /* for tag_name_dictionary */
-#include <sstream> /* for tag_name_dictionary */
-#include <algorithm> /* for is_tag_a_data_length */
-#include <iostream> /* for message_reader::value_type::operator<<() */
-#include <limits> /* for numeric_limits<>::is_signed */
-#include <stdexcept> /* for exceptions */
+#include <cstring>          // for memcpy
+#include <string>           // for tag_names
+#include <map>              // for tag_names
+#include <sstream>          // for tag_names
+#include <algorithm>        // for is_tag_a_data_length
+#include <iostream>         // for message_reader::value_type::operator<<()
+#include <limits>           // for numeric_limits<>::is_signed
+#include <stdexcept>        // for exceptions
+#include <ctime>            // for std::tm
 
 #ifndef HFFIX_NO_BOOST_DATETIME
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -634,7 +633,7 @@ Writes an integer out as ascii.
 
         char* e = b - 1;
 
-        while(e > buffer) // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
+        while(e > buffer) // Reverse the digits in-place.
         {
             char tmp = *e;
             *e = *buffer;
@@ -1564,15 +1563,26 @@ If this message !is_complete(), no-op.
             return *this;
         }
 
+        //!
+        // \brief Returns the FIX version prefix string begin pointer. (Example: "FIX.4.4")
+        const char* prefix_begin() const { return buffer_ + 2; }
+
+        //!
+        // \brief Returns the FIX version prefix string end pointer. (Example: "FIX.4.4")
+        const char* prefix_end() const { return prefix_end_; }
+        
+        //!
+        // \brief Returns the FIX version prefix string size. (Example: "FIX.4.4")
+        const ssize_t prefix_size() const { return prefix_end_ - buffer_ - 2; }
+ 
     private:
         friend class message_reader_const_iterator;
     
         void init()
         {
-            // Skip the prefix "8=FIX.4.2" or "8=FIXT.1.1", et cetera
+            // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
 
             const char* b = buffer_ + 9; // look for the first '\x01'
-            const char* prefixend;
 
             while(true) {
                 if (b >= buffer_end_) {
@@ -1580,7 +1590,7 @@ If this message !is_complete(), no-op.
                     return;
                 }
                 if (*b == '\x01') {
-                    prefixend = b;
+                    prefix_end_ = b;
                     break;
                 }
                 if (b - buffer_ > 11) {
@@ -1669,6 +1679,7 @@ If this message !is_complete(), no-op.
         value_type message_type_;
         bool is_complete_;
         bool is_valid_;
+        const char* prefix_end_; // Points after the 8=FIX... Prefix field.
 
         void malformed()
         {
