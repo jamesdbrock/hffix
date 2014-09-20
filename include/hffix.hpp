@@ -36,7 +36,7 @@ or implied, of T3 IP, LLC.
 
 /*!
 \file 
-\brief The entire High Frequency FIX Parser library. 
+\brief The High Frequency FIX Parser library. 
 
 Just include "hffix.hpp" to use High
 Frequency FIX in your project.
@@ -45,20 +45,20 @@ Frequency FIX in your project.
 /*! \mainpage High Frequency FIX Parser (Financial Information Exchange)
 
 The High Frequency FIX Parser library is an open source implementation of 
-<a href=""http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> 
+<a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> 
 intended for use by developers of high frequency, low latency financial software. 
 The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, 
-at the location of the I/O buffer, without using intermediate objects or allocating on the free store.
+at the location of the I/O buffer, without using intermediate objects or allocating any memory on the free store.
 
-High Frequency FIX Parser follows the 
+High Frequency FIX Parser tries to follow the 
 <a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>. 
 It is modern platform-independent C++98 and depends only on the C++ Standard Library. 
 It is patterned after the C++ Standard Template Library, and it models each FIX message with 
-Container and Iterator concepts. It employs compile-time polymorphism (templates) but not
-run-time polymorphism (object-oriented inheritance).
+Container and Iterator concepts. It employs compile-time generic templates but does not
+employ object-oriented inheritance.
 
 High Frequency FIX Parser is a one-header-only library, so there are no binaries to link. Just 
-<tt>#include "hffix.hpp"</tt> to use High Frequency FIX Parser in your application.
+<tt>#include <hffix.hpp> </tt> to use High Frequency FIX Parser in your application.
 It also plays well with Boost. If you are using 
 <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your 
 application, High Frequency FIX Parser will support conversion between FIX fields
@@ -67,15 +67,11 @@ and Boost Date_Time types.
 The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts
 for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>.
 
-High Frequency FIX Parser was developed with \em fix-42_with_errata_20010501.pdf. A copy of that document can be obtained
-after registering at the <a href="http://www.fixprotocol.org">FIX Protocol Limited</a> website.
+All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the <tt>spec</tt> directory. As a convenience for the developer, the High Frequency FIX Parser library includes a Python script which parses all of the FIX protocol specification documents and generates the <tt>include/hffix_fields.hpp</tt> file. That file has <tt>enum</tt> definitions in a tag namspace and an hffix::field_dictionary_init function which allows fields to be referred to by name instead of number both during development, and at run-time.
 
 High Frequency FIX Parser is distributed under the open source FreeBSD License, also known as the Simplified BSD License.
 
-The <a href="http://www.t3tradinggroup.com/hffix">High Frequency FIX home page</a> is here.
-
-For support and discussion of High Frequency FIX Parser, see the
-<a href="http://groups.google.com/group/high-frequency-fix-support">high-frequency-fix-support Google Group</a>.
+The main repository is at https://github.com/jamesdbrock/hffix
 
 \section difference Features
 
@@ -126,11 +122,7 @@ proprietary superset of FIX.
 \subsection encryption Encryption
 
 High Frequency FIX Parser supports the binary data field types such as SecureData, but it does not
-implement any of the EncryptMethods suggested by \em fix-42_with_errata_20010501.pdf p.162.
-
-If you want to encrypt or decrypt some data you'll have to do the encryption or decryption yourself. Once you've
-created the functions for encryption and decryption, it is easy to
-use High Frequency FIX Parser to read and write encrypted data within FIX messages.
+implement any of the EncryptMethods suggested by the FIX specifications. If you want to encrypt or decrypt some data you'll have to do the encryption or decryption yourself. 
 
 \subsection checksum CheckSum
 
@@ -162,17 +154,12 @@ unless they are documented to throw exceptions, in which case they provide the B
 
 \subsection Threads
 
-Hight Frequency FIX Parser is not thread-aware at all and has no threads, mutexes, or atomic operations.
+Hight Frequency FIX Parser is not thread-aware at all and has no threads, mutexes, locks, or atomic operations.
 
 All const methods of the hffix::message_reader are thread safe. The hffix::message_reader::operator++(),
 which moves the hffix::message_reader to the next message in the buffer, is not const and is not thread safe.
 
 The hffix::message_writer is not thread safe. 
-
-The hffix::tag_name_dictionary::lookup() method and hffix::tag_name_dictionary::operator[] operator are const 
-and are thread safe, 
-unless they are used concurrently with any other hffix::tag_name_dictionary methods, which might modify
-the collection and are not thread safe.
 
 hffix::message_reader and hffix::message_writer have no storage of their own, they read and write fields directly
 on the buffer with which they are constructed. You must be sure the buffer endures until they are destroyed.
@@ -260,7 +247,6 @@ Here is a more complete example that shows reading, writing, and type conversion
 
 \code
 
-// #define HFFIX_NO_BOOST_DATETIME
 #include "hffix.hpp"
 
 #include <iostream>
@@ -509,14 +495,6 @@ This example also shows how to handle invalid, corrupt messages.
 
 */
 
-//! 
-// \def HFFIX_NO_BOOST_DATETIME
-// 
-// \brief If defined, High Frequency FIX Parser will not include Boost Date_Time support.
-// 
-// If the Boost Date_Time library is available in your build environment, boost::posix_time::ptime,
-// boost::posix_time::time_duration, and boost::gregorian::date
-// conversions will be supported for the various FIX date and time field types.
 
 #include <cstring>          // for memcpy
 #include <string>           // for tag_names
@@ -528,10 +506,38 @@ This example also shows how to handle invalid, corrupt messages.
 #include <stdexcept>        // for exceptions
 #include <ctime>            // for std::tm
 
+//! 
+// \def HFFIX_NO_BOOST_DATETIME
+// 
+// \brief If defined, High Frequency FIX Parser will not include Boost Date_Time support.
+// 
+// If the Boost Date_Time library is available in your build environment, boost::posix_time::ptime,
+// boost::posix_time::time_duration, and boost::gregorian::date
+// conversions will be automatically be supported for the various FIX date and time field types.
+// 
+// To include the Boost Date_Time library types and enable High Frequency FIX Parser support, do:
+// \code
+// #include <boost/date_time/posix_time/posix_time_types.hpp>
+// #include <boost/date_time/gregorian/gregorian_types.hpp>
+// \endcode
+// 
+// To prevent High Frequency FIX Parser support for the Boost Date_Time library, define HFFIX_NO_BOOST_DATETIME before including hffix.hpp:
+// \code
+// #define HFFIX_NO_BOOST_DATETIME
+// #include <hffix.hpp>
+// \endcode
 #ifndef HFFIX_NO_BOOST_DATETIME
+#ifdef DATE_TIME_TIME_HPP_ // The header include guard from boost/date_time/time.hpp
+#ifdef DATE_TIME_DATE_HPP_ // The header include guard from boost/date_time/date.hpp
+#define HFFIX_BOOST_DATETIME
+#endif
+#endif
+#endif
+
+#ifdef HFFIX_BOOST_DATETIME
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
-#endif // HFFIX_NO_BOOST_DATETIME
+#endif // HFFIX_BOOST_DATETIME
 
 #include <hffix_fields.hpp>
 
@@ -1087,7 +1093,7 @@ Parses ascii and returns a timestamp.
 
 //@}
 
-#ifndef HFFIX_NO_BOOST_DATETIME
+#ifdef HFFIX_BOOST_DATETIME
 
 /*! \name Boost Date and Time Conversion Methods */
 //@{
@@ -1180,7 +1186,7 @@ Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BO
 //@}
 
 
-#endif // HFFIX_NO_BOOST_DATETIME
+#endif // HFFIX_BOOST_DATETIME
 
 
     private:
@@ -1563,17 +1569,20 @@ If this message !is_complete(), no-op.
             return *this;
         }
 
-        //!
-        // \brief Returns the FIX version prefix string begin pointer. (Example: "FIX.4.4")
+        /*!
+         * \brief Returns the FIX version prefix string begin pointer. (Example: "FIX.4.4")
+         */
         const char* prefix_begin() const { return buffer_ + 2; }
 
-        //!
-        // \brief Returns the FIX version prefix string end pointer. (Example: "FIX.4.4")
+        /*!
+         * \brief Returns the FIX version prefix string end pointer. (Example: "FIX.4.4")
+         */
         const char* prefix_end() const { return prefix_end_; }
         
-        //!
-        // \brief Returns the FIX version prefix string size. (Example: "FIX.4.4")
-        const ssize_t prefix_size() const { return prefix_end_ - buffer_ - 2; }
+        /*!
+         * \brief Returns the FIX version prefix string size. (Example: returns 7 for "FIX.4.4")
+         */
+        ssize_t prefix_size() const { return prefix_end_ - buffer_ - 2; }
  
     private:
         friend class message_reader_const_iterator;
@@ -1807,8 +1816,6 @@ This method must be called before any other push_back() method. It may only be c
             *(next_++) = '\x01';
             memcpy(next_, "9=", 2);
             next_ += 2;
-            // memcpy(next_, "8=FIX.4.2\x01" "9=", 12);
-            //next_ += 16; // 12 + 4 characters reserved for BodyLength. &BodyLength = buffer_ + 12.
             body_length_ = next_;
             next_ += 6; // 6 characters reserved for BodyLength.
             *next_++ = '\x01';
@@ -2177,7 +2184,7 @@ No time zone or daylight savings time transformations are done to the timestamp.
 
 //@}
 
-#ifndef HFFIX_NO_BOOST_DATETIME
+#ifdef HFFIX_BOOST_DATETIME
 
 /*! \name Boost Date and Time Methods */
 //@{
@@ -2250,7 +2257,7 @@ Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BO
                 );
         }
 //@}
-#endif // HFFIX_NO_BOOST_DATETIME
+#endif // HFFIX_BOOST_DATETIME
 
 
 /*! \name Data Methods */
@@ -2315,13 +2322,10 @@ namespace details {
         int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
         return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
     }
-}
-/* @endcond */
 
 
-//!
+
 // \brief std::ostream-able type returned by hffix::field_name function.
-//
 template <typename AssociativeContainer> struct field_name_streamer {
   int tag;
   AssociativeContainer const& field_dictionary;
@@ -2337,18 +2341,25 @@ template <typename AssociativeContainer> struct field_name_streamer {
   }
 };
 
-//!
-// \brief Given a field and a field name dictionary, returns a type which provides operator<< to write the name of the field to an std::ostream.
-// \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept AssociativeContainer<int, std::string>, for example std::map<int, std::string> or std::unordered_map<int, std::string>.
-// \param tag The field number.
-// \param field_dictionary The field dictionary.
-// 
-// Example usage:
-// std::map<int, std::string> dictionary;
-// hffix::field_dictionary_init(dictionary);
-// std::cout << field_name(hffix:SenderCompID, dictionary) << '\n'; // Will print "SenderCompID" and a newline.
-template <typename AssociativeContainer> field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary) {
-  return field_name_streamer<AssociativeContainer>(tag, field_dictionary);
+}
+/* @endcond */
+
+/*!
+ \brief Given a field tag number and a field name dictionary, returns a type which provides <tt>operator<< </tt> to write the name of the field to an std::ostream.
+ \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept <tt>AssociativeContainer<int, std::string></tt>, for example <tt>std::map<int, std::string></tt> or <tt>std::unordered_map<int, std::string></tt>. See http://en.cppreference.com/w/cpp/concept/AssociativeContainer
+
+ \param tag The field number.
+ \param field_dictionary The field dictionary.
+ 
+ Example usage:
+ \code
+ std::map<int, std::string> dictionary;
+ hffix::field_dictionary_init(dictionary);
+ std::cout << field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID" and a newline.
+ \endcode
+*/
+template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary) {
+  return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary);
 };
 
 } // namespace hffix
