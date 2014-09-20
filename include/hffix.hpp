@@ -35,8 +35,8 @@ or implied, of T3 IP, LLC.
 #define HFFIX_HPP
 
 /*!
-\file 
-\brief The High Frequency FIX Parser library. 
+\file
+\brief The High Frequency FIX Parser library.
 
 Just include "hffix.hpp" to use High
 Frequency FIX in your project.
@@ -44,23 +44,23 @@ Frequency FIX in your project.
 
 /*! \mainpage High Frequency FIX Parser (Financial Information Exchange)
 
-The High Frequency FIX Parser library is an open source implementation of 
-<a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> 
-intended for use by developers of high frequency, low latency financial software. 
-The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, 
+The High Frequency FIX Parser library is an open source implementation of
+<a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a>
+intended for use by developers of high frequency, low latency financial software.
+The purpose of the library is to do fast, efficient encoding and decoding of FIX in place,
 at the location of the I/O buffer, without using intermediate objects or allocating any memory on the free store.
 
-High Frequency FIX Parser tries to follow the 
-<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>. 
-It is modern platform-independent C++98 and depends only on the C++ Standard Library. 
-It is patterned after the C++ Standard Template Library, and it models each FIX message with 
+High Frequency FIX Parser tries to follow the
+<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.
+It is modern platform-independent C++98 and depends only on the C++ Standard Library.
+It is patterned after the C++ Standard Template Library, and it models each FIX message with
 Container and Iterator concepts. It employs compile-time generic templates but does not
 employ object-oriented inheritance.
 
-High Frequency FIX Parser is a one-header-only library, so there are no binaries to link. Just 
+High Frequency FIX Parser is a one-header-only library, so there are no binaries to link. Just
 <tt>#include <hffix.hpp> </tt> to use High Frequency FIX Parser in your application.
-It also plays well with Boost. If you are using 
-<a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your 
+It also plays well with Boost. If you are using
+<a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your
 application, High Frequency FIX Parser will support conversion between FIX fields
 and Boost Date_Time types.
 
@@ -78,55 +78,55 @@ The main repository is at https://github.com/jamesdbrock/hffix
 \subsection others Other FIX Implementations
 
 Typical FIX implementations model a FIX message either as an associative key-value container of
-strongly typed objects that inherit from some field superclass, 
+strongly typed objects that inherit from some field superclass,
 or as a class type for each message type with member variables for every possible field in the message. Both of
-these approaches are inflexible and inefficient. The advantage of doing it this way is that you get 
+these approaches are inflexible and inefficient. The advantage of doing it this way is that you get
 random access reads and writes to the fields of the FIX message.
 
 Every high frequency trading application already has an object model
-in the application that provides random access to properties of trading objects, however. 
-A class for an order, 
-and a class for an execution, and a class for a quote, et cetera. If your application has that, 
+in the application that provides random access to properties of trading objects, however.
+A class for an order,
+and a class for an execution, and a class for a quote, et cetera. If your application has that,
 then it doesn't need random access to message fields, it needs only serial access.
 
 \subsection thisone High Frequency FIX Parser Implementation
 
 High Frequency FIX Parser models reading fields serially with an
 <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a>
-and 
-writing fields serially to a 
+and
+writing fields serially to a
 <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>.
 It performs reading and writing directly on the I/O buffer,
 without any intermediate objects and without calling new or malloc or
 doing any free store allocations of any kind.
 
 Field values are weakly typed. They are exposed to the developer
-as <tt>const char* begin(), const char* end()</tt>, and High Frequency FIX Parser provides 
-a complete set of conversion functions for ints, 
+as <tt>const char* begin(), const char* end()</tt>, and High Frequency FIX Parser provides
+a complete set of conversion functions for ints,
 decimal floats, dates and times, et cetera for the developer to call at his discretion.
 
 \section session FIX Sessions
 
-Managing sessions requires making choices about sockets and threads. 
-High Frequency FIX Parser does not manage sessions. 
+Managing sessions requires making choices about sockets and threads.
+High Frequency FIX Parser does not manage sessions.
 It is intended for developers who want a FIX parser with which to build a session manager
-for a high-performance trading system that already has a carefully crafted socket and 
+for a high-performance trading system that already has a carefully crafted socket and
 threading architecture.
 
 FIX has transport-layer features mixed in with the messages, and most FIX hosts
-have various quirks in the way they employ the administrative messages. To manage a FIX 
-session your application will need to match the the transport-layer and administrative features 
+have various quirks in the way they employ the administrative messages. To manage a FIX
+session your application will need to match the the transport-layer and administrative features
 of the other FIX host. High Frequency FIX Parser has the flexibility to express any subset or
 proprietary superset of FIX.
 
 \subsection encryption Encryption
 
 High Frequency FIX Parser supports the binary data field types such as SecureData, but it does not
-implement any of the EncryptMethods suggested by the FIX specifications. If you want to encrypt or decrypt some data you'll have to do the encryption or decryption yourself. 
+implement any of the EncryptMethods suggested by the FIX specifications. If you want to encrypt or decrypt some data you'll have to do the encryption or decryption yourself.
 
 \subsection checksum CheckSum
 
-High Frequency FIX Parser can calculate CheckSums and add the CheckSum field for all messages that you encode. 
+High Frequency FIX Parser can calculate CheckSums and add the CheckSum field for all messages that you encode.
 It does not validate the CheckSum of messages decoded.
 
 \subsection sequence Sequence Numbers
@@ -135,14 +135,14 @@ The MsgSeqNum field in the FIX Standard Header is exposed for reading and writin
 
 \subsection administrative Administrative Messages
 
-The administrative messages Logon, Logout, ResendRequest, 
-Heartbeat, TestRequest, SeqReset-Reset and SeqReset-GapFill don't get special treatment in High Frequency FIX Parser. 
+The administrative messages Logon, Logout, ResendRequest,
+Heartbeat, TestRequest, SeqReset-Reset and SeqReset-GapFill don't get special treatment in High Frequency FIX Parser.
 Any administrative message
 can be encoded or decoded like any other message.
 
 \subsection customtags User-Defined Fields and Custom Tags
 
-High Frequency FIX Parser does not enforce the data type ("Format") of the Field Definitions for 
+High Frequency FIX Parser does not enforce the data type ("Format") of the Field Definitions for
 content fields in the FIX spec, so the developer is free to read or write any field data type with any tag number.
 
 \section usage Using High Frequency FIX Parser
@@ -159,14 +159,14 @@ Hight Frequency FIX Parser is not thread-aware at all and has no threads, mutexe
 All const methods of the hffix::message_reader are thread safe. The hffix::message_reader::operator++(),
 which moves the hffix::message_reader to the next message in the buffer, is not const and is not thread safe.
 
-The hffix::message_writer is not thread safe. 
+The hffix::message_writer is not thread safe.
 
 hffix::message_reader and hffix::message_writer have no storage of their own, they read and write fields directly
 on the buffer with which they are constructed. You must be sure the buffer endures until they are destroyed.
 
 \subsection reading Reading a FIX Message
 
-Here is a simple example of how use hffix::message_reader 
+Here is a simple example of how use hffix::message_reader
 to read a FIX message from a buffer and print each field to \c std::cout.
 
 During construction, hffix::message_reader checks to make sure there is a complete,
@@ -175,8 +175,8 @@ not at the content fields, so construction is O(1).
 
 If hffix::message_reader is complete and valid after construction,
 hffix::message_reader::begin() returns an iterator that points to the MsgType field
-in the FIX Standard Message Header, and 
-hffix::message_reader::end() returns an iterator that points to the CheckSum field in the 
+in the FIX Standard Message Header, and
+hffix::message_reader::end() returns an iterator that points to the CheckSum field in the
 FIX Standard Message Trailer.
 
 \code
@@ -252,7 +252,7 @@ Here is a more complete example that shows reading, writing, and type conversion
 #include <iostream>
 #include <string>
 
-// For convenience, make a Meyers' Singleton instance of an hffix::tag_name_dictionary, 
+// For convenience, make a Meyers' Singleton instance of an hffix::tag_name_dictionary,
 // so that we can look up the names of FIX tags from anywhere in the program.
 hffix::tag_name_dictionary& dictionary_singleton()
 {
@@ -277,7 +277,7 @@ int main(int argc, const char** argv)
 {
     long long sequence_number_send(0); // can be any integer type
     long long sequence_number_recv(0); // can be any integer type
-    
+
     // Create a buffer.
     char buffer[512];
 
@@ -297,17 +297,17 @@ int main(int argc, const char** argv)
     char encryption_key[16]; // Pretend there's a binary public encryption key in here.
     // If we were using encryption, we could write the binary encryption key into RawData like so
     logon_message.push_back_data(hffix::tag::RawDataLength, hffix::tag::RawData, encryption_key, encryption_key + 16);
-    
+
     logon_message.push_back_trailer(); // write CheckSum
 
-    // Now the Logon message is ready to send. It occupies the buffer. 
+    // Now the Logon message is ready to send. It occupies the buffer.
     std::cout << "Wrote Logon to the buffer, " << logon_message.message_size() << " bytes." << std::endl;
 
     // We can print the FIX Logon message to std::cout. It contains lots of non-printing
     // characters, so it'll look strange. At this point we could also send it out a network socket.
     std::cout << std::string(logon_message.message_begin(), logon_message.message_end()) << std::endl;
 
-    
+
 
 
 
@@ -330,7 +330,7 @@ int main(int argc, const char** argv)
 
     // Limit price $500.01 = 50001*(10^-2). The push_back_decimal() method takes a decimal floating point
     // number of the form mantissa*(10^exponent).
-    new_order_message.push_back_decimal(hffix::tag::Price, 50001, -2); 
+    new_order_message.push_back_decimal(hffix::tag::Price, 50001, -2);
 
     new_order_message.push_back_char(hffix::tag::TimeInForce, '1'); // Good Till Cancel.
     new_order_message.push_back_trailer();
@@ -338,7 +338,7 @@ int main(int argc, const char** argv)
     //Now the New Order message is in the buffer after the Logon message.
     std::cout << "Wrote New Order to the buffer, " << new_order_message.message_size() << " bytes." << std::endl;
 
-    // Print the FIX New Order message to std::cout. 
+    // Print the FIX New Order message to std::cout.
     std::cout << std::string(new_order_message.message_begin(), new_order_message.message_end()) << std::endl;
 
 
@@ -355,15 +355,15 @@ int main(int argc, const char** argv)
         if (reader.is_valid())
         {
             std::cout << "Reading message of size " << reader.message_size() << " bytes." << std::endl;
-        
+
             // Get a peek at this message before we parse it by printing the raw FIX to std::cout.
             std::cout << std::string(reader.message_begin(), reader.message_end()) << std::endl;
 
-            // Check if this is a New Order MsgType. 
-            // We can't use switch(reader.message_type()->value().as_char()) here because 
+            // Check if this is a New Order MsgType.
+            // We can't use switch(reader.message_type()->value().as_char()) here because
             // some FIX message types have multiple characters.
             // Use the overloaded hffix::operator==(const message_reader_value_type_value &, const char *) instead.
-            if (reader.message_type()->value() == "D") 
+            if (reader.message_type()->value() == "D")
             {
                 // Make an instance of our order struct, see above, which will store fields that we read from this message.
                 order o;
@@ -396,7 +396,7 @@ int main(int argc, const char** argv)
                         int exponent;
                         // as_decimal() is an ascii-to-decimal conversion function that returns the value of
                         // the field as mantissa*(10^exponent), where exponent is always <= 0.
-                        i->value().as_decimal(o.price_in_tenth_pennies, exponent); 
+                        i->value().as_decimal(o.price_in_tenth_pennies, exponent);
                         o.price_in_tenth_pennies *= 1000; // Because this price is represented as tenths of pennies.
                         while(exponent++) o.price_in_tenth_pennies /= 10; // Now scale to 10^exponent, where exponent <= 0.
                         break;
@@ -451,14 +451,14 @@ int main(int argc, const char** argv)
 
 \subsection example2 TCP Example
 
-Here is an example that shows how to read incomplete messages, 
-such as you might expect to encounter when reading fragmented packets out of a TCP socket. 
+Here is an example that shows how to read incomplete messages,
+such as you might expect to encounter when reading fragmented packets out of a TCP socket.
 This example also shows how to handle invalid, corrupt messages.
 
 \code
     char buffer[512];
     size_t buffer_length(0);
-    
+
     while(true)
     {
         // Read (512 - buffer_length) bytes from I/O into buffer[buffer_length].
@@ -472,7 +472,7 @@ This example also shows how to handle invalid, corrupt messages.
         {
             if (reader.is_valid())
             {
-                // Here is a complete message. Read fields out of the reader. 
+                // Here is a complete message. Read fields out of the reader.
                 // Perhaps call a callback function and pass it a const reference to the reader as an argument.
             }
             else
@@ -506,21 +506,21 @@ This example also shows how to handle invalid, corrupt messages.
 #include <stdexcept>        // for exceptions
 #include <ctime>            // for std::tm
 
-//! 
+//!
 // \def HFFIX_NO_BOOST_DATETIME
-// 
+//
 // \brief If defined, High Frequency FIX Parser will not include Boost Date_Time support.
-// 
+//
 // If the Boost Date_Time library is available in your build environment, boost::posix_time::ptime,
 // boost::posix_time::time_duration, and boost::gregorian::date
 // conversions will be automatically be supported for the various FIX date and time field types.
-// 
+//
 // To include the Boost Date_Time library types and enable High Frequency FIX Parser support, do:
 // \code
 // #include <boost/date_time/posix_time/posix_time_types.hpp>
 // #include <boost/date_time/gregorian/gregorian_types.hpp>
 // \endcode
-// 
+//
 // To prevent High Frequency FIX Parser support for the Boost Date_Time library, define HFFIX_NO_BOOST_DATETIME before including hffix.hpp:
 // \code
 // #define HFFIX_NO_BOOST_DATETIME
@@ -560,25 +560,23 @@ Parses ascii and returns a (possibly negative) integer.
 \param end Pointer to past-the-end of the ascii string.
 \return The ascii string represented as an integer of type Int_type.
 */
-    template<typename Int_type> Int_type atoi(const char* begin, const char* end)
-    {
-        Int_type val(0);
-        bool isnegative(false);
+template<typename Int_type> Int_type atoi(const char* begin, const char* end)
+{
+    Int_type val(0);
+    bool isnegative(false);
 
-        if (begin < end && *begin == '-')
-        {
-            isnegative = true;
-            ++begin;
-        }
-
-        for(;begin<end;++begin)
-        {
-            val *= 10;
-            val += (Int_type)(*begin - '0');
-        }
-
-        return isnegative ? -val : val;
+    if (begin < end && *begin == '-') {
+        isnegative = true;
+        ++begin;
     }
+
+    for(; begin<end; ++begin) {
+        val *= 10;
+        val += (Int_type)(*begin - '0');
+    }
+
+    return isnegative ? -val : val;
+}
 
 
 /*
@@ -591,18 +589,17 @@ Parses ascii and returns an unsigned integer.
 \param end Pointer to past-the-end of the ascii string.
 \return The ascii string represented as an unsigned integer of type Uint_type.
 */
-    template<typename Uint_type> Uint_type atou(const char* begin, const char* end)
-    {    
-        Uint_type val(0);
+template<typename Uint_type> Uint_type atou(const char* begin, const char* end)
+{
+    Uint_type val(0);
 
-        for(;begin<end;++begin)
-        {
-            val *= 10u;
-            val += (Uint_type)(*begin - '0');
-        }
-
-        return val;
+    for(; begin<end; ++begin) {
+        val *= 10u;
+        val += (Uint_type)(*begin - '0');
     }
+
+    return val;
+}
 
 
 /*
@@ -615,42 +612,37 @@ Writes an integer out as ascii.
 \param buffer Pointer to location for the ascii to be written.
 \return Pointer to past-the-end of the ascii that was written.
 */
-    template<typename Int_type> char* itoa(Int_type number, char* buffer)
-    {
-        bool isnegative(false);
-        if (number < 0)
-        {
-            isnegative = true;
-            number = -number;
-        }
-
-        char*b = buffer;
-        do
-        {
-            *b++ = '0' + (number % 10);
-            number /= 10;
-        }
-        while(number);
-
-        if (isnegative)
-        {
-            *b++ = '-';
-        }
-
-        char* e = b - 1;
-
-        while(e > buffer) // Reverse the digits in-place.
-        {
-            char tmp = *e;
-            *e = *buffer;
-            *buffer = tmp;
-            ++buffer;
-            --e;
-        }
-
-        return b;
+template<typename Int_type> char* itoa(Int_type number, char* buffer)
+{
+    bool isnegative(false);
+    if (number < 0) {
+        isnegative = true;
+        number = -number;
     }
-    
+
+    char*b = buffer;
+    do {
+        *b++ = '0' + (number % 10);
+        number /= 10;
+    } while(number);
+
+    if (isnegative) {
+        *b++ = '-';
+    }
+
+    char* e = b - 1;
+
+    while(e > buffer) { // Reverse the digits in-place.
+        char tmp = *e;
+        *e = *buffer;
+        *buffer = tmp;
+        ++buffer;
+        --e;
+    }
+
+    return b;
+}
+
 
 /*
 \brief Internal unsigned-integer-to-ascii conversion.
@@ -662,29 +654,26 @@ Writes an unsigned integer out as ascii.
 \param buffer Pointer to location for the ascii to be written.
 \return Pointer to past-the-end of the ascii that was written.
 */
-    template<typename Uint_type> char* utoa(Uint_type number, char* buffer)
-    {
-        char*b = buffer;
-        do
-        {
-            *b++ = '0' + (number % 10);
-            number /= 10;
-        }
-        while(number);
+template<typename Uint_type> char* utoa(Uint_type number, char* buffer)
+{
+    char*b = buffer;
+    do {
+        *b++ = '0' + (number % 10);
+        number /= 10;
+    } while(number);
 
-        char* e = b - 1;
+    char* e = b - 1;
 
-        while(e > buffer) // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
-        {
-            char tmp = *e;
-            *e = *buffer;
-            *buffer = tmp;
-            ++buffer;
-            --e;
-        }
-
-        return b;
+    while(e > buffer) { // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
+        char tmp = *e;
+        *e = *buffer;
+        *buffer = tmp;
+        ++buffer;
+        --e;
     }
+
+    return b;
+}
 
 /*
 \brief Internal ascii-to-decimal conversion.
@@ -692,7 +681,7 @@ Writes an unsigned integer out as ascii.
 Converts an ascii string to a decimal float, of the form \htmlonly mantissa&times;10<sup>exponent</sup>\endhtmlonly.
 
 Non-normalized. The exponent will never be  greater than zero.
-If the decimal float is an integer, the exponent will be zero. 
+If the decimal float is an integer, the exponent will be zero.
 
 \tparam Int_type Integer type for the mantissa and exponent.
 \param begin Pointer to the beginning of the ascii string.
@@ -700,35 +689,30 @@ If the decimal float is an integer, the exponent will be zero.
 \param mantissa Reference to storage for the mantissa of the decimal float to be returned.
 \param exponent Reference to storage for the exponent of the decimal float to be returned.
 */
-    template<typename Int_type> void atod(const char* begin, const char* end, Int_type& mantissa, Int_type& exponent)
-    {
-        mantissa = 0;
-        exponent = 0;
-        bool isdecimal(false);
-        bool isnegative(false);
+template<typename Int_type> void atod(const char* begin, const char* end, Int_type& mantissa, Int_type& exponent)
+{
+    mantissa = 0;
+    exponent = 0;
+    bool isdecimal(false);
+    bool isnegative(false);
 
-        if (begin < end && *begin == '-')
-        {
-            isnegative = true;
-            ++begin;
-        }
-
-        for(;begin<end;begin++)
-        {
-            if (*begin == '.')
-            {
-                isdecimal = true;
-            }
-            else
-            {
-                mantissa *= 10;
-                mantissa += (*begin - '0');
-                if (isdecimal) --exponent;
-            }
-        }
-
-        if (isnegative) mantissa = -mantissa;
+    if (begin < end && *begin == '-') {
+        isnegative = true;
+        ++begin;
     }
+
+    for(; begin<end; begin++) {
+        if (*begin == '.') {
+            isdecimal = true;
+        } else {
+            mantissa *= 10;
+            mantissa += (*begin - '0');
+            if (isdecimal) --exponent;
+        }
+    }
+
+    if (isnegative) mantissa = -mantissa;
+}
 
 /*
 \brief Internal decimal-to-ascii conversion.
@@ -743,45 +727,39 @@ Non-normalized. The exponent parameter must be less than or equal to zero.
 \param buffer Pointer to location for the ascii to be written.
 \return Pointer to past-the-end of the ascii that was written.
 */
-    template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer)
-    {
-        bool isnegative(false);
-        if (mantissa < 0)
-        {
-            isnegative = true;
-            mantissa = -mantissa;
-        }
-
-        char*b = buffer;
-        do
-        {
-            *b++ = '0' + (mantissa % 10);
-            mantissa /= 10;
-            if (++exponent == 0)
-            {
-                *b++ = '.';
-            }
-        }
-        while(mantissa > 0 || exponent < 1);
-
-        if (isnegative)
-        {
-            *b++ = '-';
-        }
-
-        char* e = b - 1;
-
-        while(e > buffer) // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
-        {
-            char tmp = *e;
-            *e = *buffer;
-            *buffer = tmp;
-            ++buffer;
-            --e;
-        }
-
-        return b;
+template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer)
+{
+    bool isnegative(false);
+    if (mantissa < 0) {
+        isnegative = true;
+        mantissa = -mantissa;
     }
+
+    char*b = buffer;
+    do {
+        *b++ = '0' + (mantissa % 10);
+        mantissa /= 10;
+        if (++exponent == 0) {
+            *b++ = '.';
+        }
+    } while(mantissa > 0 || exponent < 1);
+
+    if (isnegative) {
+        *b++ = '-';
+    }
+
+    char* e = b - 1;
+
+    while(e > buffer) { // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
+        char tmp = *e;
+        *e = *buffer;
+        *buffer = tmp;
+        ++buffer;
+        --e;
+    }
+
+    return b;
+}
 
 
 /*
@@ -796,22 +774,22 @@ Parses ascii and returns a LocalMktDate or UTCDate.
 \param[out] day Day.
 \return True if successful and the out arguments were set.
 */
-    inline bool atodate(
-        const char* begin,
-        const char* end,
-        int& year,
-        int& month,
-        int& day
-        )
-    {
-        if (end - begin != 8) return false;
+inline bool atodate(
+    const char* begin,
+    const char* end,
+    int& year,
+    int& month,
+    int& day
+)
+{
+    if (end - begin != 8) return false;
 
-        year = details::atoi<int>(begin, begin + 4);
-        month = details::atoi<int>(begin + 4, begin + 6);
-        day = details::atoi<int>(begin + 6, begin + 8);
+    year = details::atoi<int>(begin, begin + 4);
+    month = details::atoi<int>(begin + 4, begin + 6);
+    day = details::atoi<int>(begin + 6, begin + 8);
 
-        return true;
-    }
+    return true;
+}
 
 
 /*
@@ -827,509 +805,480 @@ Parses ascii and returns a time.
 \param[out] millisecond Millisecond.
 \return True if successful and the out arguments were set.
 */
-    inline bool atotime(
-        const char* begin,
-        const char* end,
-        int& hour,
-        int& minute,
-        int& second,
-        int& millisecond
-        )
-    {
-        if (end - begin != 8 && end - begin != 12) return false;
+inline bool atotime(
+    const char* begin,
+    const char* end,
+    int& hour,
+    int& minute,
+    int& second,
+    int& millisecond
+)
+{
+    if (end - begin != 8 && end - begin != 12) return false;
 
-        hour = details::atoi<int>(begin, begin + 2);
-        minute = details::atoi<int>(begin + 3, begin + 5);
-        second = details::atoi<int>(begin + 6, begin + 8);
+    hour = details::atoi<int>(begin, begin + 2);
+    minute = details::atoi<int>(begin + 3, begin + 5);
+    second = details::atoi<int>(begin + 6, begin + 8);
 
-        if (end - begin == 12)
-            millisecond = details::atoi<int>(begin + 9, begin + 12);
-        else
-            millisecond = 0;
+    if (end - begin == 12)
+        millisecond = details::atoi<int>(begin + 9, begin + 12);
+    else
+        millisecond = 0;
 
-        return true;
-    }
+    return true;
+}
 
 } // namespace details
 
 /* @endcond*/
 
-    class message_reader;
-    class message_reader_const_iterator;
+class message_reader;
+class message_reader_const_iterator;
 
-/*! 
+/*!
 \brief FIX field value, weakly-typed as an array of chars, with type conversion methods.
 */
-    class message_reader_value_type_value
-    {
-    public:
+class message_reader_value_type_value {
+public:
 
-/*! \brief Pointer to the beginning of the field value. */
-        const char* begin() const { return begin_; }
+    /*! \brief Pointer to the beginning of the field value. */
+    const char* begin() const {
+        return begin_;
+    }
 
-/*! \brief Pointer to past-the-end of the field value. */
-        const char* end() const { return end_; }
+    /*! \brief Pointer to past-the-end of the field value. */
+    const char* end() const {
+        return end_;
+    }
 
-/*! \brief Size of the field value, in bytes. */
-        size_t size() const { return end_ - begin_; }
-
-
-/*! 
-\brief True if the value of the field is equal to the C-string argument.
-*/
-        friend bool operator==(const message_reader_value_type_value& that, const char* cstring)
-        {
-            return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
-        }
+    /*! \brief Size of the field value, in bytes. */
+    size_t size() const {
+        return end_ - begin_;
+    }
 
 
-/*! 
-\brief True if the value of the field is equal to the C-string argument.
-*/
-        friend bool operator==(const char* cstring, const message_reader_value_type_value& that)
-        {
-            return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
-        }
-
-/*! 
-\brief True if the value of the field is equal to the string argument.
-*/
-        template<typename Char_type> friend bool operator==(const message_reader_value_type_value& that, const std::basic_string<Char_type>& s)
-        {
-            return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
-        }
+    /*!
+    \brief True if the value of the field is equal to the C-string argument.
+    */
+    friend bool operator==(const message_reader_value_type_value& that, const char* cstring) {
+        return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
+    }
 
 
-/*! 
-\brief True if the value of the field is equal to the string argument.
-*/
-        template<typename Char_type> friend bool operator==(const std::basic_string<Char_type>& s, const message_reader_value_type_value& that)
-        {
-            return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
-        }
+    /*!
+    \brief True if the value of the field is equal to the C-string argument.
+    */
+    friend bool operator==(const char* cstring, const message_reader_value_type_value& that) {
+        return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
+    }
 
-/*! \name String Conversion Methods */
+    /*!
+    \brief True if the value of the field is equal to the string argument.
+    */
+    template<typename Char_type> friend bool operator==(const message_reader_value_type_value& that, const std::basic_string<Char_type>& s) {
+        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+    }
+
+
+    /*!
+    \brief True if the value of the field is equal to the string argument.
+    */
+    template<typename Char_type> friend bool operator==(const std::basic_string<Char_type>& s, const message_reader_value_type_value& that) {
+        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+    }
+
+    /*! \name String Conversion Methods */
 //@{
 
-/*!
-\brief Ascii value as std::string.
+    /*!
+    \brief Ascii value as std::string.
 
-\tparam Char_type Character type for the string.
-\return An std::string that contains a copy of the ascii value of the field.
-\throw std::bad_alloc
-*/
-        template<typename Char_type> std::basic_string<Char_type> as_string() const
-        {
-            return std::basic_string<Char_type>(begin(), end()); // the return value optimization
-        }
+    \tparam Char_type Character type for the string.
+    \return An std::string that contains a copy of the ascii value of the field.
+    \throw std::bad_alloc
+    */
+    template<typename Char_type> std::basic_string<Char_type> as_string() const {
+        return std::basic_string<Char_type>(begin(), end()); // the return value optimization
+    }
 
-/*!
-\brief Ascii value as char.
+    /*!
+    \brief Ascii value as char.
 
-\return The first char of the ascii value of the field.
-*/
-        char as_char() const
-        {
-            return *begin();
-        }
+    \return The first char of the ascii value of the field.
+    */
+    char as_char() const {
+        return *begin();
+    }
 
 //@}
 
 
-/*! \name Decimal Float Conversion Methods */
+    /*! \name Decimal Float Conversion Methods */
 //@{
 
-/*!
-\brief Ascii-to-decimal conversion.
+    /*!
+    \brief Ascii-to-decimal conversion.
 
-Converts an ascii string to a decimal float, of the form \htmlonly mantissa&times;10<sup>exponent</sup>\endhtmlonly.
+    Converts an ascii string to a decimal float, of the form \htmlonly mantissa&times;10<sup>exponent</sup>\endhtmlonly.
 
-Non-normalized. The exponent will never be  greater than zero.
-If the decimal float is an integer, the exponent will be zero. 
+    Non-normalized. The exponent will never be  greater than zero.
+    If the decimal float is an integer, the exponent will be zero.
 
-\tparam Int_type Integer type for the mantissa and exponent.
-\param[out] mantissa Reference to storage for the mantissa of the decimal float to be returned.
-\param[out] exponent Reference to storage for the exponent of the decimal float to be returned.
-*/
-        template<typename Int_type> void as_decimal(Int_type& mantissa, Int_type& exponent) const
-        {
-            details::atod<Int_type>(begin(), end(), mantissa, exponent);
-        }
+    \tparam Int_type Integer type for the mantissa and exponent.
+    \param[out] mantissa Reference to storage for the mantissa of the decimal float to be returned.
+    \param[out] exponent Reference to storage for the exponent of the decimal float to be returned.
+    */
+    template<typename Int_type> void as_decimal(Int_type& mantissa, Int_type& exponent) const {
+        details::atod<Int_type>(begin(), end(), mantissa, exponent);
+    }
 //@}
 
-    private:
-        template <typename Int_type, bool Is_signed_integer>
-        struct as_int_selector
-        {
-        };
+private:
+    template <typename Int_type, bool Is_signed_integer>
+    struct as_int_selector {
+    };
 
-        template <typename Int_type>
-        struct as_int_selector<Int_type, true>
-        {
-            static inline Int_type call_as_int(const char* begin, const char * end) { return details::atoi<Int_type>(begin, end); }
-        };
+    template <typename Int_type>
+    struct as_int_selector<Int_type, true> {
+        static inline Int_type call_as_int(const char* begin, const char * end) {
+            return details::atoi<Int_type>(begin, end);
+        }
+    };
 
-        template <typename Int_type>
-        struct as_int_selector<Int_type, false>
-        {
-            static inline Int_type call_as_int(const char* begin, const char * end) { return details::atou<Int_type>(begin, end); }
-        };
+    template <typename Int_type>
+    struct as_int_selector<Int_type, false> {
+        static inline Int_type call_as_int(const char* begin, const char * end) {
+            return details::atou<Int_type>(begin, end);
+        }
+    };
 
-    public:
+public:
 
-/*! \name Integer Conversion Methods */
+    /*! \name Integer Conversion Methods */
 //@{
 
-/*!
-\brief Ascii-to-integer conversion.
+    /*!
+    \brief Ascii-to-integer conversion.
 
-Parses ascii and returns an integer.
+    Parses ascii and returns an integer.
 
-\tparam Int_type The type of integer to be returned. May be an unsigned integer.
-\return The ascii field value represented as an integer of type Int_type.
-*/
-        template<typename Int_type> Int_type as_int() const
-        {
-            return as_int_selector<Int_type, std::numeric_limits<Int_type>::is_signed>::call_as_int(begin(), end());
-        }
+    \tparam Int_type The type of integer to be returned. May be an unsigned integer.
+    \return The ascii field value represented as an integer of type Int_type.
+    */
+    template<typename Int_type> Int_type as_int() const {
+        return as_int_selector<Int_type, std::numeric_limits<Int_type>::is_signed>::call_as_int(begin(), end());
+    }
 //@}
 
-/*! \name Date and Time Conversion Methods */
+    /*! \name Date and Time Conversion Methods */
 //@{
 
 
-/*!
-\brief Ascii-to-date conversion.
+    /*!
+    \brief Ascii-to-date conversion.
 
-Parses ascii and returns a LocalMktDate or UTCDate.
+    Parses ascii and returns a LocalMktDate or UTCDate.
 
-\param[out] year Year.
-\param[out] month Month.
-\param[out] day Day.
-\return True if successful and the out arguments were set.
-*/
-        bool as_date(
-            int& year,
-            int& month,
-            int& day
-            ) const
-        {
-            return details::atodate(begin(), end(), year, month, day);
-        }
-
-
-/*!
-\brief Ascii-to-month-year conversion.
-
-Parses ascii and returns a month-year.
-
-\param[out] year Year.
-\param[out] month Month.
-\return True if successful and the out arguments were set.
-*/
-        bool as_monthyear(
-            int& year,
-            int& month
-            ) const
-        {
-            if (end() - begin() != 6) return false;
-
-            year = details::atoi<int>(begin(), begin() + 4);
-            month = details::atoi<int>(begin() + 4, begin() + 6);
-
-            return true;
-        }
+    \param[out] year Year.
+    \param[out] month Month.
+    \param[out] day Day.
+    \return True if successful and the out arguments were set.
+    */
+    bool as_date(
+        int& year,
+        int& month,
+        int& day
+    ) const {
+        return details::atodate(begin(), end(), year, month, day);
+    }
 
 
-/*!
-\brief Ascii-to-time conversion.
+    /*!
+    \brief Ascii-to-month-year conversion.
 
-Parses ascii and returns a time.
+    Parses ascii and returns a month-year.
 
-\param[out] hour Hour.
-\param[out] minute Minute.
-\param[out] second Second.
-\param[out] millisecond Millisecond.
-\return True if successful and the out arguments were set.
-*/
-        bool as_timeonly(
-            int& hour,
-            int& minute,
-            int& second,
-            int& millisecond
-            ) const
-        {
-            return details::atotime(begin(), end(), hour, minute, second, millisecond);
-        }
+    \param[out] year Year.
+    \param[out] month Month.
+    \return True if successful and the out arguments were set.
+    */
+    bool as_monthyear(
+        int& year,
+        int& month
+    ) const {
+        if (end() - begin() != 6) return false;
 
-/*!
-\brief Ascii-to-timestamp conversion.
+        year = details::atoi<int>(begin(), begin() + 4);
+        month = details::atoi<int>(begin() + 4, begin() + 6);
 
-Parses ascii and returns a timestamp.
+        return true;
+    }
 
-\param[out] year Year.
-\param[out] month Month.
-\param[out] day Day.
-\param[out] hour Hour.
-\param[out] minute Minute.
-\param[out] second Second.
-\param[out] millisecond Millisecond.
-\return True if successful and the out arguments were set.
-*/
-        bool as_timestamp(
-            int& year,
-            int& month,
-            int& day,
-            int& hour,
-            int& minute,
-            int& second,
-            int& millisecond
-            ) const
-        {
-            return 
-                details::atotime(begin() + 9, end(), hour, minute, second, millisecond)
-                && details::atodate(begin(), begin() + 8, year, month, day); // take advantage of short-circuit && to check field length
-        }
+
+    /*!
+    \brief Ascii-to-time conversion.
+
+    Parses ascii and returns a time.
+
+    \param[out] hour Hour.
+    \param[out] minute Minute.
+    \param[out] second Second.
+    \param[out] millisecond Millisecond.
+    \return True if successful and the out arguments were set.
+    */
+    bool as_timeonly(
+        int& hour,
+        int& minute,
+        int& second,
+        int& millisecond
+    ) const {
+        return details::atotime(begin(), end(), hour, minute, second, millisecond);
+    }
+
+    /*!
+    \brief Ascii-to-timestamp conversion.
+
+    Parses ascii and returns a timestamp.
+
+    \param[out] year Year.
+    \param[out] month Month.
+    \param[out] day Day.
+    \param[out] hour Hour.
+    \param[out] minute Minute.
+    \param[out] second Second.
+    \param[out] millisecond Millisecond.
+    \return True if successful and the out arguments were set.
+    */
+    bool as_timestamp(
+        int& year,
+        int& month,
+        int& day,
+        int& hour,
+        int& minute,
+        int& second,
+        int& millisecond
+    ) const {
+        return
+            details::atotime(begin() + 9, end(), hour, minute, second, millisecond)
+            && details::atodate(begin(), begin() + 8, year, month, day); // take advantage of short-circuit && to check field length
+    }
 
 //@}
 
 #ifdef HFFIX_BOOST_DATETIME
 
-/*! \name Boost Date and Time Conversion Methods */
+    /*! \name Boost Date and Time Conversion Methods */
 //@{
 
-/*!
-\brief Ascii-to-date conversion.
+    /*!
+    \brief Ascii-to-date conversion.
 
-Parses ascii and returns a LocalMktDate or UTCDate.
+    Parses ascii and returns a LocalMktDate or UTCDate.
 
-Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
+    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
-\return Date if parsing was successful, else boost::posix_time::not_a_date_time.
-*/
-        boost::gregorian::date as_date() const
-        {
-            int year, month, day;
-            if (as_date(year, month, day))
-            {
-                try
-                {
-                    return boost::gregorian::date(year, month, day);
-                }
-                catch(std::exception& ex)
-                {
-                    return boost::gregorian::date(boost::posix_time::not_a_date_time);
-                }
-            }
-            else
+    \return Date if parsing was successful, else boost::posix_time::not_a_date_time.
+    */
+    boost::gregorian::date as_date() const {
+        int year, month, day;
+        if (as_date(year, month, day)) {
+            try {
+                return boost::gregorian::date(year, month, day);
+            } catch(std::exception& ex) {
                 return boost::gregorian::date(boost::posix_time::not_a_date_time);
-        }
-
-/*!
-\brief Ascii-to-time conversion.
-
-Parses ascii and returns a time.
-
-Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
-
-\return Time if parsing was successful, else boost::posix_time::not_a_date_time.
-*/
-        boost::posix_time::time_duration as_timeonly() const
-        {
-            int hour, minute, second, millisecond;
-            if (as_timeonly(hour, minute, second, millisecond))
-            {
-                try
-                {
-                    return boost::posix_time::time_duration(hour, minute, second, boost::posix_time::time_duration::ticks_per_second() * millisecond / 1000);
-                }
-                catch(std::exception& ex)
-                {
-                    return boost::posix_time::time_duration(boost::posix_time::not_a_date_time);
-                }
             }
-            else
+        } else
+            return boost::gregorian::date(boost::posix_time::not_a_date_time);
+    }
+
+    /*!
+    \brief Ascii-to-time conversion.
+
+    Parses ascii and returns a time.
+
+    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
+
+    \return Time if parsing was successful, else boost::posix_time::not_a_date_time.
+    */
+    boost::posix_time::time_duration as_timeonly() const {
+        int hour, minute, second, millisecond;
+        if (as_timeonly(hour, minute, second, millisecond)) {
+            try {
+                return boost::posix_time::time_duration(hour, minute, second, boost::posix_time::time_duration::ticks_per_second() * millisecond / 1000);
+            } catch(std::exception& ex) {
                 return boost::posix_time::time_duration(boost::posix_time::not_a_date_time);
-        }
-
-/*!
-\brief Ascii-to-timestamp conversion.
-
-Parses ascii and returns a timestamp.
-
-Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
-
-\return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
-*/
-        boost::posix_time::ptime as_timestamp() const
-        {
-            int year, month, day, hour, minute, second, millisecond;
-
-            if (details::atotime(begin() + 9, end(), hour, minute, second, millisecond)
-                && details::atodate(begin(), begin() + 8, year, month, day))
-            {
-                try
-                {
-                    return boost::posix_time::ptime(
-                        boost::gregorian::date(year, month, day),
-                        boost::posix_time::time_duration(hour, minute, second, boost::posix_time::time_duration::ticks_per_second() * millisecond / 1000)
-                        );
-                }
-                catch(std::exception& ex)
-                {
-                    return boost::posix_time::not_a_date_time;
-                }
             }
-            else
+        } else
+            return boost::posix_time::time_duration(boost::posix_time::not_a_date_time);
+    }
+
+    /*!
+    \brief Ascii-to-timestamp conversion.
+
+    Parses ascii and returns a timestamp.
+
+    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
+
+    \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
+    */
+    boost::posix_time::ptime as_timestamp() const {
+        int year, month, day, hour, minute, second, millisecond;
+
+        if (details::atotime(begin() + 9, end(), hour, minute, second, millisecond)
+                && details::atodate(begin(), begin() + 8, year, month, day)) {
+            try {
+                return boost::posix_time::ptime(
+                           boost::gregorian::date(year, month, day),
+                           boost::posix_time::time_duration(hour, minute, second, boost::posix_time::time_duration::ticks_per_second() * millisecond / 1000)
+                       );
+            } catch(std::exception& ex) {
                 return boost::posix_time::not_a_date_time;
-        }
+            }
+        } else
+            return boost::posix_time::not_a_date_time;
+    }
 //@}
 
 
 #endif // HFFIX_BOOST_DATETIME
 
 
-    private:
-        friend class message_reader_value_type;
-        friend class message_reader_const_iterator;
-        friend class message_reader;
-        const char* begin_;
-        const char* end_;
-    };
+private:
+    friend class message_reader_value_type;
+    friend class message_reader_const_iterator;
+    friend class message_reader;
+    const char* begin_;
+    const char* end_;
+};
 
 /*!
 \brief A FIX field for reading, with tag and field value. This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
 */
-    class message_reader_value_type
-    {
-    public:
+class message_reader_value_type {
+public:
 
-/*! \brief Tag of the field. */
-        int tag() const { return tag_; } 
+    /*! \brief Tag of the field. */
+    int tag() const {
+        return tag_;
+    }
 
-/*! \brief Weakly-typed value of the field. */
-        const message_reader_value_type_value& value() const { return value_; }
+    /*! \brief Weakly-typed value of the field. */
+    const message_reader_value_type_value& value() const {
+        return value_;
+    }
 
-/*! \brief Output stream operator. Output format is "[tag number]=[value]". */
-        friend std::ostream& operator<<(std::ostream& os, const message_reader_value_type& that)
-        {
-            os << that.tag_ << "=";
-            return os.write(that.value_.begin(), that.value_.size());
-        }
+    /*! \brief Output stream operator. Output format is "[tag number]=[value]". */
+    friend std::ostream& operator<<(std::ostream& os, const message_reader_value_type& that) {
+        os << that.tag_ << "=";
+        return os.write(that.value_.begin(), that.value_.size());
+    }
 
-    private:
-        friend class message_reader_const_iterator;
-        friend class message_reader;
-        int tag_;
-        message_reader_value_type_value value_;
-    };
+private:
+    friend class message_reader_const_iterator;
+    friend class message_reader;
+    int tag_;
+    message_reader_value_type_value value_;
+};
 
 /*!
-\brief hffix::message_reader::const_iterator. 
+\brief hffix::message_reader::const_iterator.
 
 Satisfies the const Input Iterator Concept for an immutable hffix::message_reader container of fields.
 */
-    class message_reader_const_iterator
-    {
-    public:
+class message_reader_const_iterator {
+public:
 
-/*! 
-\brief Copy Constructor. 
-*/
-        message_reader_const_iterator(const message_reader_const_iterator& that) :
-            message_reader_(that.message_reader_),
-            buffer_(that.buffer_),
-            current_(that.current_)
-        {
-        }        
-        
-    private:
-        // there cannot be a default constructor because of the message_reader_ member.
+    /*!
+    \brief Copy Constructor.
+    */
+    message_reader_const_iterator(const message_reader_const_iterator& that) :
+        message_reader_(that.message_reader_),
+        buffer_(that.buffer_),
+        current_(that.current_) {
+    }
 
-        message_reader_const_iterator(message_reader& container, const char* buffer) : 
-            message_reader_(container),
-            buffer_(buffer),
-            current_()
-          {
-          }
+private:
+    // there cannot be a default constructor because of the message_reader_ member.
 
-    public:
+    message_reader_const_iterator(message_reader& container, const char* buffer) :
+        message_reader_(container),
+        buffer_(buffer),
+        current_() {
+    }
 
-        typedef ::std::input_iterator_tag iterator_category;
-        typedef message_reader_value_type value_type;
-        typedef std::ptrdiff_t difference_type;
-        typedef message_reader_value_type* pointer;
-        typedef message_reader_value_type& reference;
+public:
+
+    typedef ::std::input_iterator_tag iterator_category;
+    typedef message_reader_value_type value_type;
+    typedef std::ptrdiff_t difference_type;
+    typedef message_reader_value_type* pointer;
+    typedef message_reader_value_type& reference;
 
 
-/*! 
-\brief Returns a hffix::message_reader::const_reference to a field. 
-*/
-        const message_reader_value_type& operator*() const { return current_; }
+    /*!
+    \brief Returns a hffix::message_reader::const_reference to a field.
+    */
+    const message_reader_value_type& operator*() const {
+        return current_;
+    }
 
-/*! 
-\brief Returns a hffix::message_reader::const_pointer to a field. 
-*/
-        const message_reader_value_type* operator->() const { return &current_; }
+    /*!
+    \brief Returns a hffix::message_reader::const_pointer to a field.
+    */
+    const message_reader_value_type* operator->() const {
+        return &current_;
+    }
 
 
 
-        friend bool operator==(const message_reader_const_iterator& a, const message_reader_const_iterator& b)
-        {
-            return a.buffer_ == b.buffer_;
-        }
+    friend bool operator==(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+        return a.buffer_ == b.buffer_;
+    }
 
-        friend bool operator!=(const message_reader_const_iterator& a, const message_reader_const_iterator& b)
-        {
-            return a.buffer_ != b.buffer_;
-        }
+    friend bool operator!=(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+        return a.buffer_ != b.buffer_;
+    }
 
-        friend bool operator<(const message_reader_const_iterator& a, const message_reader_const_iterator& b)
-        {
-            return a.buffer_ < b.buffer_;
-        }
+    friend bool operator<(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+        return a.buffer_ < b.buffer_;
+    }
 
-        friend bool operator>(const message_reader_const_iterator& a, const message_reader_const_iterator& b)
-        {
-            return a.buffer_ > b.buffer_;
-        }
+    friend bool operator>(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+        return a.buffer_ > b.buffer_;
+    }
 
-        friend bool operator<=(const message_reader_const_iterator& a, const message_reader_const_iterator& b)
-        {
-            return a.buffer_ <= b.buffer_;
-        }
+    friend bool operator<=(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+        return a.buffer_ <= b.buffer_;
+    }
 
-        friend bool operator>=(const message_reader_const_iterator& a, const message_reader_const_iterator& b)
-        {
-            return a.buffer_ >= b.buffer_;
-        }
+    friend bool operator>=(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+        return a.buffer_ >= b.buffer_;
+    }
 
-        message_reader_const_iterator operator++(int) //postfix
-        {
-            message_reader_const_iterator i(*this);
-            ++(*this);
-            return i;
-        }        
-        
-        message_reader_const_iterator& operator++() //prefix
-        {
-            increment();
-            return *this;
-        }
+    message_reader_const_iterator operator++(int) { //postfix
+        message_reader_const_iterator i(*this);
+        ++(*this);
+        return i;
+    }
 
-    private:
-        friend class message_reader;
-        message_reader& message_reader_;
-        const char* buffer_;
-        message_reader_value_type current_;
+    message_reader_const_iterator& operator++() { //prefix
+        increment();
+        return *this;
+    }
 
-        void increment();
-    };
+private:
+    friend class message_reader;
+    message_reader& message_reader_;
+    const char* buffer_;
+    message_reader_value_type current_;
+
+    void increment();
+};
 
 
 
 /*!
-\brief One FIX message for reading. 
+\brief One FIX message for reading.
 
 An immutable Forward Container of FIX fields. Given a buffer containing a FIX message, the hffix::message_reader
 will provide an Iterator for iterating over the fields in the message without modifying the buffer. The buffer
@@ -1355,898 +1304,846 @@ for transport that are mixed in with the content fields in FIX. Here is the list
 - EncodedUnderlyingSecurityDescLen
 - EncodedListStatusTextLen
 
-Fields of binary data type are content fields, and will be iterated over like any other field. The special FIX 
-binary data length fields will be skipped, but the length of the binary data is accessible from 
+Fields of binary data type are content fields, and will be iterated over like any other field. The special FIX
+binary data length fields will be skipped, but the length of the binary data is accessible from
 hffix::message_reader::value_type::value().size().
 */
-    class message_reader
-    {
+class message_reader {
 
-    public:
+public:
 
-        typedef message_reader_value_type value_type;
-        typedef const message_reader_value_type& const_reference;
-        typedef message_reader_const_iterator const_iterator;
-        typedef const message_reader_value_type* const_pointer;
-        typedef size_t size_type;
+    typedef message_reader_value_type value_type;
+    typedef const message_reader_value_type& const_reference;
+    typedef message_reader_const_iterator const_iterator;
+    typedef const message_reader_value_type* const_pointer;
+    typedef size_t size_type;
 
-/*!
-\brief Construct by buffer size.
-\param buffer Pointer to the buffer to be read.
-\param size Number of bytes in the buffer to be read.
-*/
-        message_reader(const char* buffer, size_t size) :
-            buffer_(buffer),
-            buffer_end_(buffer + size),
-            begin_(*this, 0),
-            end_(*this, 0),
-            is_complete_(false),
-            is_valid_(true)
-        {
-            init();
+    /*!
+    \brief Construct by buffer size.
+    \param buffer Pointer to the buffer to be read.
+    \param size Number of bytes in the buffer to be read.
+    */
+    message_reader(const char* buffer, size_t size) :
+        buffer_(buffer),
+        buffer_end_(buffer + size),
+        begin_(*this, 0),
+        end_(*this, 0),
+        is_complete_(false),
+        is_valid_(true) {
+        init();
+    }
+
+    /*!
+    \brief Construct by buffer begin and end.
+    \param begin Pointer to the buffer to be read.
+    \param end Pointer to past-the-end of the buffer to be read.
+    */
+    message_reader(const char* begin, const char* end) :
+        buffer_(begin),
+        buffer_end_(end),
+        begin_(*this, 0),
+        end_(*this, 0),
+        is_complete_(false),
+        is_valid_(true) {
+        init();
+    }
+    /*!
+    \brief Copy constructor. The hffix::message_reader is immutable, so copying it is fine.
+    */
+    message_reader(const message_reader& that) :
+        buffer_(that.buffer_),
+        buffer_end_(that.buffer_end_),
+        begin_(that.begin_),
+        end_(that.end_),
+        is_complete_(that.is_complete_),
+        is_valid_(that.is_valid_) {
+    }
+
+    ~message_reader() {
+    }
+
+    /*!
+    \brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::message_type().
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
+    */
+    const const_iterator& begin() const {
+        // return iterator for beginning of nonmutable sequence
+        if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
+        return begin_;
+    }
+
+    /*!
+    \brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::check_sum().
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
+    */
+    const const_iterator& end() const {
+        // return iterator for end of nonmutable sequence
+        if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
+        return end_;
+    }
+
+    /*!
+    \brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::begin().
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
+    */
+    const const_iterator& message_type() const {
+        // return iterator for beginning of nonmutable sequence
+        if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
+        return begin_;
+    }
+
+    /*!
+    \brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::end().
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
+    */
+    const const_iterator& check_sum() const {
+        // return iterator for end of nonmutable sequence
+        if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
+        return end_;
+    }
+
+    /*!
+    \brief A pointer to the begining of the buffer.
+    buffer_begin() == message_begin()
+    */
+    const char* buffer_begin() const {
+        return buffer_;
+    }
+    /*!
+    \brief A pointer to past-the-end of the buffer.
+    */
+    const char* buffer_end() const {
+        return buffer_end_;
+    }
+
+    /*!
+    \brief The size of the buffer in bytes.
+    */
+    size_t buffer_size() const {
+        return buffer_end_ - buffer_;
+    }
+
+    /*!
+    \brief A pointer to the beginning of the FIX message in the buffer.
+     buffer_begin() == message_begin()
+    */
+    const char* message_begin() const {
+        return buffer_;
+    }
+    /*!
+    \brief A pointer to past-the-end of the FIX message in the buffer.
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
+    */
+    const char* message_end() const {
+        if (!is_valid_) throw std::logic_error("hffix Cannot determine size of an invalid message.");
+        return end_.current_.value_.end_ + 1;
+    }
+
+    /*!
+    \brief The entire size of the FIX 4.1 message in bytes.
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
+    */
+    size_t message_size() const {
+        if (!is_valid_) throw std::logic_error("hffix Cannot determine size of an invalid message.");
+        return end_.current_.value_.end_ - buffer_ + 1;
+    }
+
+    /*!
+    \brief True if the buffer contains a complete FIX message.
+    */
+    bool is_complete() const {
+        return is_complete_;
+    }
+    /*!
+    \brief True if the message is correct FIX.
+
+    If false, there was an error parsing the FIX message and the message cannot be read.
+
+    fix-42_with_errata_20010501.pdf p.17:
+    "Valid FIX Message is a message that is properly formed according to this specification and contains a
+    valid body length and checksum field"
+    */
+    bool is_valid() const {
+        return is_valid_;
+    }
+
+
+    /*!
+    \brief Moves this message_reader to the next FIX message in the buffer.
+
+    If this message is_valid() and is_complete(), assume that the next message comes immediately after this one.
+
+    If this message !is_valid(), will search the remainder of the buffer
+    for the text "8=FIX", to see if there might be a complete or partial valid message
+    anywhere else in the remainder of the buffer.
+
+    If this message !is_complete(), no-op.
+
+    \return *this
+    */
+    message_reader& operator++() {
+        if (!is_complete_) {
+            return *this; // can't increment on an incomplete message.
         }
 
-/*!
-\brief Construct by buffer begin and end.
-\param begin Pointer to the buffer to be read.
-\param end Pointer to past-the-end of the buffer to be read.
-*/
-        message_reader(const char* begin, const char* end) :
-            buffer_(begin),
-            buffer_end_(end),
-            begin_(*this, 0),
-            end_(*this, 0),
-            is_complete_(false),
-            is_valid_(true)
-        {
-            init();
-        }
-/*! 
-\brief Copy constructor. The hffix::message_reader is immutable, so copying it is fine.
-*/
-        message_reader(const message_reader& that) :
-            buffer_(that.buffer_),
-            buffer_end_(that.buffer_end_),
-            begin_(that.begin_),
-            end_(that.end_),
-            is_complete_(that.is_complete_),
-            is_valid_(that.is_valid_)
-        {
-        }
-
-        ~message_reader()
-        {
-        }
-
-/*!
-\brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::message_type().
-\throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
-*/
-        const const_iterator& begin() const
-        {    // return iterator for beginning of nonmutable sequence
-            if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
-            return begin_;
-        }
-
-/*!
-\brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::check_sum().
-\throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
-*/
-        const const_iterator& end() const
-        {    // return iterator for end of nonmutable sequence
-            if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
-            return end_;
-        }
-
-/*!
-\brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::begin().
-\throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
-*/
-        const const_iterator& message_type() const
-        {    // return iterator for beginning of nonmutable sequence
-            if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
-            return begin_;
-        }
-
-/*!
-\brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::end().
-\throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
-*/        
-        const const_iterator& check_sum() const
-        {    // return iterator for end of nonmutable sequence
-            if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
-            return end_;
-        }
-
-/*!
-\brief A pointer to the begining of the buffer.
-buffer_begin() == message_begin()
-*/
-        const char* buffer_begin() const
-        {
-            return buffer_;
-        }
-/*!
-\brief A pointer to past-the-end of the buffer.
-*/
-        const char* buffer_end() const
-        {
-            return buffer_end_;
-        }
-
-/*!
-\brief The size of the buffer in bytes.
-*/
-        size_t buffer_size() const
-        {
-            return buffer_end_ - buffer_;
-        }
-
-/*!
-\brief A pointer to the beginning of the FIX message in the buffer.
- buffer_begin() == message_begin()
-*/
-        const char* message_begin() const
-        {
-            return buffer_;
-        }
-/*!
-\brief A pointer to past-the-end of the FIX message in the buffer.
-\throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
-*/
-        const char* message_end() const
-        {
-            if (!is_valid_) throw std::logic_error("hffix Cannot determine size of an invalid message.");
-            return end_.current_.value_.end_ + 1;
-        }
-
-/*!
-\brief The entire size of the FIX 4.1 message in bytes.
-\throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
-*/
-        size_t message_size() const
-        {
-            if (!is_valid_) throw std::logic_error("hffix Cannot determine size of an invalid message.");
-            return end_.current_.value_.end_ - buffer_ + 1;
-        }
-
-/*!
-\brief True if the buffer contains a complete FIX message.
-*/
-        bool is_complete() const
-        {
-            return is_complete_;
-        }
-/*!
-\brief True if the message is correct FIX.
-
-If false, there was an error parsing the FIX message and the message cannot be read.
-
-fix-42_with_errata_20010501.pdf p.17:
-"Valid FIX Message is a message that is properly formed according to this specification and contains a
-valid body length and checksum field"
-*/
-        bool is_valid() const
-        {
-            return is_valid_;
-        }
-
-
-/*!
-\brief Moves this message_reader to the next FIX message in the buffer.
-
-If this message is_valid() and is_complete(), assume that the next message comes immediately after this one.
-
-If this message !is_valid(), will search the remainder of the buffer
-for the text "8=FIX", to see if there might be a complete or partial valid message
-anywhere else in the remainder of the buffer.
-
-If this message !is_complete(), no-op.
-
-\return *this
-*/
-        message_reader& operator++()
-        {
-            if (!is_complete_)
-            {
-                return *this; // can't increment on an incomplete message.
+        if (!is_valid_) { // this message isn't valid, so we have to try to search for the beginning of the next message.
+            const char* b = buffer_ + 1;
+            while(b < buffer_end_ - 10) {
+                if (!std::memcmp(b, "8=FIX", 5))
+                    break;
+                ++b;
             }
-
-            if (!is_valid_) // this message isn't valid, so we have to try to search for the beginning of the next message.
-            {
-                const char* b = buffer_ + 1;
-                while(b < buffer_end_ - 10)
-                {
-                    if (!std::memcmp(b, "8=FIX", 5))
-                        break;
-                    ++b;
-                }
-                new (this) message_reader(b, buffer_end_); // whether or not we found the next message, reconstruct.
-                return *this;
-            }
-
-            new (this) message_reader(end_.current_.value_.end_ + 1, buffer_end_);
+            new (this) message_reader(b, buffer_end_); // whether or not we found the next message, reconstruct.
             return *this;
         }
 
-        /*!
-         * \brief Returns the FIX version prefix string begin pointer. (Example: "FIX.4.4")
-         */
-        const char* prefix_begin() const { return buffer_ + 2; }
+        new (this) message_reader(end_.current_.value_.end_ + 1, buffer_end_);
+        return *this;
+    }
 
-        /*!
-         * \brief Returns the FIX version prefix string end pointer. (Example: "FIX.4.4")
-         */
-        const char* prefix_end() const { return prefix_end_; }
-        
-        /*!
-         * \brief Returns the FIX version prefix string size. (Example: returns 7 for "FIX.4.4")
-         */
-        ssize_t prefix_size() const { return prefix_end_ - buffer_ - 2; }
- 
-    private:
-        friend class message_reader_const_iterator;
-    
-        void init()
-        {
-            // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
+    /*!
+     * \brief Returns the FIX version prefix string begin pointer. (Example: "FIX.4.4")
+     */
+    const char* prefix_begin() const {
+        return buffer_ + 2;
+    }
 
-            const char* b = buffer_ + 9; // look for the first '\x01'
+    /*!
+     * \brief Returns the FIX version prefix string end pointer. (Example: "FIX.4.4")
+     */
+    const char* prefix_end() const {
+        return prefix_end_;
+    }
 
-            while(true) {
-                if (b >= buffer_end_) {
-                    is_complete_ = false;
-                    return;
-                }
-                if (*b == '\x01') {
-                    prefix_end_ = b;
-                    break;
-                }
-                if (b - buffer_ > 11) {
-                    malformed();
-                    return;
-                }
-                ++b;
-            }
+    /*!
+     * \brief Returns the FIX version prefix string size. (Example: returns 7 for "FIX.4.4")
+     */
+    ssize_t prefix_size() const {
+        return prefix_end_ - buffer_ - 2;
+    }
 
-            if (b + 1 >= buffer_end_) {
+private:
+    friend class message_reader_const_iterator;
+
+    void init() {
+        // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
+
+        const char* b = buffer_ + 9; // look for the first '\x01'
+
+        while(true) {
+            if (b >= buffer_end_) {
                 is_complete_ = false;
                 return;
             }
-            if (b[1] != '9') // next field must be tag 9 BodyLength
-            {
+            if (*b == '\x01') {
+                prefix_end_ = b;
+                break;
+            }
+            if (b - buffer_ > 11) {
                 malformed();
                 return;
             }
-            b += 3; // skip the " 9=" for tag 9 BodyLength
-
-            size_t bodylength(0); // the value of tag 9 BodyLength
-
-            while(true)
-            {
-                if (b >= buffer_end_)
-                {
-                    is_complete_ = false;
-                    return;
-                }
-                if (*b == '\x01') break;
-                if (*b < '0' || *b > '9') // this is the only time we need to check for numeric ascii.
-                {
-                    malformed();
-                    return;
-                }
-                bodylength *= 10;
-                bodylength += *b++ - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
-            }
-
             ++b;
-            if (b + 3 >= buffer_end_)
-            {
+        }
+
+        if (b + 1 >= buffer_end_) {
+            is_complete_ = false;
+            return;
+        }
+        if (b[1] != '9') { // next field must be tag 9 BodyLength
+            malformed();
+            return;
+        }
+        b += 3; // skip the " 9=" for tag 9 BodyLength
+
+        size_t bodylength(0); // the value of tag 9 BodyLength
+
+        while(true) {
+            if (b >= buffer_end_) {
                 is_complete_ = false;
                 return;
             }
-
-            if (*b != '3' || b[1] != '5') // next field must be tag 35 MsgType
-            {
+            if (*b == '\x01') break;
+            if (*b < '0' || *b > '9') { // this is the only time we need to check for numeric ascii.
                 malformed();
                 return;
             }
-
-            const char* checksum = b + bodylength; 
-
-            if (checksum + 7 > buffer_end_)
-            {
-                is_complete_ = false;
-                return;
-            }
-
-            if (*(checksum + 6) != '\x01') // check for trailing SOH
-            {
-                malformed();
-                return;
-            }            
-            
-            begin_.buffer_ = b;
-            begin_.current_.tag_ = 35; // MsgType
-            b += 3;
-            begin_.current_.value_.begin_ = b;
-            while(*++b != '\x01') {}
-            begin_.current_.value_.end_ = b;
-
-            end_.buffer_ = checksum;
-            end_.current_.tag_ = 10; //CheckSum
-            end_.current_.value_.begin_ = checksum + 3;
-            end_.current_.value_.end_ = checksum + 6;
-            
-            is_complete_ = true;
+            bodylength *= 10;
+            bodylength += *b++ - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
         }
 
-        const char* buffer_;
-        const char* buffer_end_;
-        const_iterator begin_;
-        const_iterator end_;
-        value_type message_type_;
-        bool is_complete_;
-        bool is_valid_;
-        const char* prefix_end_; // Points after the 8=FIX... Prefix field.
-
-        void malformed()
-        {
-            is_complete_ = true; // invalid messages are considered complete, for use of the message_reader::operator++()
-            is_valid_ = false;
+        ++b;
+        if (b + 3 >= buffer_end_) {
+            is_complete_ = false;
+            return;
         }
-    };
 
-    //!
-    // \brief A predicate constructed with a FIX tag which returns true if the tag of the field passed to the predicate is equal.
-    //
-    struct tag_predicate {
-      tag_predicate(int tag) : tag(tag) {}
-      int tag;
-      inline bool operator()(message_reader::value_type const& v) const {
+        if (*b != '3' || b[1] != '5') { // next field must be tag 35 MsgType
+            malformed();
+            return;
+        }
+
+        const char* checksum = b + bodylength;
+
+        if (checksum + 7 > buffer_end_) {
+            is_complete_ = false;
+            return;
+        }
+
+        if (*(checksum + 6) != '\x01') { // check for trailing SOH
+            malformed();
+            return;
+        }
+
+        begin_.buffer_ = b;
+        begin_.current_.tag_ = 35; // MsgType
+        b += 3;
+        begin_.current_.value_.begin_ = b;
+        while(*++b != '\x01') {}
+        begin_.current_.value_.end_ = b;
+
+        end_.buffer_ = checksum;
+        end_.current_.tag_ = 10; //CheckSum
+        end_.current_.value_.begin_ = checksum + 3;
+        end_.current_.value_.end_ = checksum + 6;
+
+        is_complete_ = true;
+    }
+
+    const char* buffer_;
+    const char* buffer_end_;
+    const_iterator begin_;
+    const_iterator end_;
+    value_type message_type_;
+    bool is_complete_;
+    bool is_valid_;
+    const char* prefix_end_; // Points after the 8=FIX... Prefix field.
+
+    void malformed() {
+        is_complete_ = true; // invalid messages are considered complete, for use of the message_reader::operator++()
+        is_valid_ = false;
+    }
+};
+
+//!
+// \brief A predicate constructed with a FIX tag which returns true if the tag of the field passed to the predicate is equal.
+//
+struct tag_predicate {
+    tag_predicate(int tag) : tag(tag) {}
+    int tag;
+    inline bool operator()(message_reader::value_type const& v) const {
         return v.tag() == tag;
-      }
-    };
-      
-      
+    }
+};
+
+
 
 /*! @cond EXCLUDE */
 namespace details {
-    bool is_tag_a_data_length(int tag); 
+bool is_tag_a_data_length(int tag);
 }
 /*! @endcond */
 
-    inline void message_reader_const_iterator::increment()
-    {
+inline void message_reader_const_iterator::increment()
+{
+    buffer_ = current_.value_.end_ + 1;
+    current_.value_.begin_ = buffer_;
+    current_.tag_ = 0;
+
+    while(*current_.value_.begin_ != '=') {
+        current_.tag_ *= 10;
+        current_.tag_ += (*current_.value_.begin_ - '0');
+        ++current_.value_.begin_;
+    }
+
+    current_.value_.end_ = ++current_.value_.begin_;
+
+    while(*(++current_.value_.end_ ) != '\x01') {}
+
+    if (details::is_tag_a_data_length(current_.tag_)) {
+        size_t data_len = details::atou<size_t>(current_.value_.begin_, current_.value_.end_);
+
         buffer_ = current_.value_.end_ + 1;
         current_.value_.begin_ = buffer_;
         current_.tag_ = 0;
 
-        while(*current_.value_.begin_ != '=')
-        {
+        while(*current_.value_.begin_ != '=') {
             current_.tag_ *= 10;
             current_.tag_ += (*current_.value_.begin_ - '0');
             ++current_.value_.begin_;
         }
 
-        current_.value_.end_ = ++current_.value_.begin_;
+        current_.value_.end_ = ++current_.value_.begin_ + data_len;
 
-        while(*(++current_.value_.end_ ) != '\x01') {}
-
-        if (details::is_tag_a_data_length(current_.tag_))
-        {
-            size_t data_len = details::atou<size_t>(current_.value_.begin_, current_.value_.end_);
-
-            buffer_ = current_.value_.end_ + 1;
-            current_.value_.begin_ = buffer_;
-            current_.tag_ = 0;
-
-            while(*current_.value_.begin_ != '=')
-            {
-                current_.tag_ *= 10;
-                current_.tag_ += (*current_.value_.begin_ - '0');
-                ++current_.value_.begin_;
-            }
-
-            current_.value_.end_ = ++current_.value_.begin_ + data_len;
-
-            if (current_.value_.end_ >= message_reader_.end_.buffer_)
-            {
-                message_reader_.malformed(); // in theory this can never happen.
-            }
+        if (current_.value_.end_ >= message_reader_.end_.buffer_) {
+            message_reader_.malformed(); // in theory this can never happen.
         }
-    };
+    }
+};
 
 
-/*! 
+/*!
 \brief One FIX message for writing.
 
 Given a buffer, the message_writer will write a FIX message to the buffer. The interface is patterned after
 Back Insertion Sequence Containers, with overloads of push_back for different FIX field data types.
 
-The push_back_header() method will write the BeginString and BodyLength fields to the message, 
-but the FIX Standard Message Header requires also MsgType, SenderCompID, TargetCompID, MsgSeqNum and SendingTime. 
+The push_back_header() method will write the BeginString and BodyLength fields to the message,
+but the FIX Standard Message Header requires also MsgType, SenderCompID, TargetCompID, MsgSeqNum and SendingTime.
 You must write those fields yourself, starting with MsgType.
 
-After calling all other push_back methods and before sending the message, you must call push_back_trailer(), 
+After calling all other push_back methods and before sending the message, you must call push_back_trailer(),
 which will write the CheckSum field for you.
 
 */
-    class message_writer
-    {
-    public:
+class message_writer {
+public:
 
-/*!
-\brief Construct by buffer size.
-\param buffer Pointer to the buffer to be written to.
-\param size Size of the buffer in bytes.
-*/        message_writer(char* buffer, size_t size):
-            buffer_(buffer),
-            buffer_end_(buffer + size),
-            next_(buffer)
-        {
+    /*!
+    \brief Construct by buffer size.
+    \param buffer Pointer to the buffer to be written to.
+    \param size Size of the buffer in bytes.
+    */
+    message_writer(char* buffer, size_t size):
+        buffer_(buffer),
+        buffer_end_(buffer + size),
+        next_(buffer) {
+    }
+
+    /*!
+    \brief Construct by buffer begin and end.
+    \param begin Pointer to the buffer to be written to.
+    \param end Pointer to past-the-end of the buffer to be written to.
+    */
+    message_writer(char* begin, char* end) :
+        buffer_(begin),
+        buffer_end_(end),
+        next_(begin) {
+    }
+
+    /*!
+    \brief Write the BeginString and BodyLength fields to the buffer.
+
+    This method must be called before any other push_back() method. It may only be called once for each message_writer.
+
+    \pre No other push_back method has yet been called.
+    \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
+    */
+    void push_back_header(char* begin_string_version) {
+        memcpy(next_, "8=", 2);
+        next_ += 2;
+        memcpy(next_, begin_string_version, std::strlen(begin_string_version) - 1);
+        next_ += std::strlen(begin_string_version) - 1;
+        *(next_++) = '\x01';
+        memcpy(next_, "9=", 2);
+        next_ += 2;
+        body_length_ = next_;
+        next_ += 6; // 6 characters reserved for BodyLength.
+        *next_++ = '\x01';
+    }
+    /*!
+    \brief Write the CheckSum field to the buffer.
+
+    This function must be called after all other push_back functions. It may only be called once for each message_writer.
+
+    \post There is a complete and valid FIX message in the buffer.
+
+    \param calculate_checksum If this flag is set to false, then instead of iterating over the entire message and
+    calculating the CheckSum, the standard trailer will simply write CheckSum=000. This is fine if you're sending
+    the message to a FIX parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
+    */
+    void push_back_trailer(bool calculate_checksum = true) {
+        // calculate and write out the BodyLength
+        size_t bodylength = next_ - (buffer_ + 17);
+        for(char* b = body_length_ + 5; b >= body_length_; --b) {
+            *b = '0' + (bodylength % 10);
+            bodylength /= 10;
         }
 
-/*!
-\brief Construct by buffer begin and end.
-\param begin Pointer to the buffer to be written to.
-\param end Pointer to past-the-end of the buffer to be written to.
-*/        
-        message_writer(char* begin, char* end) :
-            buffer_(begin),
-            buffer_end_(end),
-            next_(begin)
-        {
-        }
+        // write out the CheckSum after optionally calculating it
+        if (calculate_checksum) {
+            size_t checksum(0);
+            char* b = buffer_;
+            while(b < next_) checksum += *b++;
+            checksum = checksum % 256;
 
-/*!
-\brief Write the BeginString and BodyLength fields to the buffer.
+            memcpy(next_, "10=", 3);
+            next_ += 3;
 
-This method must be called before any other push_back() method. It may only be called once for each message_writer.
-
-\pre No other push_back method has yet been called.
-\param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
-*/
-        void push_back_header(char* begin_string_version)
-        {
-            memcpy(next_, "8=", 2);
-            next_ += 2;
-            memcpy(next_, begin_string_version, std::strlen(begin_string_version) - 1);
-            next_ += std::strlen(begin_string_version) - 1;
-            *(next_++) = '\x01';
-            memcpy(next_, "9=", 2);
-            next_ += 2;
-            body_length_ = next_;
-            next_ += 6; // 6 characters reserved for BodyLength.
-            *next_++ = '\x01';
-        }
-/*!
-\brief Write the CheckSum field to the buffer.
-
-This function must be called after all other push_back functions. It may only be called once for each message_writer.
-
-\post There is a complete and valid FIX message in the buffer.
-
-\param calculate_checksum If this flag is set to false, then instead of iterating over the entire message and 
-calculating the CheckSum, the standard trailer will simply write CheckSum=000. This is fine if you're sending
-the message to a FIX parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
-*/
-        void push_back_trailer(bool calculate_checksum = true)
-        {
-            // calculate and write out the BodyLength
-            size_t bodylength = next_ - (buffer_ + 17);
-            for(char* b = body_length_ + 5; b >= body_length_; --b)
-            {
-                *b = '0' + (bodylength % 10);
-                bodylength /= 10;
+            for (char* b = next_ + 2; b >= next_; --b) {
+                *b = '0' + (checksum % 10);
+                checksum /= 10;
             }
-
-            // write out the CheckSum after optionally calculating it
-            if (calculate_checksum)
-            {
-                size_t checksum(0);
-                char* b = buffer_;
-                while(b < next_) checksum += *b++;
-                checksum = checksum % 256;
-
-                memcpy(next_, "10=", 3);
-                next_ += 3;
-
-                for (char* b = next_ + 2; b >= next_; --b)
-                {
-                    *b = '0' + (checksum % 10);
-                    checksum /= 10;
-                }
-                next_ += 3;
-                *next_++ = '\x01';
-            }
-            else
-            {
-                memcpy(next_, "10=000\x01", 7);
-                next_ += 7;
-            }
-
-        }
-
-/*!
-\brief Size of the message in bytes.
-*/
-        size_t message_size() const
-        {
-            return next_ - buffer_;
-        }
-
-/*!
-\brief Pointer to beginning of the message.
-*/
-        char* message_begin() const
-        {
-            return buffer_;
-        }
-/*!
-\brief Pointer to past-the-end of the message.
-*/
-        char* message_end() const
-        {
-            return next_;
-        }
-
-
-/*! \name String Methods */
-//@{
-/*!
-\brief Append a string field to the message.
-\param tag FIX tag.
-\param begin Pointer to the beginning of the string.
-\param end Pointer to past-the-end of the string.
-*/
-        void push_back_string(int tag, const char* begin, const char* end)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            memcpy(next_, begin, end - begin);
-            next_ += (end - begin);
-            *next_++ = '\x01';
-        }
-
-/*!
-\brief Append a string field to the message.
-\param tag FIX tag.
-\param cstring Pointer to the beginning of a C-style null-terminated string.
-*/
-        void push_back_string(int tag, const char* cstring)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            while(*cstring) *next_++ = *cstring++;
-            *next_++ = '\x01';
-        }
-
-/*!
-\brief Append a string field to the message.
-
-The entire, literal contents of s will be copied to the output buffer, so if you are using std::wstring
-you may need to first convert from UTF-16 to Ascii, or do some other encoding transformation.
-
-\tparam Char_type Character type for the string. Your complier will usually infer the Char_type, so you
-can elide this parameter.
-
-\param tag FIX tag.
-\param s String.
-*/
-        template<typename Char_type> void push_back_string(int tag, const std::basic_string<Char_type>& s)
-        {
-            push_back_string(tag, s.data(), s.data() + s.length());
-        }
-
-
-/*!
-\brief Append a char field to the message.
-\param tag FIX tag.
-\param character An ascii character.
-*/
-        void push_back_char(int tag, char character)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            *next_++ = character;
-            *next_++ = '\x01';
-        }
-//@}
-
-
-/*! \name Integer Methods */
-//@{
-/*!
-\brief Append an integer field to the message.
-\tparam Int_type Type of integer.
-\param tag FIX tag.
-\param number Integer value.
-*/
-        template<typename Int_type> void push_back_int(int tag, Int_type number)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            next_ = details::itoa(number, next_);
-            *next_++ = '\x01';
-        }
-/*
-\brief Append an unsigned integer field to the message.
-\tparam Uint_type Type of unsigned integer.
-\param tag FIX tag.
-\param number Unsigned integer value.
-*/
-        //template<typename Uint_type> void push_back_uint(int tag, Uint_type number)
-        //{
-        //    next_ = details::itoa(tag, next_);
-        //    *next_++ = '=';
-        //    next_ = details::utoa(number, next_);
-        //    *next_++ = '\x01';
-        //}
-//@}
-
-/*! \name Decimal Float Methods */
-//@{
-
-/*!
-\brief Append a decimal float field to the message.
-
-The decimal float is of the form \htmlonly mantissa&times;10<sup>exponent</sup>\endhtmlonly.
-
-Non-normalized. The exponent parameter must be less than or equal to zero. If the exponent
-parameter is zero, no decimal point will be written to the ascii field.
-
-\tparam Int_type Integer type for the mantissa and exponent.
-\param tag FIX tag.
-\param mantissa The mantissa of the decimal float.
-\param exponent The exponent of the decimal float. Must be less than or equal to zero.
-*/
-        template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            next_ = details::dtoa(mantissa, exponent, next_);
-            *next_++ = '\x01';
-        }
-//@}
-
-
-/*! \name Date and Time Methods */
-//@{
-
-/*! 
-\brief Append a LocalMktDate or UTCDate field to the message.
-\param tag FIX tag.
-\param year Year.
-\param month Month.
-\param day Day.
-*/
-        void push_back_date(int tag, int year, int month, int day)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            itoa_padded(year, next_, next_ + 4);
-            next_ += 4;
-            itoa_padded(month, next_, next_ + 2);
-            next_ += 2;
-            itoa_padded(day, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '\x01';
-        }
-/*!
-\brief Append a month-year field to the message.
-\param tag FIX tag.
-\param year Year.
-\param month Month.
-*/
-        void push_back_monthyear(int tag, int year, int month)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            itoa_padded(year, next_, next_ + 4);
-            next_ += 4;
-            itoa_padded(month, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '\x01';
-        }    
-
-/*!
-\brief Append a UTCTimeOnly field to the message.
-
-No time zone or daylight savings time transformations are done to the time.
-
-No fractional seconds are written to the field.
-
-\param tag FIX tag.
-\param hour Hour.
-\param minute Minute.
-\param second Second.
-*/
-        void push_back_timeonly(int tag, int hour, int minute, int second)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            itoa_padded(hour, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(minute, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(second, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '\x01';
-        }
-
-/*!
-\brief Append a UTCTimeOnly field to the message.
-
-No time zone or daylight savings time transformations are done to the time.
-
-\param tag FIX tag.
-\param hour Hour.
-\param minute Minute.
-\param second Second.
-\param millisecond Millisecond.
-*/
-        void push_back_timeonly(int tag, int hour, int minute, int second, int millisecond)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            itoa_padded(hour, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(minute, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(second, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '.';
-            itoa_padded(millisecond, next_, next_ + 3);
             next_ += 3;
             *next_++ = '\x01';
+        } else {
+            memcpy(next_, "10=000\x01", 7);
+            next_ += 7;
         }
 
-/*!
-\brief Append a UTCTimestamp field to the message.
+    }
 
-No time zone or daylight savings time transformations are done to the timestamp.
+    /*!
+    \brief Size of the message in bytes.
+    */
+    size_t message_size() const {
+        return next_ - buffer_;
+    }
 
-No fractional seconds are written to the field.
+    /*!
+    \brief Pointer to beginning of the message.
+    */
+    char* message_begin() const {
+        return buffer_;
+    }
+    /*!
+    \brief Pointer to past-the-end of the message.
+    */
+    char* message_end() const {
+        return next_;
+    }
 
-\param tag FIX tag.
-\param year Year.
-\param month Month.
-\param day Day.
-\param hour Hour.
-\param minute Minute.
-\param second Second.
-*/
-        void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            itoa_padded(year, next_, next_ + 4);
-            next_ += 4;
-            itoa_padded(month, next_, next_ + 2);
-            next_ += 2;
-            itoa_padded(day, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '-';
-            itoa_padded(hour, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(minute, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(second, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '\x01';
-        }
 
-/*!
-\brief Append a UTCTimestamp field to the message.
+    /*! \name String Methods */
+//@{
+    /*!
+    \brief Append a string field to the message.
+    \param tag FIX tag.
+    \param begin Pointer to the beginning of the string.
+    \param end Pointer to past-the-end of the string.
+    */
+    void push_back_string(int tag, const char* begin, const char* end) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        memcpy(next_, begin, end - begin);
+        next_ += (end - begin);
+        *next_++ = '\x01';
+    }
 
-No time zone or daylight savings time transformations are done to the timestamp.
+    /*!
+    \brief Append a string field to the message.
+    \param tag FIX tag.
+    \param cstring Pointer to the beginning of a C-style null-terminated string.
+    */
+    void push_back_string(int tag, const char* cstring) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        while(*cstring) *next_++ = *cstring++;
+        *next_++ = '\x01';
+    }
 
-\param tag FIX tag.
-\param year Year.
-\param month Month.
-\param day Day.
-\param hour Hour.
-\param minute Minute.
-\param second Second.
-\param millisecond Millisecond.
-*/
-        void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second, int millisecond)
-        {
-            next_ = details::itoa(tag, next_);
-            *next_++ = '=';
-            itoa_padded(year, next_, next_ + 4);
-            next_ += 4;
-            itoa_padded(month, next_, next_ + 2);
-            next_ += 2;
-            itoa_padded(day, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '-';
-            itoa_padded(hour, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(minute, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = ':';
-            itoa_padded(second, next_, next_ + 2);
-            next_ += 2;
-            *next_++ = '.';
-            itoa_padded(millisecond, next_, next_ + 3);
-            next_ += 3;
-            *next_++ = '\x01';
-        }
+    /*!
+    \brief Append a string field to the message.
+
+    The entire, literal contents of s will be copied to the output buffer, so if you are using std::wstring
+    you may need to first convert from UTF-16 to Ascii, or do some other encoding transformation.
+
+    \tparam Char_type Character type for the string. Your complier will usually infer the Char_type, so you
+    can elide this parameter.
+
+    \param tag FIX tag.
+    \param s String.
+    */
+    template<typename Char_type> void push_back_string(int tag, const std::basic_string<Char_type>& s) {
+        push_back_string(tag, s.data(), s.data() + s.length());
+    }
+
+
+    /*!
+    \brief Append a char field to the message.
+    \param tag FIX tag.
+    \param character An ascii character.
+    */
+    void push_back_char(int tag, char character) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        *next_++ = character;
+        *next_++ = '\x01';
+    }
+//@}
+
+
+    /*! \name Integer Methods */
+//@{
+    /*!
+    \brief Append an integer field to the message.
+    \tparam Int_type Type of integer.
+    \param tag FIX tag.
+    \param number Integer value.
+    */
+    template<typename Int_type> void push_back_int(int tag, Int_type number) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        next_ = details::itoa(number, next_);
+        *next_++ = '\x01';
+    }
+    /*
+    \brief Append an unsigned integer field to the message.
+    \tparam Uint_type Type of unsigned integer.
+    \param tag FIX tag.
+    \param number Unsigned integer value.
+    */
+    //template<typename Uint_type> void push_back_uint(int tag, Uint_type number)
+    //{
+    //    next_ = details::itoa(tag, next_);
+    //    *next_++ = '=';
+    //    next_ = details::utoa(number, next_);
+    //    *next_++ = '\x01';
+    //}
+//@}
+
+    /*! \name Decimal Float Methods */
+//@{
+
+    /*!
+    \brief Append a decimal float field to the message.
+
+    The decimal float is of the form \htmlonly mantissa&times;10<sup>exponent</sup>\endhtmlonly.
+
+    Non-normalized. The exponent parameter must be less than or equal to zero. If the exponent
+    parameter is zero, no decimal point will be written to the ascii field.
+
+    \tparam Int_type Integer type for the mantissa and exponent.
+    \param tag FIX tag.
+    \param mantissa The mantissa of the decimal float.
+    \param exponent The exponent of the decimal float. Must be less than or equal to zero.
+    */
+    template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        next_ = details::dtoa(mantissa, exponent, next_);
+        *next_++ = '\x01';
+    }
+//@}
+
+
+    /*! \name Date and Time Methods */
+//@{
+
+    /*!
+    \brief Append a LocalMktDate or UTCDate field to the message.
+    \param tag FIX tag.
+    \param year Year.
+    \param month Month.
+    \param day Day.
+    */
+    void push_back_date(int tag, int year, int month, int day) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        itoa_padded(year, next_, next_ + 4);
+        next_ += 4;
+        itoa_padded(month, next_, next_ + 2);
+        next_ += 2;
+        itoa_padded(day, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '\x01';
+    }
+    /*!
+    \brief Append a month-year field to the message.
+    \param tag FIX tag.
+    \param year Year.
+    \param month Month.
+    */
+    void push_back_monthyear(int tag, int year, int month) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        itoa_padded(year, next_, next_ + 4);
+        next_ += 4;
+        itoa_padded(month, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '\x01';
+    }
+
+    /*!
+    \brief Append a UTCTimeOnly field to the message.
+
+    No time zone or daylight savings time transformations are done to the time.
+
+    No fractional seconds are written to the field.
+
+    \param tag FIX tag.
+    \param hour Hour.
+    \param minute Minute.
+    \param second Second.
+    */
+    void push_back_timeonly(int tag, int hour, int minute, int second) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        itoa_padded(hour, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(minute, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(second, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '\x01';
+    }
+
+    /*!
+    \brief Append a UTCTimeOnly field to the message.
+
+    No time zone or daylight savings time transformations are done to the time.
+
+    \param tag FIX tag.
+    \param hour Hour.
+    \param minute Minute.
+    \param second Second.
+    \param millisecond Millisecond.
+    */
+    void push_back_timeonly(int tag, int hour, int minute, int second, int millisecond) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        itoa_padded(hour, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(minute, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(second, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '.';
+        itoa_padded(millisecond, next_, next_ + 3);
+        next_ += 3;
+        *next_++ = '\x01';
+    }
+
+    /*!
+    \brief Append a UTCTimestamp field to the message.
+
+    No time zone or daylight savings time transformations are done to the timestamp.
+
+    No fractional seconds are written to the field.
+
+    \param tag FIX tag.
+    \param year Year.
+    \param month Month.
+    \param day Day.
+    \param hour Hour.
+    \param minute Minute.
+    \param second Second.
+    */
+    void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        itoa_padded(year, next_, next_ + 4);
+        next_ += 4;
+        itoa_padded(month, next_, next_ + 2);
+        next_ += 2;
+        itoa_padded(day, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '-';
+        itoa_padded(hour, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(minute, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(second, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '\x01';
+    }
+
+    /*!
+    \brief Append a UTCTimestamp field to the message.
+
+    No time zone or daylight savings time transformations are done to the timestamp.
+
+    \param tag FIX tag.
+    \param year Year.
+    \param month Month.
+    \param day Day.
+    \param hour Hour.
+    \param minute Minute.
+    \param second Second.
+    \param millisecond Millisecond.
+    */
+    void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
+        next_ = details::itoa(tag, next_);
+        *next_++ = '=';
+        itoa_padded(year, next_, next_ + 4);
+        next_ += 4;
+        itoa_padded(month, next_, next_ + 2);
+        next_ += 2;
+        itoa_padded(day, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '-';
+        itoa_padded(hour, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(minute, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(second, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '.';
+        itoa_padded(millisecond, next_, next_ + 3);
+        next_ += 3;
+        *next_++ = '\x01';
+    }
 
 //@}
 
 #ifdef HFFIX_BOOST_DATETIME
 
-/*! \name Boost Date and Time Methods */
+    /*! \name Boost Date and Time Methods */
 //@{
 
-/*! 
-\brief Append a LocalMktDate or UTCDate field to the message.
+    /*!
+    \brief Append a LocalMktDate or UTCDate field to the message.
 
-Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
+    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
-\param tag FIX tag.
-\param date Date.
-\see HFFIX_NO_BOOST_DATETIME
-*/
-        void push_back_date(int tag, boost::gregorian::date date)
-        {
-            if (!date.is_not_a_date())
-                push_back_date(tag, date.year(), date.month(), date.day());
-        }
+    \param tag FIX tag.
+    \param date Date.
+    \see HFFIX_NO_BOOST_DATETIME
+    */
+    void push_back_date(int tag, boost::gregorian::date date) {
+        if (!date.is_not_a_date())
+            push_back_date(tag, date.year(), date.month(), date.day());
+    }
 
-/*!
-\brief Append a UTCTimeOnly field to the message.
+    /*!
+    \brief Append a UTCTimeOnly field to the message.
 
-No time zone or daylight savings time transformations are done to the time.
+    No time zone or daylight savings time transformations are done to the time.
 
-Fractional seconds will be written to the field, rounded to the millisecond.
+    Fractional seconds will be written to the field, rounded to the millisecond.
 
-Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
+    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
-\param tag FIX tag.
-\param timeonly Time.
-\see HFFIX_NO_BOOST_DATETIME
-*/
-        void push_back_timeonly(int tag, boost::posix_time::time_duration timeonly)
-        {
-            if (!timeonly.is_not_a_date_time())
+    \param tag FIX tag.
+    \param timeonly Time.
+    \see HFFIX_NO_BOOST_DATETIME
+    */
+    void push_back_timeonly(int tag, boost::posix_time::time_duration timeonly) {
+        if (!timeonly.is_not_a_date_time())
             push_back_timeonly(
-                tag, 
-                timeonly.hours(), 
-                timeonly.minutes(), 
-                timeonly.seconds(), 
+                tag,
+                timeonly.hours(),
+                timeonly.minutes(),
+                timeonly.seconds(),
                 int(timeonly.fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
-                );
-        }
+            );
+    }
 
-/*!
-\brief Append a UTCTimestamp field to the message.
+    /*!
+    \brief Append a UTCTimestamp field to the message.
 
-No time zone or daylight savings time transformations are done to the timestamp.
+    No time zone or daylight savings time transformations are done to the timestamp.
 
-Fractional seconds will be written to the field, rounded to the millisecond.
+    Fractional seconds will be written to the field, rounded to the millisecond.
 
-Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
+    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
-\param tag FIX tag.
-\param timestamp Date and time.
-\see HFFIX_NO_BOOST_DATETIME
-*/
-        void push_back_timestamp(int tag, boost::posix_time::ptime timestamp)
-        {
-            if (!timestamp.is_not_a_date_time())
+    \param tag FIX tag.
+    \param timestamp Date and time.
+    \see HFFIX_NO_BOOST_DATETIME
+    */
+    void push_back_timestamp(int tag, boost::posix_time::ptime timestamp) {
+        if (!timestamp.is_not_a_date_time())
             push_back_timestamp(
-                tag, 
+                tag,
                 timestamp.date().year(),
                 timestamp.date().month(),
                 timestamp.date().day(),
@@ -2254,91 +2151,88 @@ Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BO
                 timestamp.time_of_day().minutes(),
                 timestamp.time_of_day().seconds(),
                 int(timestamp.time_of_day().fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
-                );
-        }
+            );
+    }
 //@}
 #endif // HFFIX_BOOST_DATETIME
 
 
-/*! \name Data Methods */
+    /*! \name Data Methods */
 //@{
-        
-/*!
-\brief Append a data length field and a data field to the message.
 
-Note that this method will append two fields to the message. The first field is an integer equal to 
-the content length of the second field. FIX does this so that the content of the second field may contain 
-Ascii NULL or SOH or other strange characters. 
+    /*!
+    \brief Append a data length field and a data field to the message.
 
-High Frequency FIX Parser calculates the content length for you
-and writes out both fields, you just have to provide both tags and pointers to the data.
-For most of the data fields in FIX, it is true that tag_data = tag_data_length + 1, but we daren't assume that.
+    Note that this method will append two fields to the message. The first field is an integer equal to
+    the content length of the second field. FIX does this so that the content of the second field may contain
+    Ascii NULL or SOH or other strange characters.
 
-\param tag_data_length FIX tag for the data length field.
-\param tag_data FIX tag for the data field.
-\param begin Pointer to the beginning of the data.
-\param end Pointer to after-the-end of the data.
-*/
-        void push_back_data(int tag_data_length, int tag_data, const char* begin, const char* end)
-        {
-            next_ = details::itoa(tag_data_length, next_);
-            *next_++ = '=';
-            next_ = details::itoa(end - begin, next_);
-            *next_++ = '\x01';
-            next_ = details::itoa(tag_data, next_);
-            *next_++ = '=';
-            memcpy(next_, begin, end - begin);
-            next_ += end - begin;
-            *next_++ = '\x01';
-        }
+    High Frequency FIX Parser calculates the content length for you
+    and writes out both fields, you just have to provide both tags and pointers to the data.
+    For most of the data fields in FIX, it is true that tag_data = tag_data_length + 1, but we daren't assume that.
+
+    \param tag_data_length FIX tag for the data length field.
+    \param tag_data FIX tag for the data field.
+    \param begin Pointer to the beginning of the data.
+    \param end Pointer to after-the-end of the data.
+    */
+    void push_back_data(int tag_data_length, int tag_data, const char* begin, const char* end) {
+        next_ = details::itoa(tag_data_length, next_);
+        *next_++ = '=';
+        next_ = details::itoa(end - begin, next_);
+        *next_++ = '\x01';
+        next_ = details::itoa(tag_data, next_);
+        *next_++ = '=';
+        memcpy(next_, begin, end - begin);
+        next_ += end - begin;
+        *next_++ = '\x01';
+    }
 
 
 //@}
-    private:
-        static void itoa_padded(int x, char* b, char* e)
-        {
-            while (e > b)
-            {
-                *--e = '0' + (x % 10);
-                x /= 10;
-            }
+private:
+    static void itoa_padded(int x, char* b, char* e) {
+        while (e > b) {
+            *--e = '0' + (x % 10);
+            x /= 10;
         }
+    }
 
-        // message_writer() {} // no default construction allowed
-        // message_writer(const message_writer& that) {} // no copying allowed
-        // message_writer& operator=(const message_writer& that) { return *this; } // no assignment allowed
+    // message_writer() {} // no default construction allowed
+    // message_writer(const message_writer& that) {} // no copying allowed
+    // message_writer& operator=(const message_writer& that) { return *this; } // no assignment allowed
 
-        char* buffer_;
-        char* buffer_end_;
-        char* next_;
-        char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
-    };
+    char* buffer_;
+    char* buffer_end_;
+    char* next_;
+    char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
+};
 
 /* @cond EXCLUDE */
 
 namespace details {
-    inline bool is_tag_a_data_length(int tag)
-    {
-        int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
-        return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
-    }
+inline bool is_tag_a_data_length(int tag)
+{
+    int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
+    return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
+}
 
 
 
 // \brief std::ostream-able type returned by hffix::field_name function.
 template <typename AssociativeContainer> struct field_name_streamer {
-  int tag;
-  AssociativeContainer const& field_dictionary;
+    int tag;
+    AssociativeContainer const& field_dictionary;
 
-  field_name_streamer(int tag, AssociativeContainer const& field_dictionary) : tag(tag), field_dictionary(field_dictionary) {}
+    field_name_streamer(int tag, AssociativeContainer const& field_dictionary) : tag(tag), field_dictionary(field_dictionary) {}
 
-  friend std::ostream& operator<<(std::ostream& os, field_name_streamer that) {
-    typename AssociativeContainer::const_iterator i = that.field_dictionary.find(that.tag);
-    if (i == that.field_dictionary.end())
-      os << that.tag;
-    else
-      os << i->second;
-  }
+    friend std::ostream& operator<<(std::ostream& os, field_name_streamer that) {
+        typename AssociativeContainer::const_iterator i = that.field_dictionary.find(that.tag);
+        if (i == that.field_dictionary.end())
+            os << that.tag;
+        else
+            os << i->second;
+    }
 };
 
 }
@@ -2350,7 +2244,7 @@ template <typename AssociativeContainer> struct field_name_streamer {
 
  \param tag The field number.
  \param field_dictionary The field dictionary.
- 
+
  Example usage:
  \code
  std::map<int, std::string> dictionary;
@@ -2358,8 +2252,9 @@ template <typename AssociativeContainer> struct field_name_streamer {
  std::cout << field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID" and a newline.
  \endcode
 */
-template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary) {
-  return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary);
+template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary)
+{
+    return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary);
 };
 
 } // namespace hffix
