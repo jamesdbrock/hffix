@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 import sys
 import re
@@ -12,6 +12,12 @@ fix50schema = 'fix.5.0.sp2/fixmlschema/fixml-fields-base-5-0-SP2.xsd'
 #     Key is an integer Tag
 #     Value is a list of tuples representing FIX fields in the form [(Fieldname, Type, Version)]
 fields = {}
+
+# Add some fields which don't get included by the spec parsing.
+fields.setdefault(212, []).append(("XmlDataLen", "Length", "4.2",))
+fields.setdefault(213, []).append(("XmlData", "data", "4.2",))
+fields.setdefault(267, []).append(("NoMDEntryTypes", "int", "4.2",))
+fields.setdefault(268, []).append(("NoMDEntries", "int", "4.2",))
 
 # Parse FIX 5.0 Schema.
 pattern50sp2 = """<fm:Xref +Protocol="FIX" +name="(\w+)"[^>]*?Tag="(\d+)"[^>]*?Type="(\w+)"[^>]*?/>"""
@@ -55,7 +61,8 @@ l = sorted(fields.iteritems(), operator.lt, operator.itemgetter(0))
 for i in l:
   sys.stdout.write("{:<50} = {}".format(i[1][0][0], i[0]))
   if i[0] != l[-1][0]: sys.stdout.write(",")
-  sys.stdout.write(" //!")
+  sys.stdout.write(" //!<")
+  sys.stdout.write(str(i[0]))
   for field in i[1]: sys.stdout.write(" (" + field[1] + " " + field[2] + ")")
   if reduce(lambda x, y: x or (y[0] != i[1][0][0]) or (y[1] != i[1][0][1]), i[1], False): sys.stdout.write(" *Different*") # If the different spec versions have a different data type or different name for this field tag number, then print *Different*.
   sys.stdout.write("\n")

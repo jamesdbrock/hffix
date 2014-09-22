@@ -1,5 +1,5 @@
 
-CXXFLAGS = -ggdb -Iinclude
+CXXFLAGS = -Iinclude
 
 all : specs doc fixprint
 
@@ -56,4 +56,5 @@ util/bin/fixprint : util/src/fixprint.cpp include/hffix.hpp include/hffix_fields
 
 ctags : 
 	ctags include/*
+
 .PHONY : help doc all clean install uninstall fixprint specs ctags

@@ -101,7 +101,7 @@ without any intermediate objects and without calling new or malloc or
 doing any free store allocations of any kind.
 
 Field values are weakly typed. They are exposed to the developer
-as <tt>const char* begin(), const char* end()</tt>, and High Frequency FIX Parser provides
+as <tt>char const* begin(), char const* end()</tt>, and High Frequency FIX Parser provides
 a complete set of conversion functions for ints,
 decimal floats, dates and times, et cetera for the developer to call at his discretion.
 
@@ -273,7 +273,7 @@ struct order
     char time_in_force;
 };
 
-int main(int argc, const char** argv)
+int main(int argc, char const** argv)
 {
     long long sequence_number_send(0); // can be any integer type
     long long sequence_number_recv(0); // can be any integer type
@@ -362,7 +362,7 @@ int main(int argc, const char** argv)
             // Check if this is a New Order MsgType.
             // We can't use switch(reader.message_type()->value().as_char()) here because
             // some FIX message types have multiple characters.
-            // Use the overloaded hffix::operator==(const message_reader_value_type_value &, const char *) instead.
+            // Use the overloaded hffix::operator==(field_value const&, char const*) instead.
             if (reader.message_type()->value() == "D")
             {
                 // Make an instance of our order struct, see above, which will store fields that we read from this message.
@@ -560,7 +560,7 @@ Parses ascii and returns a (possibly negative) integer.
 \param end Pointer to past-the-end of the ascii string.
 \return The ascii string represented as an integer of type Int_type.
 */
-template<typename Int_type> Int_type atoi(const char* begin, const char* end)
+template<typename Int_type> Int_type atoi(char const* begin, char const* end)
 {
     Int_type val(0);
     bool isnegative(false);
@@ -589,7 +589,7 @@ Parses ascii and returns an unsigned integer.
 \param end Pointer to past-the-end of the ascii string.
 \return The ascii string represented as an unsigned integer of type Uint_type.
 */
-template<typename Uint_type> Uint_type atou(const char* begin, const char* end)
+template<typename Uint_type> Uint_type atou(char const* begin, char const* end)
 {
     Uint_type val(0);
 
@@ -689,7 +689,7 @@ If the decimal float is an integer, the exponent will be zero.
 \param mantissa Reference to storage for the mantissa of the decimal float to be returned.
 \param exponent Reference to storage for the exponent of the decimal float to be returned.
 */
-template<typename Int_type> void atod(const char* begin, const char* end, Int_type& mantissa, Int_type& exponent)
+template<typename Int_type> void atod(char const* begin, char const* end, Int_type& mantissa, Int_type& exponent)
 {
     mantissa = 0;
     exponent = 0;
@@ -775,8 +775,8 @@ Parses ascii and returns a LocalMktDate or UTCDate.
 \return True if successful and the out arguments were set.
 */
 inline bool atodate(
-    const char* begin,
-    const char* end,
+    char const* begin,
+    char const* end,
     int& year,
     int& month,
     int& day
@@ -806,8 +806,8 @@ Parses ascii and returns a time.
 \return True if successful and the out arguments were set.
 */
 inline bool atotime(
-    const char* begin,
-    const char* end,
+    char const* begin,
+    char const* end,
     int& hour,
     int& minute,
     int& second,
@@ -838,16 +838,16 @@ class message_reader_const_iterator;
 /*!
 \brief FIX field value, weakly-typed as an array of chars, with type conversion methods.
 */
-class message_reader_value_type_value {
+class field_value {
 public:
 
     /*! \brief Pointer to the beginning of the field value. */
-    const char* begin() const {
+    char const* begin() const {
         return begin_;
     }
 
     /*! \brief Pointer to past-the-end of the field value. */
-    const char* end() const {
+    char const* end() const {
         return end_;
     }
 
@@ -860,7 +860,7 @@ public:
     /*!
     \brief True if the value of the field is equal to the C-string argument.
     */
-    friend bool operator==(const message_reader_value_type_value& that, const char* cstring) {
+    friend bool operator==(field_value const& that, char const* cstring) {
         return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
     }
 
@@ -868,14 +868,14 @@ public:
     /*!
     \brief True if the value of the field is equal to the C-string argument.
     */
-    friend bool operator==(const char* cstring, const message_reader_value_type_value& that) {
+    friend bool operator==(char const* cstring, field_value const& that) {
         return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
     }
 
     /*!
     \brief True if the value of the field is equal to the string argument.
     */
-    template<typename Char_type> friend bool operator==(const message_reader_value_type_value& that, const std::basic_string<Char_type>& s) {
+    template<typename Char_type> friend bool operator==(field_value const& that, std::basic_string<Char_type> const& s) {
         return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
     }
 
@@ -883,7 +883,7 @@ public:
     /*!
     \brief True if the value of the field is equal to the string argument.
     */
-    template<typename Char_type> friend bool operator==(const std::basic_string<Char_type>& s, const message_reader_value_type_value& that) {
+    template<typename Char_type> friend bool operator==(std::basic_string<Char_type> const& s, field_value const& that) {
         return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
     }
 
@@ -940,14 +940,14 @@ private:
 
     template <typename Int_type>
     struct as_int_selector<Int_type, true> {
-        static inline Int_type call_as_int(const char* begin, const char * end) {
+        static inline Int_type call_as_int(char const* begin, char const* end) {
             return details::atoi<Int_type>(begin, end);
         }
     };
 
     template <typename Int_type>
     struct as_int_selector<Int_type, false> {
-        static inline Int_type call_as_int(const char* begin, const char * end) {
+        static inline Int_type call_as_int(char const* begin, char const* end) {
             return details::atou<Int_type>(begin, end);
         }
     };
@@ -1144,17 +1144,17 @@ public:
 
 
 private:
-    friend class message_reader_value_type;
+    friend class field;
     friend class message_reader_const_iterator;
     friend class message_reader;
-    const char* begin_;
-    const char* end_;
+    char const* begin_;
+    char const* end_;
 };
 
 /*!
 \brief A FIX field for reading, with tag and field value. This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
 */
-class message_reader_value_type {
+class field {
 public:
 
     /*! \brief Tag of the field. */
@@ -1163,12 +1163,12 @@ public:
     }
 
     /*! \brief Weakly-typed value of the field. */
-    const message_reader_value_type_value& value() const {
+    field_value const& value() const {
         return value_;
     }
 
     /*! \brief Output stream operator. Output format is "[tag number]=[value]". */
-    friend std::ostream& operator<<(std::ostream& os, const message_reader_value_type& that) {
+    friend std::ostream& operator<<(std::ostream& os, field const& that) {
         os << that.tag_ << "=";
         return os.write(that.value_.begin(), that.value_.size());
     }
@@ -1177,7 +1177,7 @@ private:
     friend class message_reader_const_iterator;
     friend class message_reader;
     int tag_;
-    message_reader_value_type_value value_;
+    field_value value_;
 };
 
 /*!
@@ -1186,22 +1186,13 @@ private:
 Satisfies the const Input Iterator Concept for an immutable hffix::message_reader container of fields.
 */
 class message_reader_const_iterator {
-public:
-
-    /*!
-    \brief Copy Constructor.
-    */
-    message_reader_const_iterator(const message_reader_const_iterator& that) :
-        message_reader_(that.message_reader_),
-        buffer_(that.buffer_),
-        current_(that.current_) {
-    }
 
 private:
     // there cannot be a default constructor because of the message_reader_ member.
+    message_reader_const_iterator() {}
 
-    message_reader_const_iterator(message_reader& container, const char* buffer) :
-        message_reader_(container),
+    message_reader_const_iterator(message_reader const& container, char const* buffer) :
+        message_reader_(&container),
         buffer_(buffer),
         current_() {
     }
@@ -1209,49 +1200,49 @@ private:
 public:
 
     typedef ::std::input_iterator_tag iterator_category;
-    typedef message_reader_value_type value_type;
+    typedef field value_type;
     typedef std::ptrdiff_t difference_type;
-    typedef message_reader_value_type* pointer;
-    typedef message_reader_value_type& reference;
+    typedef field* pointer;
+    typedef field& reference;
 
 
     /*!
     \brief Returns a hffix::message_reader::const_reference to a field.
     */
-    const message_reader_value_type& operator*() const {
+    field const& operator*() const {
         return current_;
     }
 
     /*!
     \brief Returns a hffix::message_reader::const_pointer to a field.
     */
-    const message_reader_value_type* operator->() const {
+    field const* operator->() const {
         return &current_;
     }
 
 
 
-    friend bool operator==(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+    friend bool operator==(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ == b.buffer_;
     }
 
-    friend bool operator!=(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+    friend bool operator!=(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ != b.buffer_;
     }
 
-    friend bool operator<(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+    friend bool operator<(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ < b.buffer_;
     }
 
-    friend bool operator>(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+    friend bool operator>(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ > b.buffer_;
     }
 
-    friend bool operator<=(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+    friend bool operator<=(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ <= b.buffer_;
     }
 
-    friend bool operator>=(const message_reader_const_iterator& a, const message_reader_const_iterator& b) {
+    friend bool operator>=(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ >= b.buffer_;
     }
 
@@ -1266,11 +1257,11 @@ public:
         return *this;
     }
 
-private:
+protected:
     friend class message_reader;
-    message_reader& message_reader_;
-    const char* buffer_;
-    message_reader_value_type current_;
+    message_reader const* message_reader_;
+    char const* buffer_;
+    field current_;
 
     void increment();
 };
@@ -1312,10 +1303,10 @@ class message_reader {
 
 public:
 
-    typedef message_reader_value_type value_type;
-    typedef const message_reader_value_type& const_reference;
+    typedef field value_type;
+    typedef field const& const_reference;
     typedef message_reader_const_iterator const_iterator;
-    typedef const message_reader_value_type* const_pointer;
+    typedef field const* const_pointer;
     typedef size_t size_type;
 
     /*!
@@ -1323,7 +1314,7 @@ public:
     \param buffer Pointer to the buffer to be read.
     \param size Number of bytes in the buffer to be read.
     */
-    message_reader(const char* buffer, size_t size) :
+    message_reader(char const* buffer, size_t size) :
         buffer_(buffer),
         buffer_end_(buffer + size),
         begin_(*this, 0),
@@ -1338,7 +1329,7 @@ public:
     \param begin Pointer to the buffer to be read.
     \param end Pointer to past-the-end of the buffer to be read.
     */
-    message_reader(const char* begin, const char* end) :
+    message_reader(char const* begin, char const* end) :
         buffer_(begin),
         buffer_end_(end),
         begin_(*this, 0),
@@ -1350,7 +1341,7 @@ public:
     /*!
     \brief Copy constructor. The hffix::message_reader is immutable, so copying it is fine.
     */
-    message_reader(const message_reader& that) :
+    message_reader(message_reader const& that) :
         buffer_(that.buffer_),
         buffer_end_(that.buffer_end_),
         begin_(that.begin_),
@@ -1366,7 +1357,7 @@ public:
     \brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::message_type().
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
-    const const_iterator& begin() const {
+    const_iterator begin() const {
         // return iterator for beginning of nonmutable sequence
         if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
         return begin_;
@@ -1376,7 +1367,7 @@ public:
     \brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::check_sum().
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
-    const const_iterator& end() const {
+    const_iterator end() const {
         // return iterator for end of nonmutable sequence
         if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
         return end_;
@@ -1386,7 +1377,7 @@ public:
     \brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::begin().
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
-    const const_iterator& message_type() const {
+    const_iterator message_type() const {
         // return iterator for beginning of nonmutable sequence
         if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
         return begin_;
@@ -1396,7 +1387,7 @@ public:
     \brief An iterator to the CheckSum field in the FIX message. Same as hffix::message_reader::end().
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
-    const const_iterator& check_sum() const {
+    const_iterator check_sum() const {
         // return iterator for end of nonmutable sequence
         if (!is_valid_) throw std::logic_error("hffix Cannot return iterator for an invalid message.");
         return end_;
@@ -1406,13 +1397,13 @@ public:
     \brief A pointer to the begining of the buffer.
     buffer_begin() == message_begin()
     */
-    const char* buffer_begin() const {
+    char const* buffer_begin() const {
         return buffer_;
     }
     /*!
     \brief A pointer to past-the-end of the buffer.
     */
-    const char* buffer_end() const {
+    char const* buffer_end() const {
         return buffer_end_;
     }
 
@@ -1427,14 +1418,14 @@ public:
     \brief A pointer to the beginning of the FIX message in the buffer.
      buffer_begin() == message_begin()
     */
-    const char* message_begin() const {
+    char const* message_begin() const {
         return buffer_;
     }
     /*!
     \brief A pointer to past-the-end of the FIX message in the buffer.
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
-    const char* message_end() const {
+    char const* message_end() const {
         if (!is_valid_) throw std::logic_error("hffix Cannot determine size of an invalid message.");
         return end_.current_.value_.end_ + 1;
     }
@@ -1469,49 +1460,46 @@ public:
 
 
     /*!
-    \brief Moves this message_reader to the next FIX message in the buffer.
+    \brief Returns a new message_reader for the next FIX message in the buffer.
 
-    If this message is_valid() and is_complete(), assume that the next message comes immediately after this one.
+    If this message is_valid() and is_complete(), assume that the next message comes immediately after this one and return a new message_reader constructed at this->message_end().
 
     If this message !is_valid(), will search the remainder of the buffer
     for the text "8=FIX", to see if there might be a complete or partial valid message
-    anywhere else in the remainder of the buffer.
+    anywhere else in the remainder of the buffer, will return a new message_reader constructed at that location.
 
-    If this message !is_complete(), no-op.
+    If this message !is_complete(), will throw std::logic_error.
 
-    \return *this
     */
-    message_reader& operator++() {
+    message_reader next_message_reader() const {
         if (!is_complete_) {
-            return *this; // can't increment on an incomplete message.
+            throw std::logic_error("Can't call next_message_reader on an incomplete message.");
         }
 
         if (!is_valid_) { // this message isn't valid, so we have to try to search for the beginning of the next message.
-            const char* b = buffer_ + 1;
+            char const* b = buffer_ + 1;
             while(b < buffer_end_ - 10) {
                 if (!std::memcmp(b, "8=FIX", 5))
                     break;
                 ++b;
             }
-            new (this) message_reader(b, buffer_end_); // whether or not we found the next message, reconstruct.
-            return *this;
+            return message_reader(b, buffer_end_); 
         }
 
-        new (this) message_reader(end_.current_.value_.end_ + 1, buffer_end_);
-        return *this;
+        return message_reader(end_.current_.value_.end_ + 1, buffer_end_);
     }
 
     /*!
      * \brief Returns the FIX version prefix string begin pointer. (Example: "FIX.4.4")
      */
-    const char* prefix_begin() const {
+    char const* prefix_begin() const {
         return buffer_ + 2;
     }
 
     /*!
      * \brief Returns the FIX version prefix string end pointer. (Example: "FIX.4.4")
      */
-    const char* prefix_end() const {
+    char const* prefix_end() const {
         return prefix_end_;
     }
 
@@ -1526,9 +1514,9 @@ private:
     friend class message_reader_const_iterator;
 
     void init() {
-        // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
 
-        const char* b = buffer_ + 9; // look for the first '\x01'
+        // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
+        char const* b = buffer_ + 9; // look for the first '\x01'
 
         while(true) {
             if (b >= buffer_end_) {
@@ -1540,7 +1528,7 @@ private:
                 break;
             }
             if (b - buffer_ > 11) {
-                malformed();
+                invalid();
                 return;
             }
             ++b;
@@ -1551,7 +1539,7 @@ private:
             return;
         }
         if (b[1] != '9') { // next field must be tag 9 BodyLength
-            malformed();
+            invalid();
             return;
         }
         b += 3; // skip the " 9=" for tag 9 BodyLength
@@ -1565,7 +1553,7 @@ private:
             }
             if (*b == '\x01') break;
             if (*b < '0' || *b > '9') { // this is the only time we need to check for numeric ascii.
-                malformed();
+                invalid();
                 return;
             }
             bodylength *= 10;
@@ -1579,11 +1567,11 @@ private:
         }
 
         if (*b != '3' || b[1] != '5') { // next field must be tag 35 MsgType
-            malformed();
+            invalid();
             return;
         }
 
-        const char* checksum = b + bodylength;
+        char const* checksum = b + bodylength;
 
         if (checksum + 7 > buffer_end_) {
             is_complete_ = false;
@@ -1591,7 +1579,7 @@ private:
         }
 
         if (*(checksum + 6) != '\x01') { // check for trailing SOH
-            malformed();
+            invalid();
             return;
         }
 
@@ -1599,7 +1587,12 @@ private:
         begin_.current_.tag_ = 35; // MsgType
         b += 3;
         begin_.current_.value_.begin_ = b;
-        while(*++b != '\x01') {}
+        while(*++b != '\x01') {
+            if (b >= checksum) {
+                invalid();
+                return;
+            }
+        }
         begin_.current_.value_.end_ = b;
 
         end_.buffer_ = checksum;
@@ -1610,16 +1603,16 @@ private:
         is_complete_ = true;
     }
 
-    const char* buffer_;
-    const char* buffer_end_;
+    char const* buffer_;
+    char const* buffer_end_;
     const_iterator begin_;
     const_iterator end_;
     value_type message_type_;
     bool is_complete_;
     bool is_valid_;
-    const char* prefix_end_; // Points after the 8=FIX... Prefix field.
+    char const* prefix_end_; // Points after the 8=FIX... Prefix field.
 
-    void malformed() {
+    void invalid() {
         is_complete_ = true; // invalid messages are considered complete, for use of the message_reader::operator++()
         is_valid_ = false;
     }
@@ -1643,6 +1636,7 @@ namespace details {
 bool is_tag_a_data_length(int tag);
 }
 /*! @endcond */
+
 
 inline void message_reader_const_iterator::increment()
 {
@@ -1675,9 +1669,10 @@ inline void message_reader_const_iterator::increment()
 
         current_.value_.end_ = ++current_.value_.begin_ + data_len;
 
-        if (current_.value_.end_ >= message_reader_.end_.buffer_) {
-            message_reader_.malformed(); // in theory this can never happen.
-        }
+        // TODO: eliminate this check, along with the message_reader_ member?
+        // if (current_.value_.end_ >= message_reader_->end_.buffer_) {
+        //     message_reader_->invalid(); // in theory this can never happen.
+        // }
     }
 };
 
@@ -1729,7 +1724,7 @@ public:
     \pre No other push_back method has yet been called.
     \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
     */
-    void push_back_header(char* begin_string_version) {
+    void push_back_header(char const* begin_string_version) {
         memcpy(next_, "8=", 2);
         next_ += 2;
         memcpy(next_, begin_string_version, std::strlen(begin_string_version) - 1);
@@ -1812,7 +1807,7 @@ public:
     \param begin Pointer to the beginning of the string.
     \param end Pointer to past-the-end of the string.
     */
-    void push_back_string(int tag, const char* begin, const char* end) {
+    void push_back_string(int tag, char const* begin, char const* end) {
         next_ = details::itoa(tag, next_);
         *next_++ = '=';
         memcpy(next_, begin, end - begin);
@@ -1825,7 +1820,7 @@ public:
     \param tag FIX tag.
     \param cstring Pointer to the beginning of a C-style null-terminated string.
     */
-    void push_back_string(int tag, const char* cstring) {
+    void push_back_string(int tag, char const* cstring) {
         next_ = details::itoa(tag, next_);
         *next_++ = '=';
         while(*cstring) *next_++ = *cstring++;
@@ -1844,7 +1839,7 @@ public:
     \param tag FIX tag.
     \param s String.
     */
-    template<typename Char_type> void push_back_string(int tag, const std::basic_string<Char_type>& s) {
+    template<typename Char_type> void push_back_string(int tag, std::basic_string<Char_type> const& s) {
         push_back_string(tag, s.data(), s.data() + s.length());
     }
 
@@ -2165,18 +2160,25 @@ public:
 
     Note that this method will append two fields to the message. The first field is an integer equal to
     the content length of the second field. FIX does this so that the content of the second field may contain
-    Ascii NULL or SOH or other strange characters.
+    Ascii NULL or SOH or other control characters.
 
     High Frequency FIX Parser calculates the content length for you
     and writes out both fields, you just have to provide both tags and pointers to the data.
     For most of the data fields in FIX, it is true that tag_data = tag_data_length + 1, but we daren't assume that.
+
+    Example:
+    \code
+    hffix::message_writer r;
+    std::string data("Some data.");
+    r.push_back_data(hffix::tag::RawDataLength, hffix::tag::RawData, data.begin(), data.end());
+    \endcode
 
     \param tag_data_length FIX tag for the data length field.
     \param tag_data FIX tag for the data field.
     \param begin Pointer to the beginning of the data.
     \param end Pointer to after-the-end of the data.
     */
-    void push_back_data(int tag_data_length, int tag_data, const char* begin, const char* end) {
+    void push_back_data(int tag_data_length, int tag_data, char const* begin, char const* end) {
         next_ = details::itoa(tag_data_length, next_);
         *next_++ = '=';
         next_ = details::itoa(end - begin, next_);
@@ -2198,12 +2200,8 @@ private:
         }
     }
 
-    // message_writer() {} // no default construction allowed
-    // message_writer(const message_writer& that) {} // no copying allowed
-    // message_writer& operator=(const message_writer& that) { return *this; } // no assignment allowed
-
     char* buffer_;
-    char* buffer_end_;
+    char* buffer_end_; // TODO check in all methods for overflow of buffer and throw.
     char* next_;
     char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
 };
@@ -2217,21 +2215,20 @@ inline bool is_tag_a_data_length(int tag)
     return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
 }
 
-
-
 // \brief std::ostream-able type returned by hffix::field_name function.
 template <typename AssociativeContainer> struct field_name_streamer {
     int tag;
     AssociativeContainer const& field_dictionary;
+    bool number_alternative;
 
-    field_name_streamer(int tag, AssociativeContainer const& field_dictionary) : tag(tag), field_dictionary(field_dictionary) {}
+    field_name_streamer(int tag, AssociativeContainer const& field_dictionary, bool number_alternative) : tag(tag), field_dictionary(field_dictionary), number_alternative(number_alternative) {}
 
     friend std::ostream& operator<<(std::ostream& os, field_name_streamer that) {
         typename AssociativeContainer::const_iterator i = that.field_dictionary.find(that.tag);
-        if (i == that.field_dictionary.end())
-            os << that.tag;
-        else
+        if (i != that.field_dictionary.end())
             os << i->second;
+        else if (that.number_alternative)
+            os << that.tag;
     }
 };
 
@@ -2244,17 +2241,20 @@ template <typename AssociativeContainer> struct field_name_streamer {
 
  \param tag The field number.
  \param field_dictionary The field dictionary.
+ \param or_number Specifies behavior if the tag is not found in the dictionary. If true, then the string representation of the flag will be written to the std::ostream. If false, then nothing will be written to the std::ostream. Default is false.
 
  Example usage:
  \code
  std::map<int, std::string> dictionary;
  hffix::field_dictionary_init(dictionary);
- std::cout << field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID" and a newline.
+ std::cout << field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID\n".
+ std::cout << field_name(1000000, dictionary) << '\n'; // Will print "\n".
+ std::cout << field_name(1000000, dictionary, true) << '\n'; // Will print "1000000\n".
  \endcode
 */
-template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary)
+template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary, bool or_number = false)
 {
-    return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary);
+    return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary, or_number);
 };
 
 } // namespace hffix
