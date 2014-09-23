@@ -67,7 +67,7 @@ and Boost Date_Time types.
 The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts
 for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>.
 
-All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the <tt>spec</tt> directory. As a convenience for the developer, the High Frequency FIX Parser library includes a Python script which parses all of the FIX protocol specification documents and generates the <tt>include/hffix_fields.hpp</tt> file. That file has <tt>enum</tt> definitions in a tag namspace and an hffix::field_dictionary_init function which allows fields to be referred to by name instead of number both during development, and at run-time.
+All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the <tt>spec</tt> directory. As a convenience for the developer, the High Frequency FIX Parser library includes a Python script which parses all of the FIX protocol specification documents and generates the <tt>include/hffix_fields.hpp</tt> file. That file has <tt>enum</tt> definitions in a tag namspace and an hffix::dictionary_init_field function which allows fields to be referred to by name instead of number both during development, and at run-time.
 
 High Frequency FIX Parser is distributed under the open source FreeBSD License, also known as the Simplified BSD License.
 
@@ -156,8 +156,7 @@ unless they are documented to throw exceptions, in which case they provide the B
 
 Hight Frequency FIX Parser is not thread-aware at all and has no threads, mutexes, locks, or atomic operations.
 
-All const methods of the hffix::message_reader are thread safe. The hffix::message_reader::operator++(),
-which moves the hffix::message_reader to the next message in the buffer, is not const and is not thread safe.
+All const methods of the hffix::message_reader are thread safe.
 
 The hffix::message_writer is not thread safe.
 
@@ -190,7 +189,7 @@ hffix::message_reader reader(buffer, buffer + 75);
 
 if (reader.is_complete() && reader.is_valid())
 {
-    std::cout << "Read " << reader.message_size() << " bytes from buffer." << std::endl;
+    std::cout << "Read " << reader.message_size() << " bytes from buffer." << '\n';
 
     for(hffix::message_reader::const_iterator i = reader.begin(); i != reader.end(); ++i)
     {
@@ -230,8 +229,8 @@ writer.push_back_int(hffix::tag::MsgSeqNum, 1);
 writer.push_back_timestamp(hffix::tag::SendingTime, boost::posix_time::microsec_clock::universal_time());
 writer.push_back_trailer();
 
-std::cout.write(writer.message_begin(), writer.message_size()) << std::endl;
-std::cout << "Wrote " << writer.message_size() << " bytes to buffer." << std::endl;
+std::cout.write(writer.message_begin(), writer.message_size()) << '\n';
+std::cout << "Wrote " << writer.message_size() << " bytes to buffer." << '\n';
 \endcode
 
 Example Output:
@@ -251,14 +250,6 @@ Here is a more complete example that shows reading, writing, and type conversion
 
 #include <iostream>
 #include <string>
-
-// For convenience, make a Meyers' Singleton instance of an hffix::tag_name_dictionary,
-// so that we can look up the names of FIX tags from anywhere in the program.
-hffix::tag_name_dictionary& dictionary_singleton()
-{
-    static hffix::tag_name_dictionary instance;
-    return instance;
-}
 
 // Here is a data type for an order that we'll use for the parsing example, below.
 struct order
@@ -301,11 +292,11 @@ int main(int argc, char const** argv)
     logon_message.push_back_trailer(); // write CheckSum
 
     // Now the Logon message is ready to send. It occupies the buffer.
-    std::cout << "Wrote Logon to the buffer, " << logon_message.message_size() << " bytes." << std::endl;
+    std::cout << "Wrote Logon to the buffer, " << logon_message.message_size() << " bytes." << '\n';
 
     // We can print the FIX Logon message to std::cout. It contains lots of non-printing
     // characters, so it'll look strange. At this point we could also send it out a network socket.
-    std::cout << std::string(logon_message.message_begin(), logon_message.message_end()) << std::endl;
+    std::cout.write(logon_message.message_begin(), logon_message.message_size());
 
 
 
@@ -336,10 +327,10 @@ int main(int argc, char const** argv)
     new_order_message.push_back_trailer();
 
     //Now the New Order message is in the buffer after the Logon message.
-    std::cout << "Wrote New Order to the buffer, " << new_order_message.message_size() << " bytes." << std::endl;
+    std::cout << "Wrote New Order to the buffer, " << new_order_message.message_size() << " bytes." << '\n';
 
     // Print the FIX New Order message to std::cout.
-    std::cout << std::string(new_order_message.message_begin(), new_order_message.message_end()) << std::endl;
+    std::cout.write(new_order_message.message_begin(), new_order_message.message_size());
 
 
 
@@ -354,10 +345,10 @@ int main(int argc, char const** argv)
     {
         if (reader.is_valid())
         {
-            std::cout << "Reading message of size " << reader.message_size() << " bytes." << std::endl;
+            std::cout << "Reading message of size " << reader.message_size() << " bytes." << '\n';
 
             // Get a peek at this message before we parse it by printing the raw FIX to std::cout.
-            std::cout << std::string(reader.message_begin(), reader.message_end()) << std::endl;
+            std::cout << std::string(reader.message_begin(), reader.message_end()) << '\n';
 
             // Check if this is a New Order MsgType.
             // We can't use switch(reader.message_type()->value().as_char()) here because
@@ -427,70 +418,25 @@ int main(int argc, char const** argv)
                     }
                 }
 
-                std::cout << sender_comp_id << " has sent a Logon message." << std::endl;
+                std::cout << sender_comp_id << " has sent a Logon message." << '\n';
             }
 
             else // This is a MsgType that we weren't expecting to see.
             {
-                std::cout << "Unexpected message of type " << reader.message_type()->value().as_string<char>() << std::endl;
+                std::cout << "Unexpected message of type " << reader.message_type()->value().as_string<char>() << '\n';
 
                 for(hffix::message_reader::const_iterator i = reader.begin(); i != reader.end(); ++i)
-                    std::cout << dictionary_singleton()(i->tag()) << " = " << std::string(i->value().begin(), i->value().end()) << std::endl;
+                    std::cout << hffix::field_name(i->tag()) << " = " << std::string(i->value().begin(), i->value().end()) << '\n';
             }
         }
         else
         {
-            std::cout << "Invalid message." << std::endl;
+            std::cout << "Invalid message." << '\n';
         }
     }
 
     return 0;
 }
-\endcode
-
-
-\subsection example2 TCP Example
-
-Here is an example that shows how to read incomplete messages,
-such as you might expect to encounter when reading fragmented packets out of a TCP socket.
-This example also shows how to handle invalid, corrupt messages.
-
-\code
-    char buffer[512];
-    size_t buffer_length(0);
-
-    while(true)
-    {
-        // Read (512 - buffer_length) bytes from I/O into buffer[buffer_length].
-        // buffer_length += the number of bytes actually read.
-        buffer_length += read(TCP_SOCKET_DESCRIPTOR, buffer + buffer_length, 512 - buffer_length);
-
-        hffix::message_reader reader(buffer, buffer + buffer_length);
-
-        // Try to read as many complete messages as there are in the buffer.
-        for (; reader.is_complete(); ++reader)
-        {
-            if (reader.is_valid())
-            {
-                // Here is a complete message. Read fields out of the reader.
-                // Perhaps call a callback function and pass it a const reference to the reader as an argument.
-            }
-            else
-            {
-                // An invalid, corrupted FIX message. Do not try to read fields out of this reader.
-                // The beginning of the invalid message is at location reader.message_begin() in the buffer,
-                // but the end of the invalid message is unknown (because it's invalid).
-                // Stay in this for loop, because the messager_reader::operator++()
-                // will see that this message is invalid and it will search the remainder of the buffer
-                // for the text "8=FIX", to see if there might be a complete or partial valid message
-                // anywhere else in the remainder of the buffer.
-            }
-        }
-        buffer_length = reader.buffer_end() - reader.buffer_begin();
-
-        if (buffer_length > 0) // Then there is an incomplete message at the end of the buffer.
-            std::memmove(buffer, reader.buffer_begin(), buffer_length); // Move the partial portion of the incomplete message to buffer[0].
-    }
 \endcode
 
 */
@@ -1618,18 +1564,6 @@ private:
     }
 };
 
-//!
-// \brief A predicate constructed with a FIX tag which returns true if the tag of the field passed to the predicate is equal.
-//
-struct tag_predicate {
-    tag_predicate(int tag) : tag(tag) {}
-    int tag;
-    inline bool operator()(message_reader::value_type const& v) const {
-        return v.tag() == tag;
-    }
-};
-
-
 
 /*! @cond EXCLUDE */
 namespace details {
@@ -2256,6 +2190,65 @@ template <typename AssociativeContainer> details::field_name_streamer<Associativ
 {
     return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary, or_number);
 };
+
+/*!
+ * \brief A predicate constructed with a FIX tag which returns true if the tag of the field passed to the predicate is equal.
+ */
+struct tag_predicate {
+    tag_predicate(int tag) : tag(tag) {}
+    int tag;
+    inline bool operator()(message_reader::value_type const& v) const {
+        return v.tag() == tag;
+    }
+};
+
+
+/*!
+ * \brief An algorithm for forward-searching over a range and finding items which match a predicate, when the expected ordering of the items is known. Searches from begin to end, but starts at i. If end is reached, then wraps around and finishes at i.
+ *
+ * This expression:
+ * \code
+ * find_with_hint(begin, end, i, predicate)
+ * \endcode
+ * will behave exactly the same as this expression:
+ * \code
+ * end != (i = std::find_if(begin, end, predicate))
+ * \endcode
+ * except for these two differences:
+ * * In the first expression, i is not modifed if no item is found.
+ * * The first expression is faster if the found item is a near successor of i.
+ *
+ * Example usage:
+ * \code
+ * hffix::message_reader::const_iterator i = reader.begin();
+ * if (hffix::find_with_hint(reader.begin(), reader.end(), i, hffix::tag_predicate(MsgSeqNum)) {
+ *   int seqnum = i->as_int<int>();
+ * }
+ * if (hffix::find_with_hint(reader.begin(), reader.end(), i, hffix::tag_predicate(TargetCompID)) {
+ *   std::string targetcompid = i->as_string();
+ * }
+ * \endcode
+ *
+ * \param begin The beginning of the range to search.
+ * \param end The end of the range to search.
+ * \param i If an item is found which matches predicate, then i is modified to point to the found item. Else i is unmodified.
+ * \param predicate A predicate which provides function <code>bool operator() (ForwardIterator::value_type const &v) const</code>.
+ * \return True if a field was found which matched prediate, and i was modified to point to the found field.
+ */
+template <typename ForwardIterator, typename Predicate> 
+bool find_with_hint(ForwardIterator begin, ForwardIterator end, ForwardIterator & i, Predicate predicate) {
+    ForwardIterator j = std::find_if(i, end, predicate);
+    if (j != end) {
+        i = j;
+        return true;
+    }
+    j = std::find_if(begin, i, predicate);
+    if (j != i) {
+        i = j;
+        return true;
+    }
+    return false;
+}
 
 } // namespace hffix
 

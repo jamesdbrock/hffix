@@ -1,24 +1,39 @@
 #include <iostream>
 #include <cstdio>
 #include <algorithm>
+#include <cstring>
 #include <hffix.hpp>
 
-enum { blocksize = 4096 }; // Choose a preferred I/O block size.
+const char color_field[]   = "\x1b" "[33m"; // Yellow
+const char color_value[]   = "\x1b" "[37m"; // White
+const char color_msgtype[] = "\x1b" "[31m"; // Red
+enum { chunksize = 4096 }; // Choose a preferred I/O chunk size.
 
-char buffer[blocksize * 4];
+char buffer[chunksize * 4]; // Must be larger than the maximum FIX message size.
 
-int main(int argc, char** arcv)
+int main(int argc, char** argv)
 {
-    std::map<int, std::string> dictionary;
-    hffix::field_dictionary_init(dictionary);
+    if (argc > 1 && (0 == std::strcmp("-h", argv[1]))) {
+        std::cout << 
+            "fixprint [Options]\n\n"
+            "Reads raw FIX encoded data from stdin and writes annotated human-readable FIX to stdout.\n\n"
+            "Options:\n"
+            "  -c --color     Color output.\n";
+        exit(0);
+    }
+            
+    bool color = argc > 1 && (0 == std::strcmp("-c", argv[1]) || 0 == std::strcmp("--color", argv[1]));
 
-    size_t buffer_length(0);
+    std::map<int, std::string> field_dictionary;
+    hffix::dictionary_init_field(field_dictionary);
+    std::map<std::string, std::string> message_dictionary;
+    hffix::dictionary_init_message(message_dictionary);
 
-    for (
-        size_t fred = std::fread(buffer + buffer_length, 1, std::min(sizeof(buffer) - buffer_length, size_t(blocksize)), stdin);
-        fred > 0;
-        fred = std::fread(buffer + buffer_length, 1, std::min(sizeof(buffer) - buffer_length, size_t(blocksize)), stdin)
-    ) {
+    size_t buffer_length(0); // The number of bytes read in buffer[].
+
+    size_t fred; // Number of bytes read from fread().
+    while((fred = std::fread(buffer + buffer_length, 1, std::min(sizeof(buffer) - buffer_length, size_t(chunksize)), stdin))) {
+
         buffer_length += fred;
         hffix::message_reader reader(buffer, buffer + buffer_length);
 
@@ -27,16 +42,36 @@ int main(int argc, char** arcv)
             if (reader.is_valid()) {
 
                 // Here is a complete message. Read fields out of the reader.
+                if (color) std::cout << color_value;
+                std::cout.write(reader.prefix_begin(), reader.prefix_size());
+                std::cout << ' ';
+
                 for(hffix::message_reader::const_iterator i = reader.begin(); i != reader.end(); ++i) {
-                    std::map<int, std::string>::iterator fname = dictionary.find(i->tag());
-                    if (fname != dictionary.end()) 
-                        std::cout << fname->second << "_";
+
+                    if (color) std::cout << color_field;
+
+                    std::map<int, std::string>::iterator fname = field_dictionary.find(i->tag());
+                    if (fname != field_dictionary.end())
+                        std::cout << fname->second << '_'; // Print the name of the field, if it's known.
                     std::cout << i->tag();
-                    std::cout << "=";
+
+                    std::cout << '=';
+
+                    if (color) std::cout << (i->tag() == hffix::tag::MsgType ? color_msgtype : color_value);
+
                     std::cout.write(i->value().begin(), i->value().size());
-                    std::cout << " ";
+
+                    if (i->tag() == hffix::tag::MsgType) { // If this is a MsgType field.
+                        std::map<std::string, std::string>::iterator mname = message_dictionary.find(std::string(i->value().begin(), i->value().end()));
+                        if (mname != message_dictionary.end())
+                            std::cout << '_' << mname->second; // Print the name of the message, if it's known.
+                    }
+
+                    std::cout << ' ';
                 }
-                std::cout << "\n";
+
+                std::cout << '\n';
+
             } else {
                 // An invalid, corrupted FIX message. Do not try to read fields out of this reader.
                 // The beginning of the invalid message is at location reader.message_begin() in the buffer,

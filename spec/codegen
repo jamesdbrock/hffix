@@ -1,37 +1,66 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python2.7
 
 import sys
 import re
 import operator
+from collections import OrderedDict
 
-fix43dtd = 'fix.4.3/fixml4.3v20020920.dtd'
-fix44dtd = 'fix.4.4/FIXML4.4v20030618.dtd'
-fix50schema = 'fix.5.0.sp2/fixmlschema/fixml-fields-base-5-0-SP2.xsd'
+fix43dtd_file = 'fix.4.3/fixml4.3v20020920.dtd'
+fix44dtd_file = 'fix.4.4/FIXML4.4v20030618.dtd'
+fix50schema_file = 'fix.5.0.sp2/fixmlschema/fixml-fields-base-5-0-SP2.xsd'
 
 # fields is a dictionary such that
 #     Key is an integer Tag
 #     Value is a list of tuples representing FIX fields in the form [(Fieldname, Type, Version)]
 fields = {}
 
-# Add some fields which don't get included by the spec parsing.
+# Add some fields from 4.2 which don't get included by the spec parsing for any of the other versions.
+fields.setdefault(7, []).append(("BeginSeqNo", "int", "4.2",))
+fields.setdefault(16, []).append(("EndSeqNo", "int", "4.2",))
+fields.setdefault(90, []).append(("SecureDataLen", "Length", "4.2",))
+fields.setdefault(91, []).append(("SecureData", "data", "4.2",))
+fields.setdefault(98, []).append(("EncryptMethod", "int", "4.2",))
+fields.setdefault(108, []).append(("HeartBtInt", "int", "4.2",))
 fields.setdefault(212, []).append(("XmlDataLen", "Length", "4.2",))
 fields.setdefault(213, []).append(("XmlData", "data", "4.2",))
-fields.setdefault(267, []).append(("NoMDEntryTypes", "int", "4.2",))
-fields.setdefault(268, []).append(("NoMDEntries", "int", "4.2",))
+fields.setdefault(369, []).append(("LastMsgSeqNumProcessed", "int", "4.2",))
+fields.setdefault(370, []).append(("OnBehalfOfSendingTime", "UTCTimeStamp", "4.2",))
+
+# messagetypes is a dictionary such that
+#    Key is a string
+#    Values is a list of tuples representing FIX message types in the form [(Messagename, Version)]
+messagetypes = OrderedDict()
 
 # Parse FIX 5.0 Schema.
-pattern50sp2 = """<fm:Xref +Protocol="FIX" +name="(\w+)"[^>]*?Tag="(\d+)"[^>]*?Type="(\w+)"[^>]*?/>"""
-for m in re.compile(pattern50sp2, re.MULTILINE | re.DOTALL).finditer(open(fix50schema, 'r').read()):
+fix50schema = open(fix50schema_file, 'r').read()
+# Get field names.
+fields50sp2 = """<fm:Xref +Protocol="FIX" +name="(\w+)"[^>]*?Tag="(\d+)"[^>]*?Type="(\w+)"[^>]*?/>"""
+for m in re.compile(fields50sp2, re.MULTILINE | re.DOTALL).finditer(fix50schema):
   fields.setdefault(int(m.group(2)), []).append(m.group(1, 3) + ("5.0.SP2",))
+# Get message type names.
+MsgType_enum = re.search("""<xs:simpleType name="MsgType_enum_t">(.*?)</xs:simpleType>""", fix50schema, re.MULTILINE | re.DOTALL).group(1)
+for m in re.finditer("""value="([^"]+)">(\w+)""", MsgType_enum, re.DOTALL):
+  messagetypes.setdefault(m.group(1), []).append((m.group(2),) + ("5.0.SP2",))
 
 # Parse FIX 4.4 DTD.
-pattern44 = """<!ATTLIST[^>]*?FIXTag[^>]*?'(\d+)'[^>]*?DataType[^>]*?'(\w+?)'[^>]*?FullName[^>]*?'(\w+?)'[^>]*?ComponentType CDATA #FIXED 'Field'[^>]*?>"""
-for m in re.compile(pattern44, re.MULTILINE | re.DOTALL).finditer(open(fix44dtd, 'r').read()):
+fix44dtd = open(fix44dtd_file, 'r').read()
+# Get field names for regular fields.
+for m in re.compile(
+    """<!ATTLIST[^>]*?FIXTag[^>]*?'(\d+)'[^>]*?DataType[^>]*?'(\w+?)'[^>]*?FullName[^>]*?'(\w+?)'[^>]*?ComponentType CDATA #FIXED 'Field'[^>]*?>"""
+    , re.MULTILINE | re.DOTALL).finditer(fix44dtd):
   fields.setdefault(int(m.group(1)), []).append(m.group(3, 2) + ("4.4",))
+# Get field names for repeating group header fields.
+for m in re.compile(
+    """<!ATTLIST[^>]*?'(\w+?)'[^>]*?FIXTag[^>]*?'(\d+)'[^>]*?ComponentType CDATA #FIXED 'BlockRepeating'[^>]*?>"""
+    , re.MULTILINE | re.DOTALL).finditer(fix44dtd):
+  fieldinfo = (m.group(1), "BlockRepeating", "4.4",)
+  if fieldinfo not in fields.setdefault(int(m.group(2)), []):
+    fields.setdefault(int(m.group(2)), []).append(fieldinfo)
 
-# Parse FIX 4.3 DTD. Only the fields of type Length, because the dtd fields can't be parsed by regex.
-pattern43 = """<!ATTLIST +(\w+)[^>]*?FIXTag[^>]*?['"](\d+)['"][^>]*?DataType[^>]*?['"](Length)['"][^>]*?>"""
-for m in re.compile(pattern43, re.MULTILINE | re.DOTALL).finditer(open(fix43dtd, 'r').read()):
+# Parse FIX 4.3 DTD. 
+# Get field names. Only the fields of type Length, because the dtd fields can't be parsed by regex.
+fields43 = """<!ATTLIST +(\w+)[^>]*?FIXTag[^>]*?['"](\d+)['"][^>]*?DataType[^>]*?['"](Length)['"][^>]*?>"""
+for m in re.compile(fields43, re.MULTILINE | re.DOTALL).finditer(open(fix43dtd_file, 'r').read()):
   fields.setdefault(int(m.group(2)), []).append(m.group(1, 3) + ("4.3",))
 
 
@@ -85,16 +114,31 @@ sys.stdout.write("};\n\n")
 sys.stdout.write("""/*!
  * \\brief Populate an AssociativeContainer with the names of all the FIX fields.
  *
- * \\param dictionary A reference to an AssociativeContainer.
+ * \\param dictionary A reference to an AssociativeContainer<int, std::string>
  */
  """)
-sys.stdout.write("template <typename AssociativeContainer> void field_dictionary_init(AssociativeContainer& dictionary) {\n")
+sys.stdout.write("template <typename AssociativeContainer> void dictionary_init_field(AssociativeContainer& dictionary) {\n")
 l = sorted(fields.iteritems(), operator.lt, operator.itemgetter(0))
 for i in l:
   sys.stdout.write("{:<50} = {:<50}".format("dictionary[tag::" + i[1][0][0] + "]", '"' + i[1][0][0] + '";'))
   sys.stdout.write(" //")
   for field in i[1]: sys.stdout.write(" (" + field[1] + " " + field[2] + ")")
   if reduce(lambda x, y: x or (y[0] != i[1][0][0]) or (y[1] != i[1][0][1]), i[1], False): sys.stdout.write(" *Different*") # If the different spec versions have a different data type or different name for this field tag number, then print *Different*.
+  sys.stdout.write("\n")
+sys.stdout.write("}\n")
+
+# Write C++ init method for a associative container for run-time message name lookup.
+sys.stdout.write("""/*!
+ * \\brief Populate an AssociativeContainer with the names of all the FIX message types.
+ *
+ * \\param dictionary A reference to an AssociativeContainer<std::string, std::string>
+ */
+ """)
+sys.stdout.write("template <typename AssociativeContainer> void dictionary_init_message(AssociativeContainer& dictionary) {\n")
+for i in messagetypes.iteritems():
+  sys.stdout.write("{:<25} = {:<40}".format('dictionary["' + i[0] + '"]', '"' + i[1][0][0] + '";'))
+  sys.stdout.write(" //")
+  for msgtype in i[1]: sys.stdout.write(" (" + msgtype[1] + ")")
   sys.stdout.write("\n")
 sys.stdout.write("}\n")
 

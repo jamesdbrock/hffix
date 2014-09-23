@@ -5,7 +5,7 @@ all : specs doc fixprint
 
 doc : doc/html/index.html
 
-doc/html/index.html : include/hffix.hpp include/hffix_fields.hpp
+doc/html/index.html : include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile 
 	cd doc;doxygen Doxyfile
 	@echo "*** Doxygen generated in doc/html/"
 
