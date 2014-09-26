@@ -5,7 +5,7 @@ all : specs doc fixprint
 
 doc : doc/html/index.html
 
-doc/html/index.html : include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile 
+doc/html/index.html : include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
 	cd doc;doxygen Doxyfile
 	@echo "*** Doxygen generated in doc/html/"
 
@@ -53,6 +53,10 @@ util/bin/fixprint : util/src/fixprint.cpp include/hffix.hpp include/hffix_fields
 	mkdir -p util/bin
 	$(CXX) $(CXXFLAGS) -o util/bin/fixprint util/src/fixprint.cpp
 	@echo "*** Built fixprint utility util/bin/fixprint"
+
+test/src/writer01 : test/src/writer01.cpp include/hffix.hpp include/hffix_fields.hpp
+	mkdir -p test/bin
+	$(CXX) $(CXXFLAGS) -o test/bin/writer01 test/src/writer01.cpp
 
 ctags : 
 	ctags include/*
