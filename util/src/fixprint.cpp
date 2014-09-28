@@ -10,7 +10,7 @@ const char color_value[]   = "\x1b" "[37m"; // White
 const char color_msgtype[] = "\x1b" "[31m"; // Red
 enum { chunksize = 4096 }; // Choose a preferred I/O chunk size.
 
-char buffer[chunksize * 4]; // Must be larger than the maximum FIX message size.
+char buffer[1 << 20]; // Must be larger than the largest FIX message size.
 
 int main(int argc, char** argv)
 {

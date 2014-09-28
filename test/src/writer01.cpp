@@ -1,8 +1,4 @@
 #include <iostream>
-#include <cstdio>
-#include <algorithm>
-#include <cstring>
-#include <map>
 
 // We want Boost Date_Time support, so include these before hffix.hpp.
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -12,7 +8,7 @@
 
 int main(int argc, char** argv)
 {
-    long long sequence_number_send(0); // can be any integer type
+    int sequence_number_send(0);
 
     char buffer[1 << 13];
 
@@ -29,8 +25,6 @@ int main(int argc, char** argv)
             boost::posix_time::microsec_clock::universal_time());              // Required Standard Header field.
     logon.push_back_int       (hffix::tag::EncryptMethod, 0);                  // no encryption
     logon.push_back_int       (hffix::tag::HeartBtInt, 10);                    // 10 second heartbeat interval
-
-    // logon.push_back_data(hffix::tag::RawDataLength, hffix::tag::RawData, encryption_key, encryption_key + 16);
 
     logon.push_back_trailer(); // write CheckSum
 

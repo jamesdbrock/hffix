@@ -1,17 +1,18 @@
 
 CXXFLAGS = -Iinclude
 
-all : specs doc fixprint
+all : doc fixprint examples
 
 doc : doc/html/index.html
 
-doc/html/index.html : include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
+doc/html/index.html : doc/hffix.css include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
 	cd doc;doxygen Doxyfile
 	@echo "*** Doxygen generated in doc/html/"
 
 clean :
 	-rm -R doc/html
 	-rm -R util/bin
+	-rm -R test/bin
 	-rm include/hffix_fields.hpp
 	-rm spec/fix.4.2/*.pdf
 	-rm spec/fix.4.3/*.pdf
@@ -54,11 +55,20 @@ util/bin/fixprint : util/src/fixprint.cpp include/hffix.hpp include/hffix_fields
 	$(CXX) $(CXXFLAGS) -o util/bin/fixprint util/src/fixprint.cpp
 	@echo "*** Built fixprint utility util/bin/fixprint"
 
-test/src/writer01 : test/src/writer01.cpp include/hffix.hpp include/hffix_fields.hpp
+test/bin/writer01 : test/src/writer01.cpp include/hffix.hpp include/hffix_fields.hpp
 	mkdir -p test/bin
 	$(CXX) $(CXXFLAGS) -o test/bin/writer01 test/src/writer01.cpp
+
+test/bin/reader01 : test/src/reader01.cpp include/hffix.hpp include/hffix_fields.hpp
+	mkdir -p test/bin
+	$(CXX) $(CXXFLAGS) -o test/bin/reader01 test/src/reader01.cpp
+
+examples : test/bin/writer01 test/bin/reader01
 
 ctags : 
 	ctags include/*
 
-.PHONY : help doc all clean install uninstall fixprint specs ctags
+README.html : README.md
+	pandoc --from markdown --to html < README.md > README.html
+
+.PHONY : help doc all clean install uninstall fixprint specs ctags examples

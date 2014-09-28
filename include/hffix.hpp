@@ -44,28 +44,6 @@ or implied, of T3 IP, LLC.
 #include <stdexcept>        // for exceptions
 #include <hffix_fields.hpp> // for field and message tag names and properties. Needed for length_fields[].
 
-/*!
- * \def HFFIX_NO_BOOST_DATETIME
- *
- * \brief If defined, High Frequency FIX Parser will not include Boost Date_Time support.
- *
- * If the Boost Date_Time library is available in your build environment, boost::posix_time::ptime,
- * boost::posix_time::time_duration, and boost::gregorian::date
- * conversions will be automatically be supported for the various FIX date and time field types.
- *
- * To enable High Frequency FIX Parser support for the Boost Date_Time library types, include the Boost libraries before the hffix.hpp library, like this:
- * \code
- * #include <boost/date_time/posix_time/posix_time_types.hpp>
- * #include <boost/date_time/gregorian/gregorian_types.hpp>
- * #include <hffix.hpp>
- * \endcode
- *
- * To forcibly prevent High Frequency FIX Parser support for the Boost Date_Time library, define HFFIX_NO_BOOST_DATETIME before including hffix.hpp:
- * \code
- * #define HFFIX_NO_BOOST_DATETIME
- * #include <hffix.hpp>
- * \endcode
- */
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
 #ifdef DATE_TIME_DATE_HPP___ // The header include guard from boost/date_time/date.hpp
@@ -368,20 +346,20 @@ inline bool atotime(
 /* @endcond*/
 
 /*!
-\brief One FIX message for writing.
-
-Given a buffer, the message_writer will write a FIX message to the buffer. message_writer does not take ownership of the buffer.
-
-The message_writer interface is patterned after
-Back Insertion Sequence Containers, with overloads of push_back for different FIX field data types.
-
-The push_back_header() method will write the BeginString and BodyLength fields to the message,
-but the FIX Standard Message Header requires also MsgType, SenderCompID, TargetCompID, MsgSeqNum and SendingTime.
-You must write those fields yourself, starting with MsgType.
-
-After calling all other push_back methods and before sending the message, you must call push_back_trailer(),
-which will write the CheckSum field for you.
-
+ * \brief One FIX message for writing.
+ * 
+ * Given a buffer, the message_writer will write a FIX message to the buffer. message_writer does not take ownership of the buffer.
+ * 
+ * The message_writer interface is patterned after
+ * Back Insertion Sequence Containers, with overloads of `push_back` for different FIX field data types.
+ * 
+ * The push_back_header() method will write the _BeginString_ and _BodyLength_ fields to the message,
+ * but the FIX Standard Message Header requires also _MsgType_, _SenderCompID_, _TargetCompID_, _MsgSeqNum_ and _SendingTime_.
+ * You must write those fields yourself, starting with _MsgType_.
+ * 
+ * After calling all other push_back methods and before sending the message, you must call push_back_trailer(),
+ * which will write the CheckSum field for you.
+ * 
 */
 class message_writer {
 public:
@@ -408,13 +386,51 @@ public:
         next_(begin) {
     }
 
+
     /*!
-    \brief Write the BeginString and BodyLength fields to the buffer.
+     * \brief Owns no resources, so destruction is no-op.
+     */
+    ~message_writer() {}
 
-    This method must be called before any other push_back() method. It may only be called once for each message_writer.
+    /*! \name Buffer Access */
+    //@{
 
-    \pre No other push_back method has yet been called.
-    \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
+    /*!
+    \brief Size of the message in bytes.
+     *
+     * \pre push_back_trailer() has been called.
+    */
+    size_t message_size() const {
+        return next_ - buffer_;
+    }
+
+    /*!
+     * \brief Pointer to beginning of the message.
+     */
+    char* message_begin() const {
+        return buffer_;
+    }
+    /*!
+     * \brief Pointer to past-the-end of the message.
+     *
+     * \pre push_back_trailer() has been called.
+     */
+    char* message_end() const {
+        return next_;
+    }
+
+    //@}
+
+    /*! \name Transport Fields */
+    //@{
+
+    /*!
+     * \brief Write the _BeginString_ and _BodyLength_ fields to the buffer.
+     *
+     * This method must be called before any other `push_back` method. It may only be called once for each message_writer.
+     * 
+     * \pre No other `push_back` method has yet been called.
+     * \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
     */
     void push_back_header(char const* begin_string_version) {
         memcpy(next_, "8=", 2);
@@ -428,16 +444,20 @@ public:
         next_ += 6; // 6 characters reserved for BodyLength.
         *next_++ = '\x01';
     }
+
+
     /*!
-    \brief Write the CheckSum field to the buffer.
-
-    This function must be called after all other push_back functions. It may only be called once for each message_writer.
-
-    \post There is a complete and valid FIX message in the buffer.
-
-    \param calculate_checksum If this flag is set to false, then instead of iterating over the entire message and
-    calculating the CheckSum, the standard trailer will simply write CheckSum=000. This is fine if you're sending
-    the message to a FIX parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
+     * \brief Write the _CheckSum_ field to the buffer.
+     *
+     * This function must be called after all other `push_back` functions. It may only be called once for each message_writer.
+     *
+     * \pre push_back_header() method has been called.
+     *
+     * \post There is a complete and valid FIX message in the buffer.
+     *
+     * \param calculate_checksum If this flag is set to false, then instead of iterating over the entire message and
+     * calculating the CheckSum, the standard trailer will simply write CheckSum=000. This is fine if you're sending
+     * the message to a FIX parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
     */
     void push_back_trailer(bool calculate_checksum = true) {
         // Calculate and write out the BodyLength.
@@ -472,29 +492,11 @@ public:
 
     }
 
-    /*!
-    \brief Size of the message in bytes.
-    */
-    size_t message_size() const {
-        return next_ - buffer_;
-    }
+    //@}
 
-    /*!
-    \brief Pointer to beginning of the message.
-    */
-    char* message_begin() const {
-        return buffer_;
-    }
-    /*!
-    \brief Pointer to past-the-end of the message.
-    */
-    char* message_end() const {
-        return next_;
-    }
+    /*! \name String Fields */
+    //@{
 
-
-    /*! \name String Methods */
-//@{
     /*!
     \brief Append a string field to the message.
     \param tag FIX tag.
@@ -552,7 +554,7 @@ public:
 //@}
 
 
-    /*! \name Integer Methods */
+    /*! \name Integer Fields */
 //@{
     /*!
     \brief Append an integer field to the message.
@@ -566,22 +568,10 @@ public:
         next_ = details::itoa(number, next_);
         *next_++ = '\x01';
     }
-    /*
-    \brief Append an unsigned integer field to the message.
-    \tparam Uint_type Type of unsigned integer.
-    \param tag FIX tag.
-    \param number Unsigned integer value.
-    */
-    //template<typename Uint_type> void push_back_uint(int tag, Uint_type number)
-    //{
-    //    next_ = details::itoa(tag, next_);
-    //    *next_++ = '=';
-    //    next_ = details::utoa(number, next_);
-    //    *next_++ = '\x01';
-    //}
+
 //@}
 
-    /*! \name Decimal Float Methods */
+    /*! \name Decimal Float Fields */
 //@{
 
     /*!
@@ -606,7 +596,7 @@ public:
 //@}
 
 
-    /*! \name Date and Time Methods */
+    /*! \name Date and Time Fields */
 //@{
 
     /*!
@@ -775,13 +765,11 @@ public:
 
 #ifdef HFFIX_BOOST_DATETIME
 
-    /*! \name Boost Date and Time Methods */
+    /*! \name Boost Date and Time Fields */
 //@{
 
     /*!
     \brief Append a LocalMktDate or UTCDate field to the message.
-
-    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
     \param tag FIX tag.
     \param date Date.
@@ -798,8 +786,6 @@ public:
     No time zone or daylight savings time transformations are done to the time.
 
     Fractional seconds will be written to the field, rounded to the millisecond.
-
-    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
     \param tag FIX tag.
     \param timeonly Time.
@@ -822,8 +808,6 @@ public:
     No time zone or daylight savings time transformations are done to the timestamp.
 
     Fractional seconds will be written to the field, rounded to the millisecond.
-
-    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
     \param tag FIX tag.
     \param timestamp Date and time.
@@ -848,7 +832,7 @@ public:
 #endif // HFFIX_BOOST_DATETIME
 
 
-    /*! \name Data Methods */
+    /*! \name Data Fields */
 //@{
 
     /*!
@@ -906,7 +890,11 @@ class message_reader;
 class message_reader_const_iterator;
 
 /*!
-\brief FIX field value, weakly-typed as an array of chars, with type conversion methods.
+ * \brief FIX field value for hffix::message_reader. 
+ * 
+ * FIX field values are weakly-typed as an array of chars, usually ASCII. Type conversion methods are provided.
+ * 
+ * This class is essentially equivalent to a `boost::range<char*>`.
 */
 class field_value {
 public:
@@ -939,7 +927,7 @@ public:
     \brief True if the value of the field is equal to the C-string argument.
     */
     friend bool operator==(char const* cstring, field_value const& that) {
-        return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
+        return (that == cstring);
     }
 
     /*!
@@ -955,6 +943,13 @@ public:
     */
     template<typename Char_type> friend bool operator==(std::basic_string<Char_type> const& s, field_value const& that) {
         return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+    }
+
+    /*!
+     * \brief Stream out the raw text value of the field.
+     */
+    friend std::ostream& operator<<(std::ostream& os, field_value const& that) {
+        return os.write(that.begin(), that.size());
     }
 
     /*! \name String Conversion Methods */
@@ -1145,8 +1140,6 @@ public:
 
     Parses ascii and returns a LocalMktDate or UTCDate.
 
-    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
-
     \return Date if parsing was successful, else boost::posix_time::not_a_date_time.
     */
     boost::gregorian::date as_date() const {
@@ -1166,8 +1159,6 @@ public:
 
     Parses ascii and returns a time.
 
-    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
-
     \return Time if parsing was successful, else boost::posix_time::not_a_date_time.
     */
     boost::posix_time::time_duration as_timeonly() const {
@@ -1186,8 +1177,6 @@ public:
     \brief Ascii-to-timestamp conversion.
 
     Parses ascii and returns a timestamp.
-
-    Requires Boost Date_Time library support, can be disabled by #define HFFIX_NO_BOOST_DATETIME.
 
     \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
     */
@@ -1222,8 +1211,10 @@ private:
 };
 
 /*!
-\brief A FIX field for reading, with tag and field value. This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
-*/
+ * \brief A FIX field for hffix::message_reader, with tag and hffix::field_value. 
+ *
+ * This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
+ */
 class field {
 public:
 
@@ -1251,7 +1242,7 @@ private:
 };
 
 /*!
-\brief hffix::message_reader::const_iterator.
+\brief The iterator type for hffix::message_reader. Typedef'd as `hffix::message_reader::const_iterator`.
 
 Satisfies the const Input Iterator Concept for an immutable hffix::message_reader container of fields.
 */
@@ -1336,35 +1327,99 @@ protected:
 };
 
 
+/*!
+ * \brief A predicate closed with a FIX tag which returns true if the tag of the hffix::field passed to the predicate is equal.
+ */
+struct tag_equal {
+    tag_equal(int tag) : tag(tag) {}
+    int tag;
+    inline bool operator()(field const& v) const {
+        return v.tag() == tag;
+    }
+};
+
 
 /*!
-\brief One FIX message for reading.
+ * \brief An algorithm similar to `std::find_if` for forward-searching over a range and finding items which match a predicate. 
+ *
+ * Efficient when searching for multiple items and the expected ordering of the items is known. 
+ * Searches from `i` to `end`, then searches from `begin` to `i`.
+ *
+ * This expression:
+ * \code
+ * find_with_hint(begin, end, i, predicate)
+ * \endcode
+ * will behave exactly the same as this expression:
+ * \code
+ * end != (i = std::find_if(begin, end, predicate))
+ * \endcode
+ * except for these two differences:
+ * * In the first expression, `i` is not modifed if no item is found.
+ * * The first expression is faster if the found item is a near successor of `i`.
+ *
+ * Example usage:
+ * \code
+ * hffix::message_reader::const_iterator i = reader.begin();
+ *
+ * if (hffix::find_with_hint(reader.begin(), reader.end(), hffix::tag_equal(hffix::tag::MsgSeqNum), i)
+ *   int seqnum = i++->as_int<int>();
+ *
+ * if (hffix::find_with_hint(reader.begin(), reader.end(), hffix::tag_equal(hffix::tag::TargetCompID), i)
+ *   std::string targetcompid = i++->as_string();
+ * \endcode
+ *
+ * See also the convenience method hffix::message_reader::find_with_hint.
+ *
+ * \param begin The beginning of the range to search.
+ * \param end The end of the range to search.
+ * \param predicate A predicate which provides function `bool operator() (ForwardIterator::value_type const &v) const`.
+ * \param i If an item is found which satisfies `predicate`, then `i` is modified to point to the found item. Else `i` is unmodified.
+ * \return True if an item was found which matched `predicate`, and `i` was modified to point to the found item.
+ */
+template <typename ForwardIterator, typename UnaryPredicate> 
+inline bool find_with_hint(ForwardIterator begin, ForwardIterator end, UnaryPredicate predicate, ForwardIterator & i) {
+    ForwardIterator j = std::find_if(i, end, predicate);
+    if (j != end) {
+        i = j;
+        return true;
+    }
+    j = std::find_if(begin, i, predicate);
+    if (j != i) {
+        i = j;
+        return true;
+    }
+    return false;
+}
 
-An immutable Forward Container of FIX fields. Given a buffer containing a FIX message, the hffix::message_reader
-will provide an Iterator for iterating over the fields in the message without modifying the buffer. The buffer
-used to construct the hffix::message_reader must outlive the hffix::message_reader.
 
-During construction, hffix::message_reader checks to make sure there is a complete,
-valid FIX message in the buffer. It looks only at the header and trailer transport fields in the message,
-not at the content fields, so construction is O(1).
-
-If hffix::message_reader is complete and valid after construction,
-hffix::message_reader::begin() returns an iterator that points to the MsgType field
-in the FIX Standard Message Header, and
-hffix::message_reader::end() returns an iterator that points to the CheckSum field in the
-FIX Standard Message Trailer.
-
-The hffix::message_reader will only iterate over content fields of the message, and will skip over all of the framing transport fields
- that are mixed in with the content fields in FIX. Here is the list of skipped fields which will not appear when iterating over the fields of the message:
-
-- BeginString
-- BodyLength
-- CheckSum
-- And all of the binary data length framing fields listed in hffix::length_fields.
-
-Fields of binary data type are content fields, and will be iterated over like any other field. The special FIX
-binary data length framing fields will be skipped, but the length of the binary data is accessible from the hffix::message_reader::value_type::value().size()
-of the content field.
+/*!
+ * \brief One FIX message for reading.
+ * 
+ * An immutable Forward Container of FIX fields. Given a buffer containing a FIX message, the hffix::message_reader
+ * will provide an Iterator for iterating over the fields in the message without modifying the buffer. The buffer
+ * used to construct the hffix::message_reader must outlive the hffix::message_reader.
+ * 
+ * During construction, hffix::message_reader checks to make sure there is a complete,
+ * valid FIX message in the buffer. It looks only at the header and trailer transport fields in the message,
+ * not at the content fields, so construction is O(1).
+ * 
+ * If hffix::message_reader is complete and valid after construction,
+ * hffix::message_reader::begin() returns an iterator that points to the MsgType field
+ * in the FIX Standard Message Header, and
+ * hffix::message_reader::end() returns an iterator that points to the CheckSum field in the
+ * FIX Standard Message Trailer.
+ * 
+ * The hffix::message_reader will only iterate over content fields of the message, and will skip over all of the framing transport fields
+ *  that are mixed in with the content fields in FIX. Here is the list of skipped fields which will not appear when iterating over the fields of the message:
+ * 
+ * - BeginString
+ * - BodyLength
+ * - CheckSum
+ * - And all of the binary data length framing fields listed in hffix::length_fields.
+ * 
+ * Fields of binary data type are content fields, and will be iterated over like any other field.
+ * The special FIX binary data length framing fields will be skipped, but the length of the binary data 
+ * is accessible from the hffix::message_reader::value_type::value().size() of the content field.
 */
 class message_reader {
 
@@ -1436,11 +1491,69 @@ public:
 
 
     /*!
-     * \brief message_reader controls no resources, so there are no resources to release.
+     * \brief Owns no resources, so destruction is no-op.
      */
     ~message_reader() {
     }
 
+    /*!
+     * \brief True if the buffer contains a complete FIX message.
+     */
+    bool is_complete() const {
+        return is_complete_;
+    }
+    /*!
+     * \brief True if the message is valid.
+     *
+     * A valid message must meet these criteria.
+     * * The first field is *BeginString*.
+     * * The next field is *BodyLength*, and there is a *CheckSum* field at the end of the message at the location dictated by *BodyLength*.
+     * * After *BodyLength* there is a *MsgType* field.
+     *
+     * If false, the message is unintelligable, and the length of the message is unknown.
+     *
+     * _fix-42_with_errata_20010501.pdf_ p.17:
+     * "Valid FIX Message is a message that is properly formed according to this specification and contains a
+     * valid body length and checksum field"
+     * 
+    */
+    bool is_valid() const {
+        return is_valid_;
+    }
+
+
+    /*!
+     * \brief Returns a new message_reader for the next FIX message in the buffer.
+     *
+     * If this message is_valid() and is_complete(), assume that the next message comes immediately 
+     * after this one and return a new message_reader constructed at this->message_end().
+     *
+     * If this message `!`is_valid(), will search the remainder of the buffer
+     * for the text "8=FIX", to see if there might be a complete or partial valid message
+     * anywhere else in the remainder of the buffer, will return a new message_reader constructed at that location.
+     *
+     * If this message `!`is_complete(), will throw `std::logic_error`.
+     */
+    message_reader next_message_reader() const {
+        if (!is_complete_) {
+            throw std::logic_error("Can't call next_message_reader on an incomplete message.");
+        }
+
+        if (!is_valid_) { // this message isn't valid, so we have to try to search for the beginning of the next message.
+            char const* b = buffer_ + 1;
+            while(b < buffer_end_ - 10) {
+                if (!std::memcmp(b, "8=FIX", 5))
+                    break;
+                ++b;
+            }
+            return message_reader(b, buffer_end_); 
+        }
+
+        return message_reader(end_.current_.value_.end_ + 1, buffer_end_);
+    }
+
+    /*! \name Field Access */
+//@{
     /*!
     \brief An iterator to the MsgType field in the FIX message. Same as hffix::message_reader::message_type().
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
@@ -1482,6 +1595,56 @@ public:
     }
 
     /*!
+     * \brief Returns the FIX version prefix BeginString field value begin pointer. (Example: "FIX.4.4")
+     */
+    char const* prefix_begin() const {
+        return buffer_ + 2;
+    }
+
+    /*!
+     * \brief Returns the FIX version prefix BeginString field value end pointer. 
+     */
+    char const* prefix_end() const {
+        return prefix_end_;
+    }
+
+    /*!
+     * \brief Returns the FIX version prefix BeginString field value size. (Example: returns 7 for "FIX.4.4")
+     */
+    ssize_t prefix_size() const {
+        return prefix_end_ - buffer_ - 2;
+    }
+
+    /*!
+     * \brief Convenient synonym for `hffix::find_with_hint(reader.begin(), reader.end(), hffix::tag_equal(tag), i)`.
+     *
+     * Similar to `std::find_if`. See `hffix::find_with_hint` for details.
+     *
+     * \param tag The field tag number to find.
+     * \param i If a field is found which has the tag number `tag`, then `i` is modified to point to the found item. Else `i` is unmodified.
+     * \return True if a field was found, and `i` was modified to point to the found field.
+     *
+     * Example usage:
+     * \code
+     * hffix::message_reader::const_iterator i = reader.begin();
+     *
+     * if (reader.find_with_hint(MsgSeqNum, i))
+     *   int seqnum = i++->as_int<int>();
+     *
+     * if (reader.find_with_hint(TargetCompID, i))
+     *   std::string targetcompid = i++->as_string();
+     * \endcode
+     */
+    bool find_with_hint(int tag, const_iterator& i) {
+        return hffix::find_with_hint(begin(), end(), tag_equal(tag), i);
+    }
+
+//@}
+
+
+    /*! \name Buffer Access */
+//@{
+    /*!
     \brief A pointer to the begining of the buffer.
     buffer_begin() == message_begin()
     */
@@ -1519,7 +1682,7 @@ public:
     }
 
     /*!
-    \brief The entire size of the FIX 4.1 message in bytes.
+    \brief The entire size of the FIX message in bytes.
     \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
     size_t message_size() const {
@@ -1527,76 +1690,7 @@ public:
         return end_.current_.value_.end_ - buffer_ + 1;
     }
 
-    /*!
-    \brief True if the buffer contains a complete FIX message.
-    */
-    bool is_complete() const {
-        return is_complete_;
-    }
-    /*!
-    \brief True if the message is correct FIX.
-
-    If false, there was an error parsing the FIX message and the message cannot be read.
-
-    fix-42_with_errata_20010501.pdf p.17:
-    "Valid FIX Message is a message that is properly formed according to this specification and contains a
-    valid body length and checksum field"
-    */
-    bool is_valid() const {
-        return is_valid_;
-    }
-
-
-    /*!
-    \brief Returns a new message_reader for the next FIX message in the buffer.
-
-    If this message is_valid() and is_complete(), assume that the next message comes immediately after this one and return a new message_reader constructed at this->message_end().
-
-    If this message !is_valid(), will search the remainder of the buffer
-    for the text "8=FIX", to see if there might be a complete or partial valid message
-    anywhere else in the remainder of the buffer, will return a new message_reader constructed at that location.
-
-    If this message !is_complete(), will throw std::logic_error.
-
-    */
-    message_reader next_message_reader() const {
-        if (!is_complete_) {
-            throw std::logic_error("Can't call next_message_reader on an incomplete message.");
-        }
-
-        if (!is_valid_) { // this message isn't valid, so we have to try to search for the beginning of the next message.
-            char const* b = buffer_ + 1;
-            while(b < buffer_end_ - 10) {
-                if (!std::memcmp(b, "8=FIX", 5))
-                    break;
-                ++b;
-            }
-            return message_reader(b, buffer_end_); 
-        }
-
-        return message_reader(end_.current_.value_.end_ + 1, buffer_end_);
-    }
-
-    /*!
-     * \brief Returns the FIX version prefix BeginString begin pointer. (Example: "FIX.4.4")
-     */
-    char const* prefix_begin() const {
-        return buffer_ + 2;
-    }
-
-    /*!
-     * \brief Returns the FIX version prefix BeginString end pointer. 
-     */
-    char const* prefix_end() const {
-        return prefix_end_;
-    }
-
-    /*!
-     * \brief Returns the FIX version prefix BeginString size. (Example: returns 7 for "FIX.4.4")
-     */
-    ssize_t prefix_size() const {
-        return prefix_end_ - buffer_ - 2;
-    }
+//@}
 
 private:
     friend class message_reader_const_iterator;
@@ -1782,85 +1876,26 @@ template <typename AssociativeContainer> struct field_name_streamer {
 /* @endcond */
 
 /*!
- \brief Given a field tag number and a field name dictionary, returns a type which provides <tt>operator<< </tt> to write the name of the field to an std::ostream.
- \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept <tt>AssociativeContainer<int, std::string></tt>, for example <tt>std::map<int, std::string></tt> or <tt>std::unordered_map<int, std::string></tt>. See http://en.cppreference.com/w/cpp/concept/AssociativeContainer
-
- \param tag The field number.
- \param field_dictionary The field dictionary.
- \param or_number Specifies behavior if the tag is not found in the dictionary. If true, then the string representation of the flag will be written to the std::ostream. If false, then nothing will be written to the std::ostream. Default is false.
-
- Example usage:
- \code
- std::map<int, std::string> dictionary;
- hffix::field_dictionary_init(dictionary);
- std::cout << hffix::field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID\n".
- std::cout << hffix::field_name(1000000, dictionary) << '\n';                  // Unknown field tag, will print "1000000\n".
- std::cout << hffix::field_name(1000000, dictionary, false) << '\n';           // Unknown field tag, will print "\n".
- \endcode
+  * \brief Given a field tag number and a field name dictionary, returns a type which provides <tt>operator<< </tt> to write the name of the field to an std::ostream.
+  * \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept <tt>AssociativeContainer<int, std::string></tt>, for example <tt>std::map<int, std::string></tt> or <tt>std::unordered_map<int, std::string></tt>. See http://en.cppreference.com/w/cpp/concept/AssociativeContainer
+  *
+  * \param tag The field number.
+  * \param field_dictionary The field dictionary.
+  * \param or_number Specifies behavior if the tag is not found in the dictionary. If true, then the string representation of the flag will be written to the std::ostream. If false, then nothing will be written to the std::ostream. Default is false.
+  *
+  * Example usage:
+  * \code
+  * std::map<int, std::string> dictionary;
+  * hffix::field_dictionary_init(dictionary);
+  * std::cout << hffix::field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID\n".
+  * std::cout << hffix::field_name(1000000, dictionary) << '\n';                  // Unknown field tag, will print "1000000\n".
+  * std::cout << hffix::field_name(1000000, dictionary, false) << '\n';           // Unknown field tag, will print "\n".
+  * \endcode
 */
 template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary, bool or_number = true)
 {
     return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary, or_number);
 };
-
-/*!
- * \brief A predicate constructed with a FIX tag which returns true if the tag of the field passed to the predicate is equal.
- */
-struct tag_predicate {
-    tag_predicate(int tag) : tag(tag) {}
-    int tag;
-    inline bool operator()(message_reader::value_type const& v) const {
-        return v.tag() == tag;
-    }
-};
-
-
-/*!
- * \brief An algorithm for forward-searching over a range and finding items which match a predicate, when the expected ordering of the items is known. Searches from `begin` to `end`, but starts at `i`. If end is reached, then wraps around and finishes at `i`.
- *
- * This expression:
- * \code
- * find_with_hint(begin, end, i, predicate)
- * \endcode
- * will behave exactly the same as this expression:
- * \code
- * end != (i = std::find_if(begin, end, predicate))
- * \endcode
- * except for these two differences:
- * * In the first expression, i is not modifed if no item is found.
- * * The first expression is faster if the found item is a near successor of i.
- *
- * Example usage:
- * \code
- * hffix::message_reader::const_iterator i = reader.begin();
- * if (hffix::find_with_hint(reader.begin(), reader.end(), i, hffix::tag_predicate(MsgSeqNum)) {
- *   int seqnum = i->as_int<int>();
- * }
- * if (hffix::find_with_hint(reader.begin(), reader.end(), i, hffix::tag_predicate(TargetCompID)) {
- *   std::string targetcompid = i->as_string();
- * }
- * \endcode
- *
- * \param begin The beginning of the range to search.
- * \param end The end of the range to search.
- * \param i If an item is found which matches predicate, then i is modified to point to the found item. Else i is unmodified.
- * \param predicate A predicate which provides function <code>bool operator() (ForwardIterator::value_type const &v) const</code>.
- * \return True if a field was found which matched prediate, and i was modified to point to the found field.
- */
-template <typename ForwardIterator, typename Predicate> 
-bool find_with_hint(ForwardIterator begin, ForwardIterator end, ForwardIterator & i, Predicate predicate) {
-    ForwardIterator j = std::find_if(i, end, predicate);
-    if (j != end) {
-        i = j;
-        return true;
-    }
-    j = std::find_if(begin, i, predicate);
-    if (j != i) {
-        i = j;
-        return true;
-    }
-    return false;
-}
 
 } // namespace hffix
 
