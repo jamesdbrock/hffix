@@ -136,7 +136,7 @@ High Frequency FIX Parser does not enforce the data type of the Field Definition
 This example program is in the _hffix_ repository at `test/src/writer01.cpp`.
 
 It writes a _Logon_ message and a _New Order - Single_ message to `stdout`.
-~~~
+~~~cpp
 #include <iostream>
 
 // We want Boost Date_Time support, so include these before hffix.hpp.
@@ -213,7 +213,7 @@ This example program is in the _hffix_ repository at `test/src/reader01.cpp`.
 
 It reads messages from `stdin`. If it finds a _Logon_ message or a _New Order - Single_ message, then it prints out some information about their fields.
 
-~~~
+~~~cpp
 #include <iostream>
 #include <cstdio>
 #include <map>
@@ -357,14 +357,14 @@ If the Boost Date_Time library is available in your build environment, `boost::p
 
 To enable High Frequency FIX Parser support for the Boost Date_Time library types, include the Boost libraries before the hffix.hpp library, like this:
 
-~~~
+~~~cpp
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <hffix.hpp>
 ~~~
 
 To forcibly prevent High Frequency FIX Parser support for the Boost Date_Time library, `#define HFFIX_NO_BOOST_DATETIME` before including `hffix.hpp`:
-~~~
+~~~cpp
 #define HFFIX_NO_BOOST_DATETIME
 #include <hffix.hpp>
 ~~~
@@ -386,7 +386,7 @@ Q: I have a bunch of different threads serializing and sending FIX messages out 
 
 A: That multi-threading model is not a good choice for your software. The performance penalty for that threading model is much greater than the performance advantage of this non-allocating parser library. You should consider redesigning to use a single-threaded simultaneous-wait event loop like *libev* or *Boost Asio*. If you insist on multi-threading, then you could do something like this code example. 
 
-~~~
+~~~cpp
 hffix::message_writer m;
 m.push_back_string(hffix::tag::MsgSeqNum, "00000000"); // Make a placeholder value over which you can later paste your sequence number.
 
