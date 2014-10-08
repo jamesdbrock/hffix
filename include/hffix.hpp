@@ -1900,6 +1900,7 @@ template <typename AssociativeContainer> struct field_name_streamer {
             os << i->second;
         else if (that.number_alternative)
             os << that.tag;
+        return os;
     }
 };
 
@@ -1907,8 +1908,8 @@ template <typename AssociativeContainer> struct field_name_streamer {
 /* @endcond */
 
 /*!
-  * \brief Given a field tag number and a field name dictionary, returns a type which provides <tt>operator<< </tt> to write the name of the field to an std::ostream.
-  * \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept <tt>AssociativeContainer<int, std::string></tt>, for example <tt>std::map<int, std::string></tt> or <tt>std::unordered_map<int, std::string></tt>. See http://en.cppreference.com/w/cpp/concept/AssociativeContainer
+  * \brief Given a field tag number and a field name dictionary, returns a type which provides `operator<<`  to write the name of the field to an `std::ostream`.
+  * \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept `AssociativeContainer<int, std::string>`, for example `std::map<int, std::string>` or `std::unordered_map<int, std::string>`. See http://en.cppreference.com/w/cpp/concept/AssociativeContainer
   *
   * \param tag The field number.
   * \param field_dictionary The field dictionary.
