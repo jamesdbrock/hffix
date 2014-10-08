@@ -1880,7 +1880,7 @@ inline void message_reader_const_iterator::increment()
 /* @cond EXCLUDE */
 
 namespace details {
-bool is_tag_a_data_length(int tag)
+inline bool is_tag_a_data_length(int tag)
 {
     int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
     return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.

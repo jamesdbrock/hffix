@@ -1400,6 +1400,7 @@ StreamAsgnType                                     = 1617 //!<1617 (int 5.0.SP2)
 };
 } // namespace tag
 
+namespace {
 //! Sorted list of all field tags which are of type Length
 int length_fields[] = {
 tag::SecureDataLen,                 // 90 Length 4.2
@@ -1421,6 +1422,7 @@ tag::DerivativeEncodedIssuerLen,    // 1277 Length 5.0.SP2
 tag::DerivativeEncodedSecurityDescLen, // 1280 Length 5.0.SP2
 tag::EncodedMktSegmDescLen          // 1397 Length 5.0.SP2
 };
+}
 
 /*!
  * \brief Populate an AssociativeContainer with the names of all the FIX fields.
