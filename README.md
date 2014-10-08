@@ -25,8 +25,7 @@ To see an example of the library in action, enter these four commands at your sh
 The library is header-only, so there is nothing to link. To use the `hffix.hpp` library for C++ FIX development, place the two header files in your include path and `#include <hffix.hpp>`.
 
     git clone https://github.com/jamesdbrock/hffix.git
-    cp hffix/include/hffix.hpp /usr/include/
-    cp hffix/include/hffix_fields.hpp /usr/include/
+    cp hffix/include/hffix.hpp hffix/include/hffix_fields.hpp /usr/include/
 
 ### Documentation
 
@@ -340,8 +339,9 @@ New Order Single message
 Buy OIH 100 @ $50001E-2
 </span></pre>
 
-To examine the output from `test/bin/writer01` program, you can also use `/util/bin/fixprint`, like this:
+To examine the output from `test/bin/writer01` program, you can also use `util/bin/fixprint`, like this:
 
+    make examples
     make fixprint
     test/bin/writer01 | util/bin/fixprint --color
 
