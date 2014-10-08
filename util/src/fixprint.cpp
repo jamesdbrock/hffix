@@ -1,9 +1,10 @@
+#include <hffix.hpp>
+
 #include <iostream>
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
 #include <map>
-#include <hffix.hpp>
 
 const char color_field[]   = "\x1b" "[33m"; // Yellow
 const char color_value[]   = "\x1b" "[37m"; // White

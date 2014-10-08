@@ -1,10 +1,10 @@
-#include <iostream>
-
 // We want Boost Date_Time support, so include these before hffix.hpp.
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 
 #include <hffix.hpp>
+
+#include <iostream>
 
 int main(int argc, char** argv)
 {

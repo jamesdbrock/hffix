@@ -35,14 +35,13 @@ or implied, of T3 IP, LLC.
 #ifndef HFFIX_HPP
 #define HFFIX_HPP
 
+#include <hffix_fields.hpp> // for field and message tag names and properties. Needed for length_fields[].
 #include <cstring>          // for memcpy
 #include <string>           // 
-#include <sstream>          // 
 #include <algorithm>        // for is_tag_a_data_length
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
-#include <hffix_fields.hpp> // for field and message tag names and properties. Needed for length_fields[].
 
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
@@ -527,16 +526,13 @@ public:
     \brief Append a string field to the message.
 
     The entire, literal contents of s will be copied to the output buffer, so if you are using std::wstring
-    you may need to first convert from UTF-16 to Ascii, or do some other encoding transformation.
-
-    \tparam Char_type Character type for the string. Your complier will usually infer the Char_type, so you
-    can elide this parameter.
+    you may need to first convert from UTF-32 to UTF-8, or do some other encoding transformation.
 
     \param tag FIX tag.
     \param s String.
     */
-    template<typename Char_type> void push_back_string(int tag, std::basic_string<Char_type> const& s) {
-        push_back_string(tag, s.data(), s.data() + s.length());
+    void push_back_string(int tag, std::string const& s) {
+        push_back_string(tag, s.data(), s.data() + s.size());
     }
 
 
@@ -933,7 +929,7 @@ public:
     /*!
     \brief True if the value of the field is equal to the string argument.
     */
-    template<typename Char_type> friend bool operator==(field_value const& that, std::basic_string<Char_type> const& s) {
+    friend bool operator==(field_value const& that, std::string const& s) {
         return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
     }
 
@@ -941,7 +937,7 @@ public:
     /*!
     \brief True if the value of the field is equal to the string argument.
     */
-    template<typename Char_type> friend bool operator==(std::basic_string<Char_type> const& s, field_value const& that) {
+    friend bool operator==(std::string const& s, field_value const& that) {
         return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
     }
 
@@ -956,21 +952,22 @@ public:
 //@{
 
     /*!
-    \brief Ascii value as std::string.
-
-    \tparam Char_type Character type for the string.
-    \return An std::string that contains a copy of the ascii value of the field.
-    \throw std::bad_alloc
+     * \brief Ascii value as std::string.
+     * 
+     * This function will, of course, allocate memory if the string is larger than the short-string-optimization size.
+     *
+     * \return An std::string that contains a copy of the ascii value of the field.
+     * \throw std::bad_alloc
     */
-    template<typename Char_type> std::basic_string<Char_type> as_string() const {
-        return std::basic_string<Char_type>(begin(), end()); // the return value optimization
+    std::string as_string() const {
+        return std::string(begin(), end()); 
     }
 
     /*!
-    \brief Ascii value as char.
-
-    \return The first char of the ascii value of the field.
-    */
+     * \brief Ascii value as char.
+     *
+     * \return The first char of the ascii value of the field.
+     */
     char as_char() const {
         return *begin();
     }
@@ -1005,14 +1002,14 @@ private:
 
     template <typename Int_type>
     struct as_int_selector<Int_type, true> {
-        static inline Int_type call_as_int(char const* begin, char const* end) {
+        static Int_type call_as_int(char const* begin, char const* end) {
             return details::atoi<Int_type>(begin, end);
         }
     };
 
     template <typename Int_type>
     struct as_int_selector<Int_type, false> {
-        static inline Int_type call_as_int(char const* begin, char const* end) {
+        static Int_type call_as_int(char const* begin, char const* end) {
             return details::atou<Int_type>(begin, end);
         }
     };
@@ -1136,12 +1133,12 @@ public:
 //@{
 
     /*!
-    \brief Ascii-to-date conversion.
-
-    Parses ascii and returns a LocalMktDate or UTCDate.
-
-    \return Date if parsing was successful, else boost::posix_time::not_a_date_time.
-    */
+     * \brief Ascii-to-date conversion.
+     *
+     * Parses ascii and returns a LocalMktDate or UTCDate.
+     * 
+     * \return Date if parsing was successful, else `boost::posix_time::not_a_date_time`.
+     */
     boost::gregorian::date as_date() const {
         int year, month, day;
         if (as_date(year, month, day)) {
@@ -1155,12 +1152,12 @@ public:
     }
 
     /*!
-    \brief Ascii-to-time conversion.
-
-    Parses ascii and returns a time.
-
-    \return Time if parsing was successful, else boost::posix_time::not_a_date_time.
-    */
+     * \brief Ascii-to-time conversion.
+     *
+     * Parses ascii and returns a time.
+     *
+     * \return Time if parsing was successful, else boost::posix_time::not_a_date_time.
+     */
     boost::posix_time::time_duration as_timeonly() const {
         int hour, minute, second, millisecond;
         if (as_timeonly(hour, minute, second, millisecond)) {
@@ -1174,11 +1171,11 @@ public:
     }
 
     /*!
-    \brief Ascii-to-timestamp conversion.
-
-    Parses ascii and returns a timestamp.
-
-    \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
+     * \brief Ascii-to-timestamp conversion.
+     *
+     * Parses ascii and returns a timestamp.
+     * 
+     * \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
     */
     boost::posix_time::ptime as_timestamp() const {
         int year, month, day, hour, minute, second, millisecond;
@@ -1259,10 +1256,15 @@ private:
 
 public:
 
+    //! \brief For std::iterator_traits 
     typedef ::std::input_iterator_tag iterator_category;
+    //! \brief For std::iterator_traits 
     typedef field value_type;
+    //! \brief For std::iterator_traits 
     typedef std::ptrdiff_t difference_type;
+    //! \brief For std::iterator_traits 
     typedef field* pointer;
+    //! \brief For std::iterator_traits 
     typedef field& reference;
 
 
@@ -1281,43 +1283,72 @@ public:
     }
 
 
-
+    //! \brief Equal
     friend bool operator==(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ == b.buffer_;
     }
 
+    //! \brief Not equal
     friend bool operator!=(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ != b.buffer_;
     }
 
+    //! \brief Less-than
     friend bool operator<(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ < b.buffer_;
     }
 
+    //! \brief Greater-than
     friend bool operator>(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ > b.buffer_;
     }
 
+    //! \brief Less-than or equal
     friend bool operator<=(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ <= b.buffer_;
     }
 
+    //! \brief Greater-than or equal
     friend bool operator>=(message_reader_const_iterator const& a, message_reader_const_iterator const& b) {
         return a.buffer_ >= b.buffer_;
     }
 
-    message_reader_const_iterator operator++(int) { //postfix
+    //! \brief Postfix increment
+    message_reader_const_iterator operator++(int) {
         message_reader_const_iterator i(*this);
         ++(*this);
         return i;
     }
 
-    message_reader_const_iterator& operator++() { //prefix
+    //! \brief Prefix increment
+    message_reader_const_iterator& operator++() {
         increment();
         return *this;
     }
 
-protected:
+    /*!
+     * \brief Addition 
+     *
+     * \param a Iterator to add to.
+     * \param addend Addend.
+     * \throw logic_error Throws if *addend < 0*
+     * \pre *addend >= 0*
+     */
+    friend message_reader_const_iterator operator+(message_reader_const_iterator a, int addend) {
+        if (addend < 0) throw std::logic_error("message_reader::const_iterator is a Forward Iterator, so only positive addends are allowed.");
+        for (int i = 0; i < addend; ++i)
+            ++a;
+
+        return a;
+    }
+
+
+    //! \brief Addition
+    friend message_reader_const_iterator operator+(int addend, message_reader_const_iterator a) {
+        return a + addend;
+    }
+
+private:
     friend class message_reader;
     message_reader const* message_reader_;
     char const* buffer_;
@@ -1333,7 +1364,7 @@ protected:
 struct tag_equal {
     tag_equal(int tag) : tag(tag) {}
     int tag;
-    inline bool operator()(field const& v) const {
+    bool operator()(field const& v) const {
         return v.tag() == tag;
     }
 };
@@ -1849,7 +1880,7 @@ inline void message_reader_const_iterator::increment()
 /* @cond EXCLUDE */
 
 namespace details {
-inline bool is_tag_a_data_length(int tag)
+bool is_tag_a_data_length(int tag)
 {
     int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
     return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.

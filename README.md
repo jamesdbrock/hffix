@@ -42,17 +42,17 @@ To build the Doxygen html documentation in the `doc/html` directory and view it:
 ## Library Design
 
 High Frequency FIX Parser tries to follow the
-<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent C++98 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
+<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent C++03 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
 
 High Frequency FIX Parser is a header-only library, so there are no binaries to link. It also plays well with Boost. If you are using <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your application, High Frequency FIX Parser will support conversion between FIX fields and Boost Date_Time types.
 
-The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>.
-
 All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the `spec` directory. As a convenience for the developer, the High Frequency FIX Parser library includes a Python script which parses all of the FIX protocol specification documents and generates the `include/hffix_fields.hpp` file. That file has `enum` definitions in a tag namspace and an `hffix::dictionary_init_field` function which allows fields to be referred to by name instead of number both during development, and at run-time.
+
+The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>.
 
 ### Platforms
 
-The main library `hffix.hpp` should be platform-independent C++03, but is only tested on Linux. 
+The main library `hffix.hpp` should be platform-independent C++03, but is only tested on Linux and *gcc*. 
 
 The `spec/codegen` script for re-generating the `hffix_fields.hpp` file requires Python 2.7.
 
@@ -70,23 +70,24 @@ Included FIX specs are copyright FIX Protocol, Limited.
 
 Typical FIX implementations employ object-oriented-style programming to model a FIX message either as an associative key-value container of strongly typed objects that inherit from some field superclass, or as a class type for each message type with member variables for every possible field in the message. 
 
-There are two drawbacks to this method.
+There are two disadvantages to this method.
+
 1. Creating these message objects requires free-store memory allocation, which uses a lot of CPU time &mdash; typically more CPU time than all the rest of the parsing logic.
 2. Declaring the classes for these objects requires a lot of boilerplate code, and makes it difficult to handle surprising messages at run-time. 
 
-The advantage of object-oriented-style FIX parsers is that with the familiar object-oriented metaphor, any field of a message object can be read or written randomly at any point in the program, which may simplify program logic. 
-
-Every high frequency trading application already has an object model in the application that provides random access to properties of trading objects, however. A class for an order, and a class for an execution, and a class for a quote, et cetera. If your application has that, then it doesn't need random access to FIX message fields, it needs only serial access.
+The advantage of object-oriented-style FIX parsers is that with the familiar object API, any field of a message object can be read or written randomly at any point in the program, which may simplify program logic. 
 
 ### High Frequency FIX Parser Implementation
 
 For reading FIX messages, High Frequency FIX Parser presents an STL-style <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a> interface. Writing fields is done serially with an interface similar to an STL-style <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>. Reading and writing are done directly on the I/O buffer, without any intermediate objects.  
 
-Field values in FIX are always encoded on the wire as ASCII, and High Frequency FIX exposes fields to the developer as iterator range `char const* begin(), char const* end()`. High Frequency FIX Parser also provides a complete set of conversion functions to native C++ types for *ints*, *decimal floats*, *dates* and *times*, et cetera &mdash; see documentation for `hffix::message_writer` and `hffix::field_value`.
+The disadvantage of this implementation is that the message API provides serial access to fields, not random access. The advantage is that this enables the High Frequency FIX Parser library to completely avoid memory allocation.
+
+Field values in the FIX protocol are always encoded on the wire as ASCII, and High Frequency FIX Parser exposes fields to the developer as iterator range `char const* begin(), char const* end()`. High Frequency FIX Parser also provides a complete set of conversion functions to native C++ types for *ints*, *decimal floats*, *dates* and *times*, et cetera &mdash; see documentation for `hffix::message_writer` and `hffix::field_value`.
 
 ### Exceptions
 
-All High Frequency FIX Parser methods, functions, constructors, and destructors provide the No-Throw exception guarantee (again, the library performs no memory allocation!) unless they are documented to throw exceptions, in which case they provide the Basic exception guarantee. Generally, a function may throw `std::logic_error` if preconditions are not met by the programmer. See documentation for details.
+All High Frequency FIX Parser methods, functions, constructors, and destructors provide the No-Throw exception guarantee unless they are documented to throw exceptions, in which case they provide the Basic exception guarantee. Generally, a function may throw `std::logic_error` if preconditions are not met by the programmer. See documentation for details.
 
 ### Thread Safety
 
@@ -136,6 +137,7 @@ High Frequency FIX Parser does not enforce the data type of the Field Definition
 This example program is in the _hffix_ repository at `test/src/writer01.cpp`.
 
 It writes a _Logon_ message and a _New Order - Single_ message to `stdout`.
+
 ~~~cpp
 #include <iostream>
 
@@ -147,7 +149,7 @@ It writes a _Logon_ message and a _New Order - Single_ message to `stdout`.
 
 int main(int argc, char** argv)
 {
-    long long sequence_number_send(0); // can be any integer type
+    int sequence_number_send(0);
 
     char buffer[1 << 13];
 
@@ -213,7 +215,7 @@ This example program is in the _hffix_ repository at `test/src/reader01.cpp`.
 
 It reads messages from `stdin`. If it finds a _Logon_ message or a _New Order - Single_ message, then it prints out some information about their fields.
 
-~~~cpp
+~~~cpp 
 #include <iostream>
 #include <cstdio>
 #include <map>
@@ -316,6 +318,7 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
 ~~~
 
 ### Running the Examples
@@ -353,7 +356,7 @@ Which will produce output like this:
 
 ## Boost Date_Time
 
-If the Boost Date_Time library is available in your build environment, `boost::posix_time::ptime`, `boost::posix_time::time_duration`, and `boost::gregorian::date` will be automatically supported for the various FIX date and time field types.
+If the <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> library is available in your build environment, `boost::posix_time::ptime`, `boost::posix_time::time_duration`, and `boost::gregorian::date` will be automatically supported for the various FIX date and time field types.
 
 To enable High Frequency FIX Parser support for the Boost Date_Time library types, include the Boost libraries before the hffix.hpp library, like this:
 
@@ -363,7 +366,8 @@ To enable High Frequency FIX Parser support for the Boost Date_Time library type
 #include <hffix.hpp>
 ~~~
 
-To forcibly prevent High Frequency FIX Parser support for the Boost Date_Time library, `#define HFFIX_NO_BOOST_DATETIME` before including `hffix.hpp`:
+To prevent High Frequency FIX Parser support for the Boost Date_Time library, `#define HFFIX_NO_BOOST_DATETIME` before including `hffix.hpp`:
+
 ~~~cpp
 #define HFFIX_NO_BOOST_DATETIME
 #include <hffix.hpp>
@@ -413,6 +417,48 @@ implementations of the protocol to use the first field as a "delimiter" indicati
 entry. The first field listed after the NoXXX, then becomes conditionally required if the NoXXX field
 is greater than zero.</blockquote>
 
+Here is one way iterate over a Repeating Group.
+
+This is an example of iterating over the nested Repeating Groups when reading a *Mass Quote* message.
+The *Mass Quote* message has *QuoteSet* Repeating Groups, and nested inside those groups are *QuoteEntry* Repeating Groups, see *fix-42-with_errata_20010501.pdf* page 52.
+In each repeated *QuoteSet* Group, `hffix::tag::QuoteSetID` is always the first field. In each repeated *QuoteEntry* Group, `hffix::tag::QuoteEntryID` is always the first field.
+
+~~~cpp
+hffix::message_reader r; 
+
+hffix::message_reader::const_iterator group1_begin = std::find_if(r.begin(), r.end(), hffix::tag_equal(hffix::tag::QuoteSetID));
+
+if (group1_begin != r.end()) { // There is at least one QuoteSet group.
+    
+    for (
+        hffix::message_reader::const_iterator group1_end = std::find_if(group1_begin + 1, r.end(), hffix::tag_equal(hffix::tag::QuoteSetID));
+        group1_begin != r.end();
+        group1_begin = group1_end, group1_end = std::find_if(group1_begin + 1, r.end(), hffix::tag_equal(hffix::tag::QuoteSetID))
+    ) {
+        // This loop body will be entered once for each QuoteSet Repeating Group.
+        // 
+        // group1_begin will point to the first field in the QuoteSet group, which is always hffix::tag::QuoteSetID.
+        // group1_end   will point past-the-end of the QuoteSet group.
+
+        group2_begin = std::find_if(group1_begin, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID));
+
+        if (group2_begin != group1_end) { // There is at least one QuoteEntry group.
+
+            for (
+                hffix::message_reader::const_iterator group2_end = std::find_if(group2_begin + 1, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID));
+                group2_begin != group1_end;
+                group2_begin = group2_end, group2_end = std::find_if(group2_begin + 1, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID))
+            ) {
+                // This loop body will be entered once for each QuoteEntry Repeating Group.
+                //
+                // group2_begin will point to the first field of the QuoteEntry group, which is always QuoteEntryID.
+                // group2_end   will point past-the-end of the QuoteEntry group.
+            }
+        }
+    }
+}
+~~~
+
 
 
 ## Support
@@ -452,4 +498,3 @@ After *Logon* response, the client may begin sending messages, but the client ha
 * Lexical cast validation for hffix::message_reader.
 
 ### C++14
-* Use `std::range` for everything.

@@ -1,12 +1,12 @@
-#include <iostream>
-#include <cstdio>
-#include <map>
-
 // We want Boost Date_Time support, so include these before hffix.hpp.
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include <hffix.hpp>
+
+#include <iostream>
+#include <cstdio>
+#include <map>
 
 const size_t chunksize = 4096; // Choose a preferred I/O chunk size.
 
