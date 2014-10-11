@@ -118,7 +118,7 @@ l = sorted(fields.iteritems(), operator.lt, operator.itemgetter(0))
 for i in l:
   sys.stdout.write("{:<50} = {}".format(i[1][0][0], i[0]))
   if i[0] != l[-1][0]: sys.stdout.write(",")
-  sys.stdout.write(" //!<")
+  sys.stdout.write(" //!< ")
   sys.stdout.write(str(i[0]))
   for field in i[1]: sys.stdout.write(" (" + field[1] + " " + field[2] + ")")
   if reduce(lambda x, y: x or (y[0] != i[1][0][0]) or (y[1] != i[1][0][1]), i[1], False): sys.stdout.write(" *Different*") # If the different spec versions have a different data type or different name for this field tag number, then print *Different*.

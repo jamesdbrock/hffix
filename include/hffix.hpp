@@ -1446,7 +1446,7 @@ inline bool find_with_hint(ForwardIterator begin, ForwardIterator end, UnaryPred
  * - BeginString
  * - BodyLength
  * - CheckSum
- * - And all of the binary data length framing fields listed in hffix::length_fields.
+ * - And all of the binary data length framing fields listed in hffix::anonymous_namespace{hffix_fields.hpp}::length_fields.
  * 
  * Fields of binary data type are content fields, and will be iterated over like any other field.
  * The special FIX binary data length framing fields will be skipped, but the length of the binary data 
