@@ -339,7 +339,9 @@ SendingTime =  2014-Sep-26 15:27:38.789000
 The next field is EncryptMethod = 0<br/>
 New Order Single message
 Buy OIH 100 @ $50001E-2
-</span></pre>
+</span>
+</pre>
+
 
 To examine the output from `test/bin/writer01` program, you can also use `util/bin/fixprint`, like this:
 
