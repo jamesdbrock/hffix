@@ -324,8 +324,10 @@ int main(int argc, char** argv)
 
 The writer example can be piped to the reader example. Running these commands:
 
-    make examples
-    test/bin/writer01 | test/bin/reader01 
+~~~
+make examples
+test/bin/writer01 | test/bin/reader01 
+~~~
 
 Should produce output like this:
 
@@ -341,9 +343,11 @@ Buy OIH 100 @ $50001E-2
 
 To examine the output from `test/bin/writer01` program, you can also use `util/bin/fixprint`, like this:
 
-    make examples
-    make fixprint
-    test/bin/writer01 | util/bin/fixprint --color
+~~~
+make examples
+make fixprint
+test/bin/writer01 | util/bin/fixprint --color
+~~~
 
 Which will produce output like this:
 
@@ -417,8 +421,6 @@ implementations of the protocol to use the first field as a "delimiter" indicati
 entry. The first field listed after the NoXXX, then becomes conditionally required if the NoXXX field
 is greater than zero.</blockquote>
 
-Here is one way iterate over a Repeating Group.
-
 This is an example of iterating over the nested Repeating Groups when reading a *Mass Quote* message.
 The *Mass Quote* message has *QuoteSet* Repeating Groups, and nested inside those groups are *QuoteEntry* Repeating Groups, see *fix-42-with_errata_20010501.pdf* page 52.
 In each repeated *QuoteSet* Group, `hffix::tag::QuoteSetID` is always the first field. In each repeated *QuoteEntry* Group, `hffix::tag::QuoteEntryID` is always the first field.
@@ -482,7 +484,7 @@ A FIX session When a FIX client connects to a FIX server, the client doesn't kno
 
 Either the client can choose to reset both sequence numbers, in which case the client may miss messages, or not, in which case the client is subject to the *Resend Request* race condition.
 
-After *Logon* response, the client may begin sending messages, but the client has to wait some amount of time because the server may send *Request Resend*.
+After *Logon* response, the client may begin sending messages, but the client has to wait some amount of time because the server may send *Resend Request*. If the client sends any message to the server while the server is preparing to send *Resend Request*, then the server's response is not defined by the *FIX* specification, and some servers implementations may seize up in confusion at that point.
 
 
 
@@ -498,3 +500,4 @@ After *Logon* response, the client may begin sending messages, but the client ha
 * Lexical cast validation for hffix::message_reader.
 
 ### C++14
+

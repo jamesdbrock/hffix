@@ -1666,7 +1666,7 @@ public:
      *   std::string targetcompid = i++->as_string();
      * \endcode
      */
-    bool find_with_hint(int tag, const_iterator& i) {
+    bool find_with_hint(int tag, const_iterator& i) const {
         return hffix::find_with_hint(begin(), end(), tag_equal(tag), i);
     }
 
