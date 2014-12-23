@@ -9,6 +9,8 @@
 const char color_field[]   = "\x1b" "[33m"; // Yellow
 const char color_value[]   = "\x1b" "[37m"; // White
 const char color_msgtype[] = "\x1b" "[31m"; // Red
+const char color_default[] = "\x1b" "[39m"; // Default Foreground
+
 enum { chunksize = 4096 }; // Choose a preferred I/O chunk size.
 
 char buffer[1 << 20]; // Must be larger than the largest FIX message size.
@@ -100,5 +102,7 @@ int main(int argc, char** argv)
         if (buffer_length > 0) // Then there is an incomplete message at the end of the buffer.
             std::memmove(buffer, reader.buffer_begin(), buffer_length); // Move the partial portion of the incomplete message to buffer[0].
     }
+
+    if (color) std::cout << color_default;
     return 0;
 }
