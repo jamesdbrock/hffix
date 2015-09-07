@@ -25,7 +25,8 @@ To see an example of the library in action, enter these four commands at your sh
 The library is header-only, so there is nothing to link. To use the `hffix.hpp` library for C++ FIX development, place the two header files in your include path and `#include <hffix.hpp>`.
 
     git clone https://github.com/jamesdbrock/hffix.git
-    cp hffix/include/hffix.hpp hffix/include/hffix_fields.hpp /usr/include/
+    cp hffix/include/hffix.hpp /usr/local/include/
+    cp hffix/include/hffix_fields.hpp /usr/local/include/
 
 ### Documentation
 
@@ -80,9 +81,12 @@ The advantage of object-oriented-style FIX parsers is that with the familiar obj
 
 For reading FIX messages, High Frequency FIX Parser presents an STL-style <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a> interface. Writing fields is done serially with an interface similar to an STL-style <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>. Reading and writing are done directly on the I/O buffer, without any intermediate objects.  
 
-The disadvantage of this implementation is that the message API provides serial access to fields, not random access. The advantage is that this enables the High Frequency FIX Parser library to completely avoid memory allocation.
+The disadvantage of this implementation is that the message API provides serial access to fields, not random access.
 
-Field values in the FIX protocol are always encoded on the wire as ASCII, and High Frequency FIX Parser exposes fields to the developer as iterator range `char const* begin(), char const* end()`. High Frequency FIX Parser also provides a complete set of conversion functions to native C++ types for *ints*, *decimal floats*, *dates* and *times*, et cetera &mdash; see documentation for `hffix::message_writer` and `hffix::field_value`.
+The advantage is that this enables the High Frequency FIX Parser library to completely avoid free store memory allocation.
+The library performs all memory allocation on the stack, and the library never requires developers using the library to allocate anything on the free store with `new` or `malloc`.
+
+Field values in the FIX protocol are always encoded on the wire as ASCII, and High Frequency FIX Parser exposes field values to the developer as iterator range `char const* begin(), char const* end()`. High Frequency FIX Parser also provides a complete set of conversion functions to native C++ types for *ints*, *decimal floats*, *dates* and *times*, et cetera &mdash; see documentation for `hffix::message_writer` and `hffix::field_value`.
 
 ### Exceptions
 

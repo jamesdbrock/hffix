@@ -954,7 +954,7 @@ public:
     /*!
      * \brief Ascii value as std::string.
      * 
-     * This function will, of course, allocate memory if the string is larger than the short-string-optimization size.
+     * \warning This function will, of course, allocate memory if the string is larger than the short-string-optimization size. This is the only function in this library which may allocate memory on the free store. Instead of using this function, consider reading the field value with `begin()` and `end()`.
      *
      * \return An std::string that contains a copy of the ascii value of the field.
      * \throw std::bad_alloc
@@ -1563,7 +1563,7 @@ public:
      * for the text "8=FIX", to see if there might be a complete or partial valid message
      * anywhere else in the remainder of the buffer, will return a new message_reader constructed at that location.
      *
-     * If this message `!`is_complete(), will throw `std::logic_error`.
+     * \throw std::logic_error If this message `!`is_complete().
      */
     message_reader next_message_reader() const {
         if (!is_complete_) {
