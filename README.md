@@ -30,7 +30,7 @@ The library is header-only, so there is nothing to link. To use the `hffix.hpp` 
 
 ### Documentation
 
-Full Doxygen is on the internet at <http://jamesdbrock.github.com/hffix>
+Full Doxygen is on the internet at <http://jamesdbrock.github.io/hffix>
 
 To build the Doxygen html documentation in the `doc/html` directory and view it:
 
