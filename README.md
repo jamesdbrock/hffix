@@ -486,13 +486,17 @@ Pull requests welcome.
 
 ### The *Logon* - *Resend Request* Race Condition
 
-A FIX session When a FIX client connects to a FIX server, the client doesn't know what sequence number to use for the *Logon* message. 
+When a FIX client connects to a FIX server, the client doesn't know what sequence number to use for the *Logon* message.
 
 Either the client can choose to reset both sequence numbers, in which case the client may miss messages, or not, in which case the client is subject to the *Resend Request* race condition.
 
-After *Logon* response, the client may begin sending messages, but the client has to wait some amount of time because the server may send *Resend Request*. If the client sends any message to the server while the server is preparing to send *Resend Request*, then the server's response is not defined by the *FIX* specification, and some servers implementations may seize up in confusion at that point.
+After *Logon* response from the server, the client may begin sending messages, but the client has to wait some amount of time because the server may send *Resend Request*. If the client sends any message to the server while the server is preparing to send *Resend Request*, then the server's response is not defined by the *FIX* specification, and some servers implementations may seize up in confusion at that point.
 
 
+
+## C++14
+
+This library only depends on C++03 because it doesn't need any of the features of C++14. It was, however, written with the intention of being included in a C++14 build, and will interact well with all C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::message_reader::find_with_hint`.
 
 
 ## TODO
@@ -505,5 +509,4 @@ After *Logon* response, the client may begin sending messages, but the client ha
 
 * Lexical cast validation for hffix::message_reader.
 
-### C++14
 
