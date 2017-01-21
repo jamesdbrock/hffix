@@ -1373,8 +1373,8 @@ struct tag_equal {
 /*!
  * \brief An algorithm similar to `std::find_if` for forward-searching over a range and finding items which match a predicate. 
  *
- * Efficient when searching for multiple items and the expected ordering of the items is known. 
- * Searches from `i` to `end`, then searches from `begin` to `i`.
+ * Instead of searching from `begin` to `end`, searches from `i` to `end`, then searches from `begin` to `i`.
+ * Efficient for finding multiple items when the expected ordering of the items is known.
  *
  * This expression:
  * \code

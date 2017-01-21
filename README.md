@@ -496,7 +496,7 @@ After *Logon* response from the server, the client may begin sending messages, b
 
 ## C++14
 
-This library only depends on C++03 because it doesn't need any of the features of C++14. It was, however, written with the intention of being included in a C++14 build, and will interact well with all C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::message_reader::find_with_hint`.
+This library only depends on C++03 because it doesn't need any of the features of C++14. It was, however, written with the intention of being included in a C++14 build, and will interact well with all C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
 
 
 ## TODO
