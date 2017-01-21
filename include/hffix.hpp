@@ -1791,6 +1791,17 @@ private:
             return;
         }
 
+        if (*(checksum - 1) != '\x01') { // check for SOH before the checksum.
+                                         // this guarantees that at least
+                                         // there is one SOH in the message
+                                         // which will prevent us from
+                                         // falling off of the end of
+                                         // a malformed message while
+                                         // iterating.
+            invalid();
+            return;
+        }
+
         if (*(checksum + 6) != '\x01') { // check for trailing SOH
             invalid();
             return;
@@ -1845,12 +1856,22 @@ inline void message_reader_const_iterator::increment()
     current_.value_.begin_ = buffer_;
     current_.tag_ = 0;
 
-    while(*current_.value_.begin_ != '=') {
+    while(*current_.value_.begin_ != '=' && *current_.value_.begin_ != '\x01') {
         current_.tag_ *= 10;
         current_.tag_ += (*current_.value_.begin_ - '0');
         ++current_.value_.begin_;
     }
 
+    // we expect to see a '='. if we see a '\x01' at this point then this field
+    // has no value and the message is invalid, so we're doomed. it's too
+    // late to set is_invalid, though, so let's just say that this field
+    // has a null value.
+    if (*current_.value_.begin_ == '\x01') {
+        current_.value_.end_ = current_.value_.begin_;
+        return;
+    }
+
+    // move past the '='.
     current_.value_.end_ = ++current_.value_.begin_;
 
     while(*(++current_.value_.end_ ) != '\x01') {}
