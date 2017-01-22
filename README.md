@@ -81,7 +81,7 @@ The advantage of object-oriented-style FIX parsers is that with the familiar obj
 
 For reading FIX messages, High Frequency FIX Parser presents an STL-style <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a> interface. Writing fields is done serially with an interface similar to an STL-style <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>. Reading and writing are done directly on the I/O buffer, without any intermediate objects.  
 
-The disadvantage of this implementation is that the message API provides serial access to fields, not random access.
+The disadvantage of this implementation is that the message API provides serial access to fields, not random access. Of course, when we're writing a message, random access isn't important, just write out the fields in order. When we're reading a message, it's easy enough to pretend that we have random access by using iterator algorithms like `std::find`. A convenience algorithm `hffix::message_reader::find_with_hint` is provided by this library for efficiently reading fields when you know approximately what field order to expect.
 
 The advantage is that this enables the High Frequency FIX Parser library to completely avoid free store memory allocation.
 The library performs all memory allocation on the stack, and the library never requires developers using the library to allocate anything on the free store with `new` or `malloc`.
@@ -90,7 +90,7 @@ Field values in the FIX protocol are always encoded on the wire as ASCII, and Hi
 
 ### Exceptions
 
-All High Frequency FIX Parser methods, functions, constructors, and destructors provide the No-Throw exception guarantee unless they are documented to throw exceptions, in which case they provide the Basic exception guarantee. Generally, a function may throw `std::logic_error` if preconditions are not met by the programmer. See documentation for details.
+Some functions in this library may throw `std::logic_error` if a precondition is not met by the programmer, so you can usually prevent the library from throwing exceptions by meeting the precondition. All methods, functions, constructors, and destructors provide the No-Throw exception guarantee unless they are documented to throw exceptions, in which case they provide the Basic exception guarantee. See documentation for details.
 
 ### Thread Safety
 
