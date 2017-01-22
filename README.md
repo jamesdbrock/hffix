@@ -411,14 +411,12 @@ void thread_safe_send(hffix::message_writer const& w) {
   hffix::message_reader::const_iterator i = std::find(r.begin(), r.end(), hffix::tag_equal(hffix::tag::MsgSeqNum)); // Find the MsgSeqNum field.
   if (i != r.end()) {
     std::snprintf(const_cast<char*>(i->begin()), i->size(), "%.8i", next_sequence_number++); // Overwrite the "00000000" string with the next_sequence_number.
-  write(fd, w.message_begin(), w.message_size()); // Send the message to the socket.
+    write(fd, w.message_begin(), w.message_size()); // Send the message to the socket.
+  }
 }
 ~~~
   
 ### FIX Repeating Groups
-
-The beginning of each Repeating Group is marked by a field with a &ldquo;NoXXX&rdquo; field.
-The end of a Repeating Group is at the first occurence of a field which is not part of the group. By convention, Repeating Groups are usually located at the end of the message, so the end of the message marks the end of the Repeating Group.
 
 From *FIX-50_SP2_VOL-1_w_Errata_20110818.pdf* page 21:
 
@@ -426,6 +424,8 @@ From *FIX-50_SP2_VOL-1_w_Errata_20110818.pdf* page 21:
 implementations of the protocol to use the first field as a "delimiter" indicating a new repeating group
 entry. The first field listed after the NoXXX, then becomes conditionally required if the NoXXX field
 is greater than zero.</blockquote>
+
+The beginning of each Repeating Group is marked by a field with a &ldquo;NoXXX&rdquo; field. By convention, Repeating Groups are usually located at the end of the message, so the end of the message marks the end of the Repeating Group. In this example we assume that the convention holds, and the repeating group is at the end of the message. If the repeating group were not at the end of the message then we'd have to pay attention to the value of the &ldquo;NoXXX&ldquo; fields, which is left as an exercise for the reader.
 
 This is an example of iterating over the nested Repeating Groups when reading a *Mass Quote* message.
 The *Mass Quote* message has *QuoteSet* Repeating Groups, and nested inside those groups are *QuoteEntry* Repeating Groups, see *fix-42-with_errata_20010501.pdf* page 52.

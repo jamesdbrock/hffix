@@ -1677,6 +1677,7 @@ public:
 //@{
     /*!
     \brief A pointer to the begining of the buffer.
+
     buffer_begin() == message_begin()
     */
     char const* buffer_begin() const {
@@ -1698,7 +1699,10 @@ public:
 
     /*!
     \brief A pointer to the beginning of the FIX message in the buffer.
+
      buffer_begin() == message_begin()
+
+    \throw std::logic_error if called on an invalid message. This exception is preventable by program logic. You should always check if a message is_valid() before reading.
     */
     char const* message_begin() const {
         return buffer_;
