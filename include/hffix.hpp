@@ -1945,7 +1945,7 @@ template <typename AssociativeContainer> struct field_name_streamer {
   * Example usage:
   * \code
   * std::map<int, std::string> dictionary;
-  * hffix::field_dictionary_init(dictionary);
+  * hffix::dictionary_init_field(dictionary);
   * std::cout << hffix::field_name(hffix::tag::SenderCompID, dictionary) << '\n'; // Will print "SenderCompID\n".
   * std::cout << hffix::field_name(1000000, dictionary) << '\n';                  // Unknown field tag, will print "1000000\n".
   * std::cout << hffix::field_name(1000000, dictionary, false) << '\n';           // Unknown field tag, will print "\n".
