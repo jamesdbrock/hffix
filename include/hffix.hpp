@@ -405,6 +405,8 @@ public:
 
     /*!
      * \brief Pointer to beginning of the message.
+     *
+     * \pre None.
      */
     char* message_begin() const {
         return buffer_;
