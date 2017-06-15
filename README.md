@@ -387,6 +387,7 @@ Sample data sources, discovered by Googling.
 * `test/data/fix.5.0.set.1`    https://www.jse.co.za/content/JSETechnologyDocumentItems/03.%20JSE%20Indices.recv.log.txt
 * `test/data/fix.5.0.set.2`    http://blablastreet.com/workshop/TestSocketServer/TestSocketServer/bin/Debug/store/FIXT.1.1-ATP1CMEMY-OMSCMEMY.body
 
+The Chicago Mercantile Exchange is also a good source of sample data files, but the files are too big to include in this repository. The script `test/curl.cme.data.sh` shows how to download them. Run `curl.cme.data.sh` in the `test/` directory.
 
 ## Cookbook
 
