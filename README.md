@@ -429,37 +429,29 @@ The *Mass Quote* message has *QuoteSet* Repeating Groups, and nested inside thos
 In each repeated *QuoteSet* Group, `hffix::tag::QuoteSetID` is always the first field. In each repeated *QuoteEntry* Group, `hffix::tag::QuoteEntryID` is always the first field.
 
 ~~~cpp
-hffix::message_reader r; 
+hffix::message_reader r;
 
 hffix::message_reader::const_iterator group1_begin = std::find_if(r.begin(), r.end(), hffix::tag_equal(hffix::tag::QuoteSetID));
+hffix::message_reader::const_iterator group1_end;
 
-if (group1_begin != r.end()) { // There is at least one QuoteSet group.
-    
-    for (
-        hffix::message_reader::const_iterator group1_end = std::find_if(group1_begin + 1, r.end(), hffix::tag_equal(hffix::tag::QuoteSetID));
-        group1_begin != r.end();
-        group1_begin = group1_end, group1_end = std::find_if(group1_begin + 1, r.end(), hffix::tag_equal(hffix::tag::QuoteSetID))
-    ) {
-        // This loop body will be entered once for each QuoteSet Repeating Group.
-        // 
-        // group1_begin will point to the first field in the QuoteSet group, which is always hffix::tag::QuoteSetID.
-        // group1_end   will point past-the-end of the QuoteSet group.
+for (; group1_begin != r.end(); group1_begin = group1_end) {
+    group1_end = std::find_if(group1_begin + 1, r.end(), hffix::tag_equal(hffix::tag::QuoteSetID));
 
-        group2_begin = std::find_if(group1_begin, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID));
+    // This loop body will be entered once for each QuoteSet Repeating Group.
+    //
+    // group1_begin will point to the first field in the QuoteSet group, which is always hffix::tag::QuoteSetID.
+    // group1_end   will point past-the-end of the QuoteSet group.
 
-        if (group2_begin != group1_end) { // There is at least one QuoteEntry group.
+    hffix::message_reader::const_iterator group2_begin = std::find_if(group1_begin, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID));
+    hffix::message_reader::const_iterator group2_end;
 
-            for (
-                hffix::message_reader::const_iterator group2_end = std::find_if(group2_begin + 1, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID));
-                group2_begin != group1_end;
-                group2_begin = group2_end, group2_end = std::find_if(group2_begin + 1, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID))
-            ) {
-                // This loop body will be entered once for each QuoteEntry Repeating Group.
-                //
-                // group2_begin will point to the first field of the QuoteEntry group, which is always QuoteEntryID.
-                // group2_end   will point past-the-end of the QuoteEntry group.
-            }
-        }
+    for (; group2_begin != group1_end; group2_begin = group2_end) {
+        group2_end = std::find_if(group2_begin + 1, group1_end, hffix::tag_equal(hffix::tag::QuoteEntryID));
+
+        // This loop body will be entered once for each QuoteEntry Repeating Group.
+        //
+        // group2_begin will point to the first field of the QuoteEntry group, which is always QuoteEntryID.
+        // group2_end   will point past-the-end of the QuoteEntry group.
     }
 }
 ~~~
