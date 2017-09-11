@@ -42,6 +42,7 @@ or implied, of T3 IP, LLC.
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
+#include <type_traits>      // for enable_if etc.
 
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
@@ -70,7 +71,9 @@ Parses ascii and returns a (possibly negative) integer.
 \param end Pointer to past-the-end of the ascii string.
 \return The ascii string represented as an integer of type Int_type.
 */
-template<typename Int_type> Int_type atoi(char const* begin, char const* end)
+template<typename Int_type>
+typename std::enable_if<std::is_signed<Int_type>::value && std::is_integral<Int_type>::value, Int_type>::type
+atoi(char const* begin, char const* end)
 {
     Int_type val(0);
     bool isnegative(false);
@@ -99,7 +102,9 @@ Parses ascii and returns an unsigned integer.
 \param end Pointer to past-the-end of the ascii string.
 \return The ascii string represented as an unsigned integer of type Uint_type.
 */
-template<typename Uint_type> Uint_type atou(char const* begin, char const* end)
+template<typename Uint_type>
+typename std::enable_if<std::is_unsigned<Uint_type>::value && std::is_integral<Uint_type>::value, Uint_type>::type
+atoi(char const* begin, char const* end)
 {
     Uint_type val(0);
 
@@ -199,7 +204,9 @@ If the decimal float is an integer, the exponent will be zero.
 \param mantissa Reference to storage for the mantissa of the decimal float to be returned.
 \param exponent Reference to storage for the exponent of the decimal float to be returned.
 */
-template<typename Int_type> void atod(char const* begin, char const* end, Int_type& mantissa, Int_type& exponent)
+template<typename Int_type>
+typename std::enable_if<std::is_integral<Int_type>::value, void>::type
+atod(char const* begin, char const* end, Int_type& mantissa, Int_type& exponent)
 {
     Int_type mantissa_ = 0;
     Int_type exponent_ = 0;
@@ -560,7 +567,9 @@ public:
     \param tag FIX tag.
     \param number Integer value.
     */
-    template<typename Int_type> void push_back_int(int tag, Int_type number) {
+    template<typename Int_type>
+    typename std::enable_if<std::is_integral<Int_type>::value, void>::type
+    push_back_int(int tag, Int_type number) {
         next_ = details::itoa(tag, next_);
         *next_++ = '=';
         next_ = details::itoa(number, next_);
@@ -585,7 +594,9 @@ public:
     \param mantissa The mantissa of the decimal float.
     \param exponent The exponent of the decimal float. Must be less than or equal to zero.
     */
-    template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
+    template<typename Int_type>
+    typename std::enable_if<std::is_integral<Int_type>::value, void>::type
+    push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
         next_ = details::itoa(tag, next_);
         *next_++ = '=';
         next_ = details::dtoa(mantissa, exponent, next_);
@@ -992,31 +1003,12 @@ public:
     \param[out] mantissa Reference to storage for the mantissa of the decimal float to be returned.
     \param[out] exponent Reference to storage for the exponent of the decimal float to be returned.
     */
-    template<typename Int_type> void as_decimal(Int_type& mantissa, Int_type& exponent) const {
+    template<typename Int_type>
+    typename std::enable_if<std::is_integral<Int_type>::value, void>::type
+    as_decimal(Int_type& mantissa, Int_type& exponent) const {
         details::atod<Int_type>(begin(), end(), mantissa, exponent);
     }
 //@}
-
-private:
-    template <typename Int_type, bool Is_signed_integer>
-    struct as_int_selector {
-    };
-
-    template <typename Int_type>
-    struct as_int_selector<Int_type, true> {
-        static Int_type call_as_int(char const* begin, char const* end) {
-            return details::atoi<Int_type>(begin, end);
-        }
-    };
-
-    template <typename Int_type>
-    struct as_int_selector<Int_type, false> {
-        static Int_type call_as_int(char const* begin, char const* end) {
-            return details::atou<Int_type>(begin, end);
-        }
-    };
-
-public:
 
     /*! \name Integer Conversion Methods */
 //@{
@@ -1030,7 +1022,7 @@ public:
     \return The ascii field value represented as an integer of type Int_type.
     */
     template<typename Int_type> Int_type as_int() const {
-        return as_int_selector<Int_type, std::numeric_limits<Int_type>::is_signed>::call_as_int(begin(), end());
+        return details::atoi<Int_type>(begin(), end());
     }
 //@}
 
@@ -1883,7 +1875,7 @@ inline void message_reader_const_iterator::increment()
     while(*(++current_.value_.end_ ) != '\x01') {}
 
     if (details::is_tag_a_data_length(current_.tag_)) {
-        size_t data_len = details::atou<size_t>(current_.value_.begin_, current_.value_.end_);
+        size_t data_len = details::atoi<size_t>(current_.value_.begin_, current_.value_.end_);
 
         buffer_ = current_.value_.end_ + 1;
         current_.value_.begin_ = buffer_;
