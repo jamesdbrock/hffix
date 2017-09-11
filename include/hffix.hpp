@@ -42,6 +42,12 @@ or implied, of T3 IP, LLC.
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
+#include <type_traits>      // for enable_if
+
+#if __has_include(<string_view>)
+#include <string_view>
+#define HFFIX_HAS_STRING_VIEW
+#endif
 
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
@@ -533,6 +539,11 @@ public:
     \param tag FIX tag.
     \param s String.
     */
+#ifdef HFFIX_HAS_STRING_VIEW
+    void push_back_string(int tag, std::string_view s) {
+        push_back_string(tag, s.data(), s.data() + s.size());
+    }
+#endif
     void push_back_string(int tag, std::string const& s) {
         push_back_string(tag, s.data(), s.data() + s.size());
     }
