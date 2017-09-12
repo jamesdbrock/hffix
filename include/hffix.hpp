@@ -919,6 +919,33 @@ public:
         return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
     }
 
+    /*!
+    \brief True if the value of the field is equal to the string literal argument.
+    */
+    template <std::size_t N>
+    friend bool operator==(field_value const& that, char const (&literal)[N]) {
+        return that.size() == sizeof(literal) - 1
+            && std::equal(that.begin(), that.end(), &literal[0]);
+    }
+    template <std::size_t N>
+    friend bool operator==(char const (&literal)[N], field_value const& that) {
+        return that.size() == sizeof(literal) - 1
+            && std::equal(that.begin(), that.end(), &literal[0]);
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the string literal argument.
+    */
+    template <std::size_t N>
+    friend bool operator!=(field_value const& that, char const (&literal)[N]) {
+        return that.size() != sizeof(literal) - 1
+            || !std::equal(that.begin(), that.end(), &literal[0]);
+    }
+    template <std::size_t N>
+    friend bool operator!=(char const (&literal)[N], field_value const& that) {
+        return that.size() != sizeof(literal) - 1
+            || !std::equal(that.begin(), that.end(), &literal[0]);
+    }
 
     /*!
     \brief True if the value of the field is equal to the C-string argument.
