@@ -55,6 +55,8 @@ fields.setdefault(212, []).append(("XmlDataLen", "Length", "4.2",))
 fields.setdefault(213, []).append(("XmlData", "data", "4.2",))
 fields.setdefault(369, []).append(("LastMsgSeqNumProcessed", "int", "4.2",))
 fields.setdefault(370, []).append(("OnBehalfOfSendingTime", "UTCTimeStamp", "4.2",))
+fields.setdefault(373, []).append(("SessionRejectReason", "int", "4.2",))
+fields.setdefault(383, []).append(("MaxMessageSize", "int", "4.2",))
 
 # messagetypes is a dictionary such that
 #    Key is a string

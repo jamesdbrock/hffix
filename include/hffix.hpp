@@ -29,7 +29,7 @@ or implied, of T3 IP, LLC.
 /*!
  * \file
  * \brief The High Frequency FIX Parser Library.
- * Repository at http://github.com/jamesdbrock/hffix 
+ * Repository at http://github.com/jamesdbrock/hffix
  */
 
 #ifndef HFFIX_HPP
@@ -37,11 +37,14 @@ or implied, of T3 IP, LLC.
 
 #include <hffix_fields.hpp> // for field and message tag names and properties. Needed for length_fields[].
 #include <cstring>          // for memcpy
-#include <string>           // 
+#include <string>           //
 #include <algorithm>        // for is_tag_a_data_length
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
+#if __cplusplus >= 201703L
+#include <string_view>      // for push_back_string()
+#endif
 
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
@@ -124,6 +127,7 @@ Writes an integer out as ascii.
 */
 template<typename Int_type> char* itoa(Int_type number, char* buffer)
 {
+    // Write out the digits in reverse order.
     bool isnegative(false);
     if (number < 0) {
         isnegative = true;
@@ -140,15 +144,8 @@ template<typename Int_type> char* itoa(Int_type number, char* buffer)
         *b++ = '-';
     }
 
-    char* e = b - 1;
-
-    while(e > buffer) { // Reverse the digits in-place.
-        char tmp = *e;
-        *e = *buffer;
-        *buffer = tmp;
-        ++buffer;
-        --e;
-    }
+    // Reverse the digits in-place.
+    std::reverse(buffer, b);
 
     return b;
 }
@@ -166,21 +163,15 @@ Writes an unsigned integer out as ascii.
 */
 template<typename Uint_type> char* utoa(Uint_type number, char* buffer)
 {
+    // Write out the digits in reverse order.
     char*b = buffer;
     do {
         *b++ = '0' + (number % 10);
         number /= 10;
     } while(number);
 
-    char* e = b - 1;
-
-    while(e > buffer) { // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
-        char tmp = *e;
-        *e = *buffer;
-        *buffer = tmp;
-        ++buffer;
-        --e;
-    }
+    // Reverse the digits in-place.
+    std::reverse(buffer, b);
 
     return b;
 }
@@ -241,6 +232,7 @@ Non-normalized. The exponent parameter must be less than or equal to zero.
 */
 template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer)
 {
+    // Write out the digits in reverse order.
     bool isnegative(false);
     if (mantissa < 0) {
         isnegative = true;
@@ -260,15 +252,8 @@ template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, cha
         *b++ = '-';
     }
 
-    char* e = b - 1;
-
-    while(e > buffer) { // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
-        char tmp = *e;
-        *e = *buffer;
-        *buffer = tmp;
-        ++buffer;
-        --e;
-    }
+    // Reverse the digits in-place.
+    std::reverse(buffer, b);
 
     return b;
 }
@@ -346,19 +331,19 @@ inline bool atotime(
 
 /*!
  * \brief One FIX message for writing.
- * 
+ *
  * Given a buffer, the message_writer will write a FIX message to the buffer. message_writer does not take ownership of the buffer.
- * 
+ *
  * The message_writer interface is patterned after
  * Back Insertion Sequence Containers, with overloads of `push_back` for different FIX field data types.
- * 
+ *
  * The push_back_header() method will write the _BeginString_ and _BodyLength_ fields to the message,
  * but the FIX Standard Message Header requires also _MsgType_, _SenderCompID_, _TargetCompID_, _MsgSeqNum_ and _SendingTime_.
  * You must write those fields yourself, starting with _MsgType_.
- * 
+ *
  * After calling all other push_back methods and before sending the message, you must call push_back_trailer(),
  * which will write the CheckSum field for you.
- * 
+ *
 */
 class message_writer {
 public:
@@ -429,7 +414,7 @@ public:
      * \brief Write the _BeginString_ and _BodyLength_ fields to the buffer.
      *
      * This method must be called before any other `push_back` method. It may only be called once for each message_writer.
-     * 
+     *
      * \pre No other `push_back` method has yet been called.
      * \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
     */
@@ -537,6 +522,20 @@ public:
         push_back_string(tag, s.data(), s.data() + s.size());
     }
 
+
+#if __cplusplus >= 201703L
+    /*!
+    \brief Append a string field to the message.
+
+    The range of s will be copied to the output buffer.
+
+    \param tag FIX tag.
+    \param s String.
+    */
+    void push_back_string(int tag, std::string_view s) {
+        push_back_string(tag, &*cbegin(s), &*cend(s));
+    }
+#endif
 
     /*!
     \brief Append a char field to the message.
@@ -824,7 +823,7 @@ public:
                 int(timestamp.time_of_day().fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
             );
         else
-            throw std::logic_error("push_back_timestamp called with not_a_date_time."); 
+            throw std::logic_error("push_back_timestamp called with not_a_date_time.");
     }
 //@}
 #endif // HFFIX_BOOST_DATETIME
@@ -888,10 +887,10 @@ class message_reader;
 class message_reader_const_iterator;
 
 /*!
- * \brief FIX field value for hffix::message_reader. 
- * 
+ * \brief FIX field value for hffix::message_reader.
+ *
  * FIX field values are weakly-typed as an array of chars, usually ASCII. Type conversion methods are provided.
- * 
+ *
  * This class is essentially equivalent to a `boost::range<char*>`.
 */
 class field_value {
@@ -955,14 +954,14 @@ public:
 
     /*!
      * \brief Ascii value as std::string.
-     * 
+     *
      * \warning This function will, of course, allocate memory if the string is larger than the short-string-optimization size. This is the only function in this library which may allocate memory on the free store. Instead of using this function, consider reading the field value with `begin()` and `end()`.
      *
      * \return An std::string that contains a copy of the ascii value of the field.
      * \throw std::bad_alloc
     */
     std::string as_string() const {
-        return std::string(begin(), end()); 
+        return std::string(begin(), end());
     }
 
     /*!
@@ -1138,7 +1137,7 @@ public:
      * \brief Ascii-to-date conversion.
      *
      * Parses ascii and returns a LocalMktDate or UTCDate.
-     * 
+     *
      * \return Date if parsing was successful, else `boost::posix_time::not_a_date_time`.
      */
     boost::gregorian::date as_date() const {
@@ -1176,7 +1175,7 @@ public:
      * \brief Ascii-to-timestamp conversion.
      *
      * Parses ascii and returns a timestamp.
-     * 
+     *
      * \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
     */
     boost::posix_time::ptime as_timestamp() const {
@@ -1210,7 +1209,7 @@ private:
 };
 
 /*!
- * \brief A FIX field for hffix::message_reader, with tag and hffix::field_value. 
+ * \brief A FIX field for hffix::message_reader, with tag and hffix::field_value.
  *
  * This class is the hffix::message_reader::value_type for the hffix::message_reader Container.
  */
@@ -1258,15 +1257,15 @@ private:
 
 public:
 
-    //! \brief For std::iterator_traits 
+    //! \brief For std::iterator_traits
     typedef ::std::input_iterator_tag iterator_category;
-    //! \brief For std::iterator_traits 
+    //! \brief For std::iterator_traits
     typedef field value_type;
-    //! \brief For std::iterator_traits 
+    //! \brief For std::iterator_traits
     typedef std::ptrdiff_t difference_type;
-    //! \brief For std::iterator_traits 
+    //! \brief For std::iterator_traits
     typedef field* pointer;
-    //! \brief For std::iterator_traits 
+    //! \brief For std::iterator_traits
     typedef field& reference;
 
 
@@ -1329,7 +1328,7 @@ public:
     }
 
     /*!
-     * \brief Addition 
+     * \brief Addition
      *
      * \param a Iterator to add to.
      * \param addend Addend.
@@ -1373,7 +1372,7 @@ struct tag_equal {
 
 
 /*!
- * \brief An algorithm similar to `std::find_if` for forward-searching over a range and finding items which match a predicate. 
+ * \brief An algorithm similar to `std::find_if` for forward-searching over a range and finding items which match a predicate.
  *
  * Instead of searching from `begin` to `end`, searches from `i` to `end`, then searches from `begin` to `i`.
  * Efficient for finding multiple items when the expected ordering of the items is known.
@@ -1409,7 +1408,7 @@ struct tag_equal {
  * \param i If an item is found which satisfies `predicate`, then `i` is modified to point to the found item. Else `i` is unmodified.
  * \return True if an item was found which matched `predicate`, and `i` was modified to point to the found item.
  */
-template <typename ForwardIterator, typename UnaryPredicate> 
+template <typename ForwardIterator, typename UnaryPredicate>
 inline bool find_with_hint(ForwardIterator begin, ForwardIterator end, UnaryPredicate predicate, ForwardIterator & i) {
     ForwardIterator j = std::find_if(i, end, predicate);
     if (j != end) {
@@ -1427,31 +1426,31 @@ inline bool find_with_hint(ForwardIterator begin, ForwardIterator end, UnaryPred
 
 /*!
  * \brief One FIX message for reading.
- * 
+ *
  * An immutable Forward Container of FIX fields. Given a buffer containing a FIX message, the hffix::message_reader
  * will provide an Iterator for iterating over the fields in the message without modifying the buffer. The buffer
  * used to construct the hffix::message_reader must outlive the hffix::message_reader.
- * 
+ *
  * During construction, hffix::message_reader checks to make sure there is a complete,
  * valid FIX message in the buffer. It looks only at the header and trailer transport fields in the message,
  * not at the content fields, so construction is O(1).
- * 
+ *
  * If hffix::message_reader is complete and valid after construction,
  * hffix::message_reader::begin() returns an iterator that points to the MsgType field
  * in the FIX Standard Message Header, and
  * hffix::message_reader::end() returns an iterator that points to the CheckSum field in the
  * FIX Standard Message Trailer.
- * 
+ *
  * The hffix::message_reader will only iterate over content fields of the message, and will skip over all of the framing transport fields
  *  that are mixed in with the content fields in FIX. Here is the list of skipped fields which will not appear when iterating over the fields of the message:
- * 
+ *
  * - BeginString
  * - BodyLength
  * - CheckSum
  * - And all of the binary data length framing fields listed in hffix::anonymous_namespace{hffix_fields.hpp}::length_fields.
- * 
+ *
  * Fields of binary data type are content fields, and will be iterated over like any other field.
- * The special FIX binary data length framing fields will be skipped, but the length of the binary data 
+ * The special FIX binary data length framing fields will be skipped, but the length of the binary data
  * is accessible from the hffix::message_reader::value_type::value().size() of the content field.
 */
 class message_reader {
@@ -1504,9 +1503,9 @@ public:
         is_complete_(that.is_complete_),
         is_valid_(that.is_valid_) {
     }
-    
+
     /*!
-     * \brief Construct a message_reader from a message_writer. Equivalent to 
+     * \brief Construct a message_reader from a message_writer. Equivalent to
      * \code
      * hffix::message_writer w;
      * hffix::message_reader r(w.message_begin(), w.message_end());
@@ -1548,7 +1547,7 @@ public:
      * _fix-42_with_errata_20010501.pdf_ p.17:
      * "Valid FIX Message is a message that is properly formed according to this specification and contains a
      * valid body length and checksum field"
-     * 
+     *
     */
     bool is_valid() const {
         return is_valid_;
@@ -1558,7 +1557,7 @@ public:
     /*!
      * \brief Returns a new message_reader for the next FIX message in the buffer.
      *
-     * If this message is_valid() and is_complete(), assume that the next message comes immediately 
+     * If this message is_valid() and is_complete(), assume that the next message comes immediately
      * after this one and return a new message_reader constructed at this->message_end().
      *
      * If this message `!`is_valid(), will search the remainder of the buffer
@@ -1579,7 +1578,7 @@ public:
                     break;
                 ++b;
             }
-            return message_reader(b, buffer_end_); 
+            return message_reader(b, buffer_end_);
         }
 
         return message_reader(end_.current_.value_.end_ + 1, buffer_end_);
@@ -1635,7 +1634,7 @@ public:
     }
 
     /*!
-     * \brief Returns the FIX version prefix BeginString field value end pointer. 
+     * \brief Returns the FIX version prefix BeginString field value end pointer.
      */
     char const* prefix_end() const {
         return prefix_end_;
