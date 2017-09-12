@@ -143,15 +143,8 @@ template<typename Int_type> char* itoa(Int_type number, char* buffer)
         *b++ = '-';
     }
 
-    char* e = b - 1;
-
-    while(e > buffer) { // Reverse the digits in-place.
-        char tmp = *e;
-        *e = *buffer;
-        *buffer = tmp;
-        ++buffer;
-        --e;
-    }
+    // Reverse the digits in-place.
+    std::reverse(buffer, b);
 
     return b;
 }
@@ -175,15 +168,9 @@ template<typename Uint_type> char* utoa(Uint_type number, char* buffer)
         number /= 10;
     } while(number);
 
-    char* e = b - 1;
-
-    while(e > buffer) { // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
-        char tmp = *e;
-        *e = *buffer;
-        *buffer = tmp;
-        ++buffer;
-        --e;
-    }
+    // Do the reversal in-place instead of making temp buffer. Better cache
+    // locality, and we don't have to guess how big to make the temp buffer.
+    std::reverse(buffer, b);
 
     return b;
 }
@@ -263,15 +250,9 @@ template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, cha
         *b++ = '-';
     }
 
-    char* e = b - 1;
-
-    while(e > buffer) { // Do the reversal in-place instead of making temp buffer. Better cache locality, and we don't have to guess how big to make the temp buffer.
-        char tmp = *e;
-        *e = *buffer;
-        *buffer = tmp;
-        ++buffer;
-        --e;
-    }
+    // Do the reversal in-place instead of making temp buffer. Better cache
+    // locality, and we don't have to guess how big to make the temp buffer.
+    std::reverse(buffer, b);
 
     return b;
 }
