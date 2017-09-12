@@ -127,6 +127,7 @@ Writes an integer out as ascii.
 */
 template<typename Int_type> char* itoa(Int_type number, char* buffer)
 {
+    // Write out the digits in reverse order.
     bool isnegative(false);
     if (number < 0) {
         isnegative = true;
@@ -162,14 +163,14 @@ Writes an unsigned integer out as ascii.
 */
 template<typename Uint_type> char* utoa(Uint_type number, char* buffer)
 {
+    // Write out the digits in reverse order.
     char*b = buffer;
     do {
         *b++ = '0' + (number % 10);
         number /= 10;
     } while(number);
 
-    // Do the reversal in-place instead of making temp buffer. Better cache
-    // locality, and we don't have to guess how big to make the temp buffer.
+    // Reverse the digits in-place.
     std::reverse(buffer, b);
 
     return b;
@@ -231,6 +232,7 @@ Non-normalized. The exponent parameter must be less than or equal to zero.
 */
 template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer)
 {
+    // Write out the digits in reverse order.
     bool isnegative(false);
     if (mantissa < 0) {
         isnegative = true;
@@ -250,8 +252,7 @@ template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, cha
         *b++ = '-';
     }
 
-    // Do the reversal in-place instead of making temp buffer. Better cache
-    // locality, and we don't have to guess how big to make the temp buffer.
+    // Reverse the digits in-place.
     std::reverse(buffer, b);
 
     return b;
