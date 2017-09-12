@@ -42,6 +42,10 @@ or implied, of T3 IP, LLC.
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
+#include <type_traits>      // for enable_if
+#if __cplusplus >= 201703L
+#include <string_view>      // for push_back_string()
+#endif
 
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
@@ -537,6 +541,20 @@ public:
         push_back_string(tag, s.data(), s.data() + s.size());
     }
 
+
+#if __cplusplus >= 201703L
+    /*!
+    \brief Append a string field to the message.
+
+    The range of s will be copied to the output buffer.
+
+    \param tag FIX tag.
+    \param s String.
+    */
+    void push_back_string(int tag, std::string_view s) {
+        push_back_string(tag, &*cbegin(s), &*cend(s));
+    }
+#endif
 
     /*!
     \brief Append a char field to the message.
