@@ -1,5 +1,5 @@
 
-CXXFLAGS = -Wall -Iinclude
+CXXFLAGS += -Wall -Iinclude
 
 all : doc fixprint examples
 
