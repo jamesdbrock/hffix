@@ -1,0 +1,12 @@
+language: cpp
+
+compiler: gcc
+
+sudo: required
+
+dist: trusty
+
+install:
+  - sudo apt-get install libboost-dev
+
+script: make test

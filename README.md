@@ -1,6 +1,8 @@
 High Frequency FIX &mdash; C++ Library for Financial Information Exchange Protocol {#mainpage}
 ==========================================================================
 
+[![Build Status](https://api.travis-ci.org/jamesdbrock/hffix.svg?branch=master)](https://travis-ci.org/jamesdbrock/hffix)
+
 ## Introduction
 
 The High Frequency FIX Parser library is an open source implementation of <a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the &ldquo;heap&rdquo;).

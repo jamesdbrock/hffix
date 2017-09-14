@@ -12,9 +12,10 @@ doc/html/index.html : doc/hffix.css include/hffix.hpp include/hffix_fields.hpp d
 
 clean :
 	@echo "*** Cleaning ..."
-	-rm -R doc/html
-	-rm -R util/bin
-	-rm -R test/bin
+	-rm -r doc/html
+	-rm -r util/bin
+	-rm -r test/bin
+	-rm -r test/produced
 	-rm include/hffix_fields.hpp
 	-rm spec/fix.4.2/*.pdf
 	-rm spec/fix.4.3/*.pdf
@@ -74,4 +75,20 @@ ctags :
 README.html : README.md
 	pandoc --from markdown --to html < README.md > README.html
 
-.PHONY : help doc all clean install uninstall fixprint specs ctags examples
+test : test01 test02
+
+test01 : test/bin/writer01
+	@echo "*** test01 ..."
+	mkdir -p test/produced
+	test/bin/writer01 > test/produced/writer01.fix
+	diff test/expected/writer01.fix test/produced/writer01.fix
+	@echo "*** test01 passed"
+
+test02 : test/bin/reader01 test/produced/writer01.fix
+	@echo "*** test02 ..."
+	mkdir -p test/produced
+	test/bin/writer01 | test/bin/reader01 > test/produced/reader01.txt
+	diff test/expected/reader01.txt test/produced/reader01.txt
+	@echo "*** test02 passed"
+
+.PHONY : help doc all clean install uninstall fixprint specs ctags examples test test01 test02

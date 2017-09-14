@@ -3,28 +3,31 @@
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 
 #include <hffix.hpp>
-
 #include <iostream>
+
+using namespace boost::posix_time;
+using namespace boost::gregorian;
 
 int main(int argc, char** argv)
 {
-    int sequence_number_send(0);
+    int seq_send(1); // Sending sequence number.
 
     char buffer[1 << 13];
+
+    ptime tsend(date(2017,8,9), time_duration(12,34,56));
 
     // We'll put a FIX Logon message in the buffer.
     hffix::message_writer logon(buffer, buffer + sizeof(buffer));
 
     logon.push_back_header("FIX.4.2"); // Write BeginString and BodyLength.
 
-    logon.push_back_string    (hffix::tag::MsgType, "A");                      // Logon MsgType.
-    logon.push_back_string    (hffix::tag::SenderCompID, "AAAA");              // Required Standard Header field.
-    logon.push_back_string    (hffix::tag::TargetCompID, "BBBB");              // Required Standard Header field.
-    logon.push_back_int       (hffix::tag::MsgSeqNum, ++sequence_number_send); // Required Standard Header field.
-    logon.push_back_timestamp (hffix::tag::SendingTime,
-            boost::posix_time::microsec_clock::universal_time());              // Required Standard Header field.
-    logon.push_back_int       (hffix::tag::EncryptMethod, 0);                  // no encryption
-    logon.push_back_int       (hffix::tag::HeartBtInt, 10);                    // 10 second heartbeat interval
+    logon.push_back_string    (hffix::tag::MsgType, "A");          // Logon MsgType.
+    logon.push_back_string    (hffix::tag::SenderCompID, "AAAA");  // Required Standard Header field.
+    logon.push_back_string    (hffix::tag::TargetCompID, "BBBB");  // Required Standard Header field.
+    logon.push_back_int       (hffix::tag::MsgSeqNum, seq_send++); // Required Standard Header field.
+    logon.push_back_timestamp (hffix::tag::SendingTime, tsend);    // Required Standard Header field.
+    logon.push_back_int       (hffix::tag::EncryptMethod, 0);      // no encryption
+    logon.push_back_int       (hffix::tag::HeartBtInt, 10);        // 10 second heartbeat interval
 
     logon.push_back_trailer(); // write CheckSum
 
@@ -35,20 +38,18 @@ int main(int argc, char** argv)
 
     new_order.push_back_header("FIX.4.2");
 
-    new_order.push_back_string    (hffix::tag::MsgType, "D");                      // New Order - Single
-    new_order.push_back_string    (hffix::tag::SenderCompID, "AAAA");              // Required Standard Header field.
-    new_order.push_back_string    (hffix::tag::TargetCompID, "BBBB");              // Required Standard Header field.
-    new_order.push_back_int       (hffix::tag::MsgSeqNum, ++sequence_number_send); // Required Standard Header field.
-    new_order.push_back_timestamp (hffix::tag::SendingTime,
-            boost::posix_time::microsec_clock::universal_time());                  // Required Standard Header field.
+    new_order.push_back_string    (hffix::tag::MsgType, "D");          // New Order - Single
+    new_order.push_back_string    (hffix::tag::SenderCompID, "AAAA");  // Required Standard Header field.
+    new_order.push_back_string    (hffix::tag::TargetCompID, "BBBB");  // Required Standard Header field.
+    new_order.push_back_int       (hffix::tag::MsgSeqNum, seq_send++); // Required Standard Header field.
+    new_order.push_back_timestamp (hffix::tag::SendingTime, tsend);    // Required Standard Header field.
     new_order.push_back_string    (hffix::tag::ClOrdID, "A1");
-    new_order.push_back_char      (hffix::tag::HandlInst, '1');                    // Automated execution.
+    new_order.push_back_char      (hffix::tag::HandlInst, '1');        // Automated execution.
     new_order.push_back_string    (hffix::tag::Symbol, "OIH");
-    new_order.push_back_char      (hffix::tag::Side, '1');                         // Buy.
-    new_order.push_back_timestamp (hffix::tag::TransactTime,
-            boost::posix_time::microsec_clock::universal_time());
-    new_order.push_back_int       (hffix::tag::OrderQty, 100);                     // 100 shares.
-    new_order.push_back_char      (hffix::tag::OrdType, '2');                      // Limit order.
+    new_order.push_back_char      (hffix::tag::Side, '1');             // Buy.
+    new_order.push_back_timestamp (hffix::tag::TransactTime, tsend);
+    new_order.push_back_int       (hffix::tag::OrderQty, 100);         // 100 shares.
+    new_order.push_back_char      (hffix::tag::OrdType, '2');          // Limit order.
 
     // Limit price $500.01 = 50001*(10^-2). The push_back_decimal() method takes a decimal floating point
     // number of the form mantissa*(10^exponent).
