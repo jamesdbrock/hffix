@@ -19,9 +19,10 @@ BOOST_AUTO_TEST_CASE(firstdraft)
 
     message_reader::const_iterator i = r.begin();
     BOOST_CHECK(r.find_with_hint(tag::MsgType, i));
-    char const* a = "A";
-    BOOST_CHECK(i->value() == a);
     BOOST_CHECK(i->value() == "A");
-    // BOOST_CHECK(i->value() != "B");
+    BOOST_CHECK(i->value() == (const char*)"A");
+    BOOST_CHECK(i->value() != "B");
+    BOOST_CHECK(i->value() == std::string("A"));
+    BOOST_CHECK(i->value() != std::string("B"));
 }
 

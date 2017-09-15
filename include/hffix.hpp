@@ -915,31 +915,58 @@ public:
     /*!
     \brief True if the value of the field is equal to the C-string argument.
     */
-    friend bool operator==(field_value const& that, char const* cstring) {
+    inline friend bool operator==(field_value const& that, char const* cstring) {
         return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
     }
-
 
     /*!
     \brief True if the value of the field is equal to the C-string argument.
     */
-    friend bool operator==(char const* cstring, field_value const& that) {
-        return (that == cstring);
+    inline friend bool operator==(char const* cstring, field_value const& that) {
+        return that == cstring;
     }
 
     /*!
     \brief True if the value of the field is equal to the string argument.
     */
-    friend bool operator==(field_value const& that, std::string const& s) {
-        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+    inline friend bool operator==(field_value const& that, std::string const& s) {
+        // return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+        return std::equal(that.begin(), that.end(), s.begin(), s.end());
     }
-
 
     /*!
     \brief True if the value of the field is equal to the string argument.
     */
-    friend bool operator==(std::string const& s, field_value const& that) {
-        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+    inline friend bool operator==(std::string const& s, field_value const& that) {
+        return that == s;
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the C-string argument.
+    */
+    inline friend bool operator!=(field_value const& that, char const* cstring) {
+        return !(that == cstring);
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the C-string argument.
+    */
+    inline friend bool operator!=(char const* cstring, field_value const& that) {
+        return !(that == cstring);
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the string argument.
+    */
+    inline friend bool operator!=(field_value const& that, std::string const& s) {
+        return !(that == s);
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the string argument.
+    */
+    inline friend bool operator!=(std::string const& s, field_value const& that) {
+        return !(that == s);
     }
 
     /*!
