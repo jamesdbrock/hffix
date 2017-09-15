@@ -81,26 +81,34 @@ test/bin/reader01 : test/src/reader01.cpp include/hffix.hpp include/hffix_fields
 
 examples : test/bin/writer01 test/bin/reader01
 
+unit_tests :
+	@echo -e "${YELLOW}*** Building test/bin/unit_tests ...${NORMAL}"
+	$(CXX) $(CXXFLAGS) -o test/bin/unit_tests test/src/unit_tests.cpp
+	@echo -e "${YELLOW}*** Built test/bin/unit_tests ...${NORMAL}"
+	@echo -e "${YELLOW}*** Running test/bin/unit_tests ...${NORMAL}"
+	test/bin/unit_tests
+	@echo -e "${YELLOW}*** Passed test/bin/unit_tests ...${NORMAL}"
+
 ctags :
 	ctags include/*
 
 README.html : README.md
 	pandoc --from markdown --to html < README.md > README.html
 
-test : fixprint test01 test02
+test : fixprint test01 test02 unit_tests
 
 test01 : test/bin/writer01
-	@echo -e "${YELLOW}*** $@ ...${NORMAL}"
+	@echo -e "${YELLOW}*** Running $@ ...${NORMAL}"
 	mkdir -p test/produced
 	test/bin/writer01 > test/produced/writer01.fix
 	diff test/expected/writer01.fix test/produced/writer01.fix || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
-	@echo -e "${YELLOW}*** $@ passed${NORMAL}"
+	@echo -e "${YELLOW}*** Passed $@ ${NORMAL}"
 
 test02 : test/bin/reader01 test/bin/writer01
-	@echo -e "${YELLOW}*** $@ ...${NORMAL}"
+	@echo -e "${YELLOW}*** Running $@ ...${NORMAL}"
 	mkdir -p test/produced
 	test/bin/writer01 | test/bin/reader01 > test/produced/reader01.txt
 	diff test/expected/reader01.txt test/produced/reader01.txt || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
-	@echo -e "${YELLOW}*** $@ passed${NORMAL}"
+	@echo -e "${YELLOW}*** Passed $@ ${NORMAL}"
 
-.PHONY : help doc all clean clean-all clean-bin fixprint specs ctags examples test test01 test02
+.PHONY : help doc all clean clean-all clean-bin fixprint specs ctags examples test test01 test02 unit_tests
