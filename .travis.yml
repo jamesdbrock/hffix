@@ -8,6 +8,9 @@ sudo: required
 
 dist: trusty
 
+notifications:
+  email: false
+
 install:
   - sudo apt-get install libboost-dev libboost-test-dev
 
