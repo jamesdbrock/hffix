@@ -1,6 +1,8 @@
 language: cpp
 
-compiler: gcc
+compiler:
+- gcc
+- clang
 
 sudo: required
 
@@ -17,3 +19,10 @@ env:
 - CXXFLAGS=-std=c++11
 - CXXFLAGS=-std=c++14
 - CXXFLAGS=-std=c++17
+
+matrix:
+  allow_failures:
+  - compiler: gcc
+    env: CXXFLAGS=-std=c++14
+  - compiler: gcc
+    env: CXXFLAGS=-std=c++17
