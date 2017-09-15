@@ -930,8 +930,7 @@ public:
     \brief True if the value of the field is equal to the string argument.
     */
     inline friend bool operator==(field_value const& that, std::string const& s) {
-        // return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
-        return std::equal(that.begin(), that.end(), s.begin(), s.end());
+        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
     }
 
     /*!
