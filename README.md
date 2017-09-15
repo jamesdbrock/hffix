@@ -54,7 +54,10 @@ The design criteria for High Frequency FIX Parser are based on our experience pa
 
 ### Platforms
 
-The main library `hffix.hpp` should be platform-independent C++98, but is only tested on Linux and *gcc*. 
+The main library `hffix.hpp` is platform-independent C++98, and is tested on Linux with *gcc* and *clang*
+for all versions of C++ on my local machine, and on the [Travis CI service](https://travis-ci.org/jamesdbrock/hffix).
+
+
 
 The `spec/codegen` script for re-generating the `hffix_fields.hpp` file requires Python 2.7.
 
@@ -531,7 +534,7 @@ After *Logon* response from the server, the client may begin sending messages, b
 
 
 
-## C++03/11/14/17
+## C++03|11|14|17
 
 This library only depends on C++98 because it doesn't need any of the features of later C++. However, the library was designed with the intention of interacting well with C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
 
