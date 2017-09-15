@@ -87,7 +87,7 @@ ctags :
 README.html : README.md
 	pandoc --from markdown --to html < README.md > README.html
 
-test : test01 test02
+test : fixprint test01 test02
 
 test01 : test/bin/writer01
 	@echo -e "${YELLOW}*** $@ ...${NORMAL}"
