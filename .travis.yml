@@ -9,7 +9,7 @@ sudo: required
 dist: trusty
 
 install:
-  - sudo apt-get install libboost-dev
+  - sudo apt-get install libboost-dev libboost-test-dev
 
 script: make test
 
