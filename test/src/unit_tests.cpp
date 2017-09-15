@@ -6,7 +6,7 @@
 
 using namespace hffix;
 
-BOOST_AUTO_TEST_CASE(firstdraft)
+BOOST_AUTO_TEST_CASE(basic)
 {
     char b[1024];
     message_writer w(b, b + sizeof(b));
