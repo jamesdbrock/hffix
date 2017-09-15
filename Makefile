@@ -1,17 +1,20 @@
 
 CXXFLAGS += -Wall -Iinclude
 
+NORMAL=\033[0m
+YELLOW=\033[1;33m
+
 all : doc fixprint examples
 
 doc : doc/html/index.html
 
 doc/html/index.html : doc/hffix.css include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
-	@echo "*** Generating Doxygen in doc/html/ ..."
+	@echo -e "${YELLOW}*** Generating Doxygen in doc/html/ ...${NORMAL}"
 	cd doc;doxygen Doxyfile
-	@echo "*** Generated Doxygen in doc/html/"
+	@echo -e "${YELLOW}*** Generated Doxygen in doc/html/${NORMAL}"
 
 clean :
-	@echo "*** Cleaning ..."
+	@echo -e "${YELLOW}*** Cleaning ...${NORMAL}"
 	-rm -r doc/html
 	-rm -r util/bin
 	-rm -r test/bin
@@ -23,7 +26,7 @@ clean :
 	-rm spec/fix.4.4/*.pdf
 	-rm spec/fix.4.4/*.dtd
 	-rm -r spec/fix.5.0.sp2/fixmlschema
-	@echo "*** Cleaned"
+	@echo -e "${YELLOW}*** Cleaned${NORMAL}"
 
 # Unzip all the specification documents
 specs : spec/fix.4.3/*.dtd spec/fix.4.4/*.dtd spec/fix.5.0.sp2/fixmlschema
@@ -39,33 +42,33 @@ spec/fix.5.0.sp2/fixmlschema:
 	cd spec/fix.5.0.sp2; unzip -u -d fixmlschema fixmlschema_FIX.5.0SP2_Errata_20131209.zip
 
 include/hffix_fields.hpp: spec/codegen spec/fix.4.3/*.dtd spec/fix.4.4/*.dtd spec/fix.5.0.sp2/fixmlschema
-	@echo "*** Generating include/hffix_fields.hpp from FIX specs..."
+	@echo -e "${YELLOW}*** Generating include/hffix_fields.hpp from FIX specs...${NORMAL}"
 	cd spec/fix.4.2; unzip -u fix-42-with_errata_20010501_pdf.zip
 	cd spec/fix.4.3; unzip -u FIX-43-with_errata_20020920_PDF.ZIP
 	cd spec/fix.4.4; unzip -u fix-44_w_Errata_20030618_PDF.zip
 	cd spec/fix.5.0.sp2; unzip -u -d fixmlschema fixmlschema_FIX.5.0SP2_Errata_20131209.zip
 	cd spec;./codegen > ../include/hffix_fields.hpp
-	@echo "*** Generated include/hffix_fields.hpp from FIX specs"
+	@echo -e "${YELLOW}*** Generated include/hffix_fields.hpp from FIX specs${NORMAL}"
 
 fixprint : util/bin/fixprint
 
 util/bin/fixprint : util/src/fixprint.cpp include/hffix.hpp include/hffix_fields.hpp
-	@echo "*** Building fixprint utility util/bin/fixprint ..."
+	@echo -e "${YELLOW}*** Building fixprint utility util/bin/fixprint ...${NORMAL}"
 	mkdir -p util/bin
 	$(CXX) $(CXXFLAGS) -o util/bin/fixprint util/src/fixprint.cpp
-	@echo "*** Built fixprint utility util/bin/fixprint"
+	@echo -e "${YELLOW}*** Built fixprint utility util/bin/fixprint${NORMAL}"
 
 test/bin/writer01 : test/src/writer01.cpp include/hffix.hpp include/hffix_fields.hpp
-	@echo "*** Building test/bin/writer01 ..."
+	@echo -e "${YELLOW}*** Building test/bin/writer01 ...${NORMAL}"
 	mkdir -p test/bin
 	$(CXX) $(CXXFLAGS) -o test/bin/writer01 test/src/writer01.cpp
-	@echo "*** Built test/bin/writer01"
+	@echo -e "${YELLOW}*** Built test/bin/writer01${NORMAL}"
 
 test/bin/reader01 : test/src/reader01.cpp include/hffix.hpp include/hffix_fields.hpp
-	@echo "*** Building test/bin/reader01 ..."
+	@echo -e "${YELLOW}*** Building test/bin/reader01 ...${NORMAL}"
 	mkdir -p test/bin
 	$(CXX) $(CXXFLAGS) -o test/bin/reader01 test/src/reader01.cpp
-	@echo "*** Built test/bin/reader01"
+	@echo -e "${YELLOW}*** Built test/bin/reader01${NORMAL}"
 
 examples : test/bin/writer01 test/bin/reader01
 
@@ -78,17 +81,17 @@ README.html : README.md
 test : test01 test02
 
 test01 : test/bin/writer01
-	@echo "*** test01 ..."
+	@echo -e "${YELLOW}*** $@ ...${NORMAL}"
 	mkdir -p test/produced
 	test/bin/writer01 > test/produced/writer01.fix
-	diff test/expected/writer01.fix test/produced/writer01.fix
-	@echo "*** test01 passed"
+	diff test/expected/writer01.fix test/produced/writer01.fix || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
+	@echo -e "${YELLOW}*** $@ passed${NORMAL}"
 
-test02 : test/bin/reader01 test/produced/writer01.fix
-	@echo "*** test02 ..."
+test02 : test/bin/reader01 test/bin/writer01
+	@echo -e "${YELLOW}*** $@ ...${NORMAL}"
 	mkdir -p test/produced
 	test/bin/writer01 | test/bin/reader01 > test/produced/reader01.txt
-	diff test/expected/reader01.txt test/produced/reader01.txt
-	@echo "*** test02 passed"
+	diff test/expected/reader01.txt test/produced/reader01.txt || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
+	@echo -e "${YELLOW}*** $@ passed${NORMAL}"
 
-.PHONY : help doc all clean install uninstall fixprint specs ctags examples test test01 test02
+.PHONY : help doc all clean fixprint specs ctags examples test test01 test02
