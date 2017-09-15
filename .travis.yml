@@ -10,3 +10,10 @@ install:
   - sudo apt-get install libboost-dev
 
 script: make test
+
+env:
+- CXXFLAGS=-std=c++98
+- CXXFLAGS=-std=c++03
+- CXXFLAGS=-std=c++11
+- CXXFLAGS=-std=c++14
+- CXXFLAGS=-std=c++17
