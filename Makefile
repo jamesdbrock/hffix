@@ -13,12 +13,11 @@ doc/html/index.html : doc/hffix.css include/hffix.hpp include/hffix_fields.hpp d
 	cd doc;doxygen Doxyfile
 	@echo -e "${YELLOW}*** Generated Doxygen in doc/html/${NORMAL}"
 
-clean :
-	@echo -e "${YELLOW}*** Cleaning ...${NORMAL}"
+clean : clean-bin
+
+clean-all : clean-bin
+	@echo -e "${YELLOW}*** Cleaning all artifacts ...${NORMAL}"
 	-rm -r doc/html
-	-rm -r util/bin
-	-rm -r test/bin
-	-rm -r test/produced
 	-rm include/hffix_fields.hpp
 	-rm spec/fix.4.2/*.pdf
 	-rm spec/fix.4.3/*.pdf
@@ -26,7 +25,17 @@ clean :
 	-rm spec/fix.4.4/*.pdf
 	-rm spec/fix.4.4/*.dtd
 	-rm -r spec/fix.5.0.sp2/fixmlschema
-	@echo -e "${YELLOW}*** Cleaned${NORMAL}"
+	-rm ctags
+	@echo -e "${YELLOW}*** Cleaned all artifacts${NORMAL}"
+
+clean-bin :
+	@echo -e "${YELLOW}*** Cleaning binaries ...${NORMAL}"
+	-rm -r util/bin
+	-rm -r test/bin
+	-rm -r test/produced
+	@echo -e "${YELLOW}*** Cleaned binaries${NORMAL}"
+
+clean-spec :
 
 # Unzip all the specification documents
 specs : spec/fix.4.3/*.dtd spec/fix.4.4/*.dtd spec/fix.5.0.sp2/fixmlschema
@@ -94,4 +103,4 @@ test02 : test/bin/reader01 test/bin/writer01
 	diff test/expected/reader01.txt test/produced/reader01.txt || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
 	@echo -e "${YELLOW}*** $@ passed${NORMAL}"
 
-.PHONY : help doc all clean fixprint specs ctags examples test test01 test02
+.PHONY : help doc all clean clean-all clean-bin fixprint specs ctags examples test test01 test02
