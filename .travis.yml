@@ -21,8 +21,12 @@ env:
 - CXXFLAGS=-std=c++17
 
 matrix:
-  allow_failures:
+  exclude: # travis service doesn't have new enough gcc and clang for these tests.
   - compiler: gcc
     env: CXXFLAGS=-std=c++14
   - compiler: gcc
+    env: CXXFLAGS=-std=c++17
+  - compiler: clang
+    env: CXXFLAGS=-std=c++14
+  - compiler: clang
     env: CXXFLAGS=-std=c++17
