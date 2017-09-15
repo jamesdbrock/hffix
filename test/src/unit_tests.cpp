@@ -15,13 +15,13 @@ BOOST_AUTO_TEST_CASE(firstdraft)
     w.push_back_trailer();
     message_reader r(b, b + sizeof(b));
 
-    BOOST_TEST(w.message_size() == r.message_size());
+    BOOST_CHECK(w.message_size() == r.message_size());
 
     message_reader::const_iterator i = r.begin();
-    BOOST_TEST(r.find_with_hint(tag::MsgType, i));
+    BOOST_CHECK(r.find_with_hint(tag::MsgType, i));
     char const* a = "A";
-    BOOST_TEST(i->value() == a);
-    BOOST_TEST(i->value() == "A");
-    // BOOST_TEST(i->value() != "B");
+    BOOST_CHECK(i->value() == a);
+    BOOST_CHECK(i->value() == "A");
+    // BOOST_CHECK(i->value() != "B");
 }
 
