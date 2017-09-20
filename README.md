@@ -1,11 +1,13 @@
 High Frequency FIX &mdash; C++ Library for Financial Information Exchange Protocol {#mainpage}
 ==========================================================================
 
+[![Build Status](https://api.travis-ci.org/jamesdbrock/hffix.svg?branch=master)](https://travis-ci.org/jamesdbrock/hffix)
+
 ## Introduction
 
 The High Frequency FIX Parser library is an open source implementation of <a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the &ldquo;heap&rdquo;).
 
-Hffix library is not certified by any industry-leading committees. It is not an &ldquo;engine.&rdquo; It is not an &ldquo;adaptor.&rdquo; It has no threading, no I/O, no object-oriented inheritance.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++03.
+Hffix library is not certified by any industry-leading committees. It is not an &ldquo;engine.&rdquo; It is not an &ldquo;adaptor.&rdquo; It has no threading, no I/O, no object-oriented inheritance.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++98.
 
 ## Hello, FIX! Quick Start
 
@@ -20,7 +22,7 @@ To see an example of the library in action, enter these four commands at your sh
     util/bin/fixprint --color < test/data/fix.5.0.set.2 | less -R
 
 
-### Development
+### Usage
 
 The library is header-only, so there is nothing to link. To use the `hffix.hpp` library for C++ FIX development, place the two header files in your include path and `#include <hffix.hpp>`.
 
@@ -42,7 +44,7 @@ To build the Doxygen html documentation in the `doc/html` directory and view it:
 ## Library Design
 
 High Frequency FIX Parser tries to follow the
-<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent C++03 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
+<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent C++98 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
 
 High Frequency FIX Parser is a header-only library, so there are no binaries to link. It also plays well with Boost. If you are using <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your application, High Frequency FIX Parser will support conversion between FIX fields and Boost Date_Time types.
 
@@ -52,7 +54,10 @@ The design criteria for High Frequency FIX Parser are based on our experience pa
 
 ### Platforms
 
-The main library `hffix.hpp` should be platform-independent C++03, but is only tested on Linux and *gcc*. 
+The main library `hffix.hpp` is platform-independent C++98, and is tested on Linux with *gcc* and *clang*
+for all versions of C++ on my local machine, and on the [Travis CI service](https://travis-ci.org/jamesdbrock/hffix).
+
+
 
 The `spec/codegen` script for re-generating the `hffix_fields.hpp` file requires Python 2.7.
 
@@ -142,65 +147,76 @@ This example program is in the _hffix_ repository at `test/src/writer01.cpp`.
 It writes a _Logon_ message and a _New Order - Single_ message to `stdout`.
 
 ~~~cpp
-#include <iostream>
-
 // We want Boost Date_Time support, so include these before hffix.hpp.
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 
 #include <hffix.hpp>
+#include <iostream>
+
+using namespace boost::posix_time;
+using namespace boost::gregorian;
 
 int main(int argc, char** argv)
 {
-    int sequence_number_send(0);
+    int seq_send(1); // Sending sequence number.
 
     char buffer[1 << 13];
+
+    ptime tsend(date(2017,8,9), time_duration(12,34,56));
 
     // We'll put a FIX Logon message in the buffer.
     hffix::message_writer logon(buffer, buffer + sizeof(buffer));
 
     logon.push_back_header("FIX.4.2"); // Write BeginString and BodyLength.
 
-    logon.push_back_string    (hffix::tag::MsgType, "A");                      // Logon MsgType.
-    logon.push_back_string    (hffix::tag::SenderCompID, "AAAA");              // Required Standard Header field.
-    logon.push_back_string    (hffix::tag::TargetCompID, "BBBB");              // Required Standard Header field.
-    logon.push_back_int       (hffix::tag::MsgSeqNum, ++sequence_number_send); // Required Standard Header field.
-    logon.push_back_timestamp (hffix::tag::SendingTime,
-            boost::posix_time::microsec_clock::universal_time());              // Required Standard Header field.
-    logon.push_back_int       (hffix::tag::EncryptMethod, 0);                  // no encryption
-    logon.push_back_int       (hffix::tag::HeartBtInt, 10);                    // 10 second heartbeat interval
+    // Logon MsgType.
+    logon.push_back_string    (hffix::tag::MsgType, "A");
+    logon.push_back_string    (hffix::tag::SenderCompID, "AAAA");
+    logon.push_back_string    (hffix::tag::TargetCompID, "BBBB");
+    logon.push_back_int       (hffix::tag::MsgSeqNum, seq_send++);
+    logon.push_back_timestamp (hffix::tag::SendingTime, tsend);
+    // No encryption.
+    logon.push_back_int       (hffix::tag::EncryptMethod, 0);
+    // 10 second heartbeat interval.
+    logon.push_back_int       (hffix::tag::HeartBtInt, 10);
 
-    logon.push_back_trailer(); // write CheckSum
+    logon.push_back_trailer(); // write CheckSum.
 
-    // Now the Logon message is written to the buffer. 
+    // Now the Logon message is written to the buffer.
 
-    // Add a FIX New Order - Single message to the buffer, after the Logon message.
+    // Add a FIX New Order - Single message to the buffer, after the Logon
+    // message.
     hffix::message_writer new_order(logon.message_end(), buffer + sizeof(buffer));
 
     new_order.push_back_header("FIX.4.2");
 
-    new_order.push_back_string    (hffix::tag::MsgType, "D");                      // New Order - Single
-    new_order.push_back_string    (hffix::tag::SenderCompID, "AAAA");              // Required Standard Header field.
-    new_order.push_back_string    (hffix::tag::TargetCompID, "BBBB");              // Required Standard Header field.
-    new_order.push_back_int       (hffix::tag::MsgSeqNum, ++sequence_number_send); // Required Standard Header field.
-    new_order.push_back_timestamp (hffix::tag::SendingTime,
-            boost::posix_time::microsec_clock::universal_time());                  // Required Standard Header field.
+    // New Order - Single
+    new_order.push_back_string    (hffix::tag::MsgType, "D");
+    // Required Standard Header field.
+    new_order.push_back_string    (hffix::tag::SenderCompID, "AAAA");
+    new_order.push_back_string    (hffix::tag::TargetCompID, "BBBB");
+    new_order.push_back_int       (hffix::tag::MsgSeqNum, seq_send++);
+    new_order.push_back_timestamp (hffix::tag::SendingTime, tsend);
     new_order.push_back_string    (hffix::tag::ClOrdID, "A1");
-    new_order.push_back_char      (hffix::tag::HandlInst, '1');                    // Automated execution.
+    // Automated execution.
+    new_order.push_back_char      (hffix::tag::HandlInst, '1');
+    // Ticker symbol OIH.
     new_order.push_back_string    (hffix::tag::Symbol, "OIH");
-    new_order.push_back_char      (hffix::tag::Side, '1');                         // Buy.
-    new_order.push_back_timestamp (hffix::tag::TransactTime,
-            boost::posix_time::microsec_clock::universal_time());
-    new_order.push_back_int       (hffix::tag::OrderQty, 100);                     // 100 shares.
-    new_order.push_back_char      (hffix::tag::OrdType, '2');                      // Limit order.
-
-    // Limit price $500.01 = 50001*(10^-2). The push_back_decimal() method takes a decimal floating point
-    // number of the form mantissa*(10^exponent).
+    // Buy side.
+    new_order.push_back_char      (hffix::tag::Side, '1');
+    new_order.push_back_timestamp (hffix::tag::TransactTime, tsend);
+    // 100 shares.
+    new_order.push_back_int       (hffix::tag::OrderQty, 100);
+    // Limit order.
+    new_order.push_back_char      (hffix::tag::OrdType, '2');
+    // Limit price $500.01 = 50001*(10^-2). The push_back_decimal() method
+    // takes a decimal floating point number of the form mantissa*(10^exponent).
     new_order.push_back_decimal   (hffix::tag::Price, 50001, -2);
+    // Good Till Cancel.
+    new_order.push_back_char      (hffix::tag::TimeInForce, '1');
 
-    new_order.push_back_char      (hffix::tag::TimeInForce, '1'); // Good Till Cancel.
-
-    new_order.push_back_trailer();
+    new_order.push_back_trailer(); // write CheckSum.
 
     //Now the New Order message is in the buffer after the Logon message.
 
@@ -235,6 +251,8 @@ char buffer[1 << 20]; // Must be larger than the largest FIX message size.
 
 int main(int argc, char** argv)
 {
+    int return_code = 0;
+
     std::map<int, std::string> field_dictionary;
     hffix::dictionary_init_field(field_dictionary);
 
@@ -242,8 +260,15 @@ int main(int argc, char** argv)
 
     size_t fred; // Number of bytes read from fread().
 
-    // Read chunks from stdin until 0 is read or the buffer fills up without finding a complete message.
-    while((fred = std::fread(buffer + buffer_length, 1, std::min(sizeof(buffer) - buffer_length, chunksize), stdin))) {
+    // Read chunks from stdin until 0 is read or the buffer fills up without
+    // finding a complete message.
+    while ((fred = std::fread(
+                    buffer + buffer_length,
+                    1,
+                    std::min(sizeof(buffer) - buffer_length, chunksize),
+                    stdin
+                    )
+          )) {
 
         buffer_length += fred;
         hffix::message_reader reader(buffer, buffer + buffer_length);
@@ -254,31 +279,41 @@ int main(int argc, char** argv)
 
                 // Here is a complete message. Read fields out of the reader.
                 try {
-                    if (reader.message_type()->value() == "A") { // Logon message
+                    if (reader.message_type()->value() == "A") {
                         std::cout << "Logon message\n";
 
                         hffix::message_reader::const_iterator i = reader.begin();
 
                         if (reader.find_with_hint(hffix::tag::SenderCompID, i))
-                            std::cout << "SenderCompID = " << i++->value() << '\n';
+                            std::cout
+                                << "SenderCompID = "
+                                << i++->value() << '\n';
 
                         if (reader.find_with_hint(hffix::tag::MsgSeqNum, i))
-                            std::cout << "MsgSeqNum    = " << i++->value().as_int<int>() << '\n';
+                            std::cout
+                                << "MsgSeqNum    = "
+                                << i++->value().as_int<int>() << '\n';
 
                         if (reader.find_with_hint(hffix::tag::SendingTime, i))
-                            std::cout << "SendingTime  = " << i++->value().as_timestamp() << '\n';
+                            std::cout
+                                << "SendingTime  = "
+                                << i++->value().as_timestamp() << '\n';
 
-                        std::cout << "The next field is " << hffix::field_name(i->tag(), field_dictionary) << " = " << i->value() << '\n';
+                        std::cout
+                            << "The next field is "
+                            << hffix::field_name(i->tag(), field_dictionary)
+                            << " = " << i->value() << '\n';
 
                         std::cout << '\n';
                     }
-                    else if (reader.message_type()->value() == "D") { // New Order Single message
+                    else if (reader.message_type()->value() == "D") {
                         std::cout << "New Order Single message\n";
 
                         hffix::message_reader::const_iterator i = reader.begin();
 
                         if (reader.find_with_hint(hffix::tag::Side, i))
-                            std::cout << (i++->value().as_char() == '1' ? "Buy " : "Sell ");
+                            std::cout <<
+                                (i++->value().as_char() == '1' ?"Buy ":"Sell ");
 
                         if (reader.find_with_hint(hffix::tag::Symbol, i))
                             std::cout << i++->value() << " ";
@@ -295,33 +330,49 @@ int main(int argc, char** argv)
 
                         std::cout << "\n\n";
                     }
-                        
+
                 } catch(std::exception& ex) {
                     std::cerr << "Error reading fields: " << ex.what() << '\n';
                 }
 
             } else {
-                // An invalid, corrupted FIX message. Do not try to read fields out of this reader.
-                // The beginning of the invalid message is at location reader.message_begin() in the buffer,
-                // but the end of the invalid message is unknown (because it's invalid).
-                // Stay in this for loop, because the messager_reader::next_message_reader() function
-                // will see that this message is invalid and it will search the remainder of the buffer
-                // for the text "8=FIX", to see if there might be a complete or partial valid message
-                // anywhere else in the remainder of the buffer.
-                std::cerr << "Error Corrupt FIX message: ";
-                std::cerr.write(reader.message_begin(), std::min(ssize_t(64), buffer + buffer_length - reader.message_begin()));
+                // An invalid, corrupted FIX message. Do not try to read fields
+                // out of this reader. The beginning of the invalid message is
+                // at location reader.message_begin() in the buffer, but the
+                // end of the invalid message is unknown (because it's invalid).
+                //
+                // Stay in this for loop, because the
+                // messager_reader::next_message_reader() function will see
+                // that this message is invalid and it will search the
+                // remainder of the buffer for the text "8=FIX", to see if
+                // there might be a complete or partial valid message anywhere
+                // else in the remainder of the buffer.
+                //
+                // Set the return code non-zero to indicate that there was
+                // an invalid message, and print the first 64 chars of the
+                // invalid message.
+                return_code = 1;
+                std::cerr << "Error Invalid FIX message: ";
+                std::cerr.write(
+                    reader.message_begin(),
+                    std::min(
+                        ssize_t(64),
+                        buffer + buffer_length - reader.message_begin()
+                        )
+                    );
                 std::cerr << "...\n";
             }
         }
         buffer_length = reader.buffer_end() - reader.buffer_begin();
 
-        if (buffer_length > 0) // Then there is an incomplete message at the end of the buffer.
-            std::memmove(buffer, reader.buffer_begin(), buffer_length); // Move the partial portion of the incomplete message to buffer[0].
+        if (buffer_length > 0)
+            // Then there is an incomplete message at the end of the buffer.
+            // Move the partial portion of the incomplete message to buffer[0].
+            std::memmove(buffer, reader.buffer_begin(), buffer_length);
     }
 
-    return 0;
+    return return_code;
 }
-
 ~~~
 
 ### Running the Examples
@@ -466,7 +517,7 @@ Want to talk? Email me at <jamesbrock@gmail.com>.
 
 ## Contributing
 
-Pull requests welcome.
+Pull requests welcome. `make test` to run the test suite.
 
 
 
@@ -483,9 +534,9 @@ After *Logon* response from the server, the client may begin sending messages, b
 
 
 
-## C++14
+## C++03|11|14|17
 
-This library only depends on C++03 because it doesn't need any of the features of C++14. It was, however, written with the intention of being included in a C++14 build, and will interact well with all C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
+This library only depends on C++98 because it doesn't need any of the features of later C++. However, the library was designed with the intention of interacting well with C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
 
 
 ## TODO

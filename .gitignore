@@ -6,5 +6,7 @@ spec/fix.4.4/*.pdf
 spec/fix.4.4/*.dtd
 spec/fix.5.0.sp2/fixmlschema
 test/bin
+test/produced
 util/bin
+tags
 
