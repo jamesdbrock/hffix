@@ -1,13 +1,13 @@
-High Frequency FIX &mdash; C++ Library for Financial Information Exchange Protocol {#mainpage}
+High Frequency FIX — C++ Library for Financial Information Exchange Protocol {#mainpage}
 ==========================================================================
 
 [![Build Status](https://api.travis-ci.org/jamesdbrock/hffix.svg?branch=master)](https://travis-ci.org/jamesdbrock/hffix)
 
 ## Introduction
 
-The High Frequency FIX Parser library is an open source implementation of <a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the &ldquo;heap&rdquo;).
+The High Frequency FIX Parser library is an open source implementation of <a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the “heap”).
 
-Hffix library is not certified by any industry-leading committees. It is not an &ldquo;engine.&rdquo; It is not an &ldquo;adaptor.&rdquo; It has no threading, no I/O, no object-oriented inheritance.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++98.
+Hffix library is not certified by any industry-leading committees. It is not an “engine.” It is not an “adaptor.” It has no threading, no I/O, no object-oriented inheritance.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++98.
 
 ## Hello, FIX! Quick Start
 
@@ -77,7 +77,7 @@ Typical FIX implementations employ object-oriented-style programming to model a 
 
 There are two disadvantages to this method.
 
-1. Creating these message objects requires free-store memory allocation, which uses a lot of CPU time &mdash; typically more CPU time than all the rest of the parsing logic.
+1. Creating these message objects requires free-store memory allocation, which uses a lot of CPU time — typically more CPU time than all the rest of the parsing logic.
 2. Declaring the classes for these objects requires a lot of boilerplate code, and makes it difficult to handle surprising messages at run-time. 
 
 The advantage of object-oriented-style FIX parsers is that with the familiar object API, any field of a message object can be read or written randomly at any point in the program, which may simplify program logic. 
@@ -91,7 +91,7 @@ The disadvantage of this implementation is that the message API provides serial 
 The advantage is that this enables the High Frequency FIX Parser library to completely avoid free store memory allocation.
 The library performs all memory allocation on the stack, and the library never requires developers using the library to allocate anything on the free store with `new` or `malloc`.
 
-Field values in the FIX protocol are always encoded on the wire as ASCII, and High Frequency FIX Parser exposes field values to the developer as iterator range `char const* begin(), char const* end()`. High Frequency FIX Parser also provides a complete set of conversion functions to native C++ types for *ints*, *decimal floats*, *dates* and *times*, et cetera &mdash; see documentation for `hffix::message_writer` and `hffix::field_value`.
+Field values in the FIX protocol are always encoded on the wire as ASCII, and High Frequency FIX Parser exposes field values to the developer as iterator range `char const* begin(), char const* end()`. High Frequency FIX Parser also provides a complete set of conversion functions to native C++ types for *ints*, *decimal floats*, *dates* and *times*, et cetera — see documentation for `hffix::message_writer` and `hffix::field_value`.
 
 ### Exceptions
 
@@ -473,7 +473,7 @@ implementations of the protocol to use the first field as a "delimiter" indicati
 entry. The first field listed after the NoXXX, then becomes conditionally required if the NoXXX field
 is greater than zero.</blockquote>
 
-The beginning of each Repeating Group is marked by a field with a &ldquo;NoXXX&rdquo; field. By convention, Repeating Groups are usually located at the end of the message, so the end of the message marks the end of the Repeating Group. In this example we assume that the convention holds, and the repeating group is at the end of the message. If the repeating group were not at the end of the message then we'd have to pay attention to the value of the &ldquo;NoXXX&ldquo; fields, which is left as an exercise for the reader.
+The beginning of each Repeating Group is marked by a field with a “NoXXX” field. By convention, Repeating Groups are usually located at the end of the message, so the end of the message marks the end of the Repeating Group. In this example we assume that the convention holds, and the repeating group is at the end of the message. If the repeating group were not at the end of the message then we'd have to pay attention to the value of the “NoXXX” fields, which is left as an exercise for the reader.
 
 This is an example of iterating over the nested Repeating Groups when reading a *Mass Quote* message.
 The *Mass Quote* message has *QuoteSet* Repeating Groups, and nested inside those groups are *QuoteEntry* Repeating Groups, see *fix-42-with_errata_20010501.pdf* page 52.
