@@ -1272,6 +1272,12 @@ Satisfies the const Input Iterator Concept for an immutable hffix::message_reade
 */
 class message_reader_const_iterator {
 
+public:
+
+    /*! /brief No-op construction of an invalid iterator.
+     *
+     * Like a null pointer, the invalid iterator may not be dereferenced.
+     */
     message_reader_const_iterator() {}
 private:
 
