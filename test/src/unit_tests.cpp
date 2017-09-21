@@ -15,8 +15,13 @@ BOOST_AUTO_TEST_CASE(basic)
     w.push_back_trailer();
     message_reader r(b, b + sizeof(b));
 
+    // A reader constructed from a writer should have the same size.
     BOOST_CHECK(w.message_size() == r.message_size());
 
+    // Construct an invalid iterator.
+    message_reader::const_iterator j;
+
+    // Field value comparisons.
     message_reader::const_iterator i = r.begin();
     BOOST_CHECK(r.find_with_hint(tag::MsgType, i));
     BOOST_CHECK(i->value() == "A");
