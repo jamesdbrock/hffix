@@ -4,6 +4,9 @@
 #include <hffix.hpp>
 #include <hffix_fields.hpp>
 
+#if __cplusplus >= 201703L
+using namespace std::literals::string_view_literals;
+#endif
 using namespace hffix;
 
 BOOST_AUTO_TEST_CASE(basic)
@@ -29,5 +32,9 @@ BOOST_AUTO_TEST_CASE(basic)
     BOOST_CHECK(i->value() != "B");
     BOOST_CHECK(i->value() == std::string("A"));
     BOOST_CHECK(i->value() != std::string("B"));
+#if __cplusplus >= 201703L
+    BOOST_CHECK(i->value() == "A"sv); // string_view_literals
+    BOOST_CHECK(i->value() != "B"sv); // string_view_literals
+#endif
 }
 

@@ -968,6 +968,36 @@ public:
         return !(that == s);
     }
 
+#if __cplusplus >= 201703L
+    /*!
+    \brief True if the value of the field is equal to the string_view argument.
+    */
+    inline friend bool operator==(field_value const& that, std::string_view s) {
+        return std::equal(that.begin(), that.end(), s.begin(), s.end());
+    }
+
+    /*!
+    \brief True if the value of the field is equal to the string_view argument.
+    */
+    inline friend bool operator==(std::string_view s, field_value const& that) {
+        return that == s;
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the string_view argument.
+    */
+    inline friend bool operator!=(field_value const& that, std::string_view s) {
+        return !(that == s);
+    }
+
+    /*!
+    \brief True if the value of the field is not equal to the string_view argument.
+    */
+    inline friend bool operator!=(std::string_view s, field_value const& that) {
+        return !(that == s);
+    }
+#endif
+
     /*!
      * \brief Stream out the raw text value of the field.
      */
