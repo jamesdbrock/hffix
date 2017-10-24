@@ -45,6 +45,7 @@ fields = {}
 # Add some fields from 4.2 which don't get included by the spec parsing for any of the other versions.
 fields.setdefault(7, []).append(("BeginSeqNo", "int", "4.2",))
 fields.setdefault(16, []).append(("EndSeqNo", "int", "4.2",))
+fields.setdefault(36, []).append(("NewSeqNo", "int", "4.2",))
 fields.setdefault(90, []).append(("SecureDataLen", "Length", "4.2",))
 fields.setdefault(91, []).append(("SecureData", "data", "4.2",))
 fields.setdefault(98, []).append(("EncryptMethod", "int", "4.2",))
