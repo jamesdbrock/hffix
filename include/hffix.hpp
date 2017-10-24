@@ -927,20 +927,6 @@ public:
     }
 
     /*!
-    \brief True if the value of the field is equal to the string argument.
-    */
-    inline friend bool operator==(field_value const& that, std::string const& s) {
-        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
-    }
-
-    /*!
-    \brief True if the value of the field is equal to the string argument.
-    */
-    inline friend bool operator==(std::string const& s, field_value const& that) {
-        return that == s;
-    }
-
-    /*!
     \brief True if the value of the field is not equal to the C-string argument.
     */
     inline friend bool operator!=(field_value const& that, char const* cstring) {
@@ -952,6 +938,20 @@ public:
     */
     inline friend bool operator!=(char const* cstring, field_value const& that) {
         return !(that == cstring);
+    }
+
+    /*!
+    \brief True if the value of the field is equal to the string argument.
+    */
+    inline friend bool operator==(field_value const& that, std::string const& s) {
+        return that.size() == s.size() && !strncmp(that.begin(), s.data(), that.size());
+    }
+
+    /*!
+    \brief True if the value of the field is equal to the string argument.
+    */
+    inline friend bool operator==(std::string const& s, field_value const& that) {
+        return that == s;
     }
 
     /*!
