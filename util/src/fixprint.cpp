@@ -28,7 +28,7 @@ int main(int argc, char** argv)
 
     bool color = argc > 1 && (0 == std::strcmp("-c", argv[1]) || 0 == std::strcmp("--color", argv[1]));
 
-    std::map<hffix::tag_t<>, std::string> field_dictionary;
+    std::map<hffix::tag_t, std::string> field_dictionary;
     hffix::dictionary_init_field(field_dictionary);
     std::map<std::string, std::string> message_dictionary;
     hffix::dictionary_init_message(message_dictionary);
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
                         if (color) std::cout << color_field;
 
-                        auto fname = field_dictionary.find(i->tag());
+                        std::map<hffix::tag_t, std::string>::iterator fname = field_dictionary.find(i->tag());
                         if (fname != field_dictionary.end())
                             std::cout << fname->second << '_'; // Print the name of the field, if it's known.
                         std::cout << i->tag();

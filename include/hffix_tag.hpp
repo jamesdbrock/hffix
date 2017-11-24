@@ -16,20 +16,23 @@ namespace hffix {
 class tag_t {
 public:
 
-    constexpr explicit tag_t(int tag) : m_tag_value(tag) {}
-    constexpr explicit operator int() const { return m_tag_value; }
+    explicit tag_t(int tag) : m_tag_value(tag) {}
+#if __cplusplus >= 201103L
+    explicit operator int() const { return m_tag_value; }
+#endif
+    int value() const { return m_tag_value; }
 
-    constexpr tag_t(tag_t const& tag) = default;
-    tag_t& operator=(tag_t const& tag) = default;
+    tag_t(tag_t const& tag) : m_tag_value(tag.m_tag_value) {}
+    tag_t& operator=(tag_t const& tag) { m_tag_value = tag.m_tag_value; return *this; }
 
-    friend constexpr bool operator==(tag_t const lhs, tag_t const rhs)
+    friend bool operator==(tag_t const lhs, tag_t const rhs)
     { return lhs.m_tag_value == rhs.m_tag_value; }
 
-    friend constexpr bool operator!=(tag_t const lhs, tag_t const rhs)
+    friend bool operator!=(tag_t const lhs, tag_t const rhs)
     { return lhs.m_tag_value != rhs.m_tag_value; }
 
     // this is only here to support using tags as keys in associative containers
-    friend constexpr bool operator<(tag_t const lhs, tag_t const rhs)
+    friend bool operator<(tag_t const lhs, tag_t const rhs)
     { return lhs.m_tag_value < rhs.m_tag_value; }
 
     friend std::ostream& operator<<(std::ostream& os, tag_t const t)

@@ -491,7 +491,7 @@ public:
     \param end Pointer to past-the-end of the string.
     */
     void push_back_string(tag_t const tag, char const* begin, char const* end) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         memcpy(next_, begin, end - begin);
         next_ += (end - begin);
@@ -504,7 +504,7 @@ public:
     \param cstring Pointer to the beginning of a C-style null-terminated string.
     */
     void push_back_string(tag_t const tag, char const* cstring) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         while(*cstring) *next_++ = *cstring++;
         *next_++ = '\x01';
@@ -544,7 +544,7 @@ public:
     \param character An ascii character.
     */
     void push_back_char(tag_t const tag, char const character) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         *next_++ = character;
         *next_++ = '\x01';
@@ -561,7 +561,7 @@ public:
     \param number Integer value.
     */
     template<typename Int_type> void push_back_int(tag_t const tag, Int_type number) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         next_ = details::itoa(number, next_);
         *next_++ = '\x01';
@@ -586,7 +586,7 @@ public:
     \param exponent The exponent of the decimal float. Must be less than or equal to zero.
     */
     template<typename Int_type> void push_back_decimal(tag_t const tag, Int_type mantissa, Int_type exponent) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         next_ = details::dtoa(mantissa, exponent, next_);
         *next_++ = '\x01';
@@ -605,7 +605,7 @@ public:
     \param day Day.
     */
     void push_back_date(tag_t const tag, int year, int month, int day) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -622,7 +622,7 @@ public:
     \param month Month.
     */
     void push_back_monthyear(tag_t const tag, int year, int month) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -644,7 +644,7 @@ public:
     \param second Second.
     */
     void push_back_timeonly(tag_t const tag, int hour, int minute, int second) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         itoa_padded(hour, next_, next_ + 2);
         next_ += 2;
@@ -669,7 +669,7 @@ public:
     \param millisecond Millisecond.
     */
     void push_back_timeonly(tag_t const tag, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         itoa_padded(hour, next_, next_ + 2);
         next_ += 2;
@@ -701,7 +701,7 @@ public:
     \param second Second.
     */
     void push_back_timestamp(tag_t const tag, int year, int month, int day, int hour, int minute, int second) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -736,7 +736,7 @@ public:
     \param millisecond Millisecond.
     */
     void push_back_timestamp(tag_t const tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(static_cast<int>(tag), next_);
+        next_ = details::itoa(tag.value(), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -1275,7 +1275,7 @@ public:
 
     /*! \brief Tag of the field. */
     tag_t tag() const {
-        return tag_t{tag_};
+        return tag_t(tag_);
     }
 
     /*! \brief Weakly-typed value of the field. */
@@ -2014,7 +2014,7 @@ template <typename AssociativeContainer> struct field_name_streamer {
   * std::cout << hffix::field_name(1000000, dictionary, false) << '\n';           // Unknown field tag, will print "\n".
   * \endcode
 */
-template <typename AssociativeContainer> field_name(tag_t const tag, AssociativeContainer const& field_dictionary, bool or_number = true)
+template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(tag_t const tag, AssociativeContainer const& field_dictionary, bool or_number = true)
 {
     return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary, or_number);
 };
