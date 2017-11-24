@@ -42,6 +42,7 @@ or implied, of T3 IP, LLC.
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
+#include <iterator>         // for begin,end
 #if __cplusplus >= 201703L
 #include <string_view>      // for push_back_string()
 #endif
@@ -489,8 +490,8 @@ public:
     \param begin Pointer to the beginning of the string.
     \param end Pointer to past-the-end of the string.
     */
-    void push_back_string(int tag, char const* begin, char const* end) {
-        next_ = details::itoa(tag, next_);
+    void push_back_string(tag_t<detail::string_tag> const tag, char const* begin, char const* end) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         memcpy(next_, begin, end - begin);
         next_ += (end - begin);
@@ -502,8 +503,8 @@ public:
     \param tag FIX tag.
     \param cstring Pointer to the beginning of a C-style null-terminated string.
     */
-    void push_back_string(int tag, char const* cstring) {
-        next_ = details::itoa(tag, next_);
+    void push_back_string(tag_t<detail::string_tag> const tag, char const* cstring) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         while(*cstring) *next_++ = *cstring++;
         *next_++ = '\x01';
@@ -518,7 +519,7 @@ public:
     \param tag FIX tag.
     \param s String.
     */
-    void push_back_string(int tag, std::string const& s) {
+    void push_back_string(tag_t<detail::string_tag> const tag, std::string const& s) {
         push_back_string(tag, s.data(), s.data() + s.size());
     }
 
@@ -532,8 +533,8 @@ public:
     \param tag FIX tag.
     \param s String.
     */
-    void push_back_string(int tag, std::string_view s) {
-        push_back_string(tag, &*cbegin(s), &*cend(s));
+    void push_back_string(tag_t<detail::string_tag> const tag, std::string_view s) {
+        push_back_string(tag, &*std::cbegin(s), &*std::cend(s));
     }
 #endif
 
@@ -542,8 +543,8 @@ public:
     \param tag FIX tag.
     \param character An ascii character.
     */
-    void push_back_char(int tag, char character) {
-        next_ = details::itoa(tag, next_);
+    void push_back_char(tag_t<detail::character_tag> const tag, char const character) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         *next_++ = character;
         *next_++ = '\x01';
@@ -559,8 +560,8 @@ public:
     \param tag FIX tag.
     \param number Integer value.
     */
-    template<typename Int_type> void push_back_int(int tag, Int_type number) {
-        next_ = details::itoa(tag, next_);
+    template<typename Int_type> void push_back_int(tag_t<detail::number_tag> const tag, Int_type number) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         next_ = details::itoa(number, next_);
         *next_++ = '\x01';
@@ -584,8 +585,8 @@ public:
     \param mantissa The mantissa of the decimal float.
     \param exponent The exponent of the decimal float. Must be less than or equal to zero.
     */
-    template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
-        next_ = details::itoa(tag, next_);
+    template<typename Int_type> void push_back_decimal(tag_t<detail::number_tag> const tag, Int_type mantissa, Int_type exponent) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         next_ = details::dtoa(mantissa, exponent, next_);
         *next_++ = '\x01';
@@ -603,8 +604,8 @@ public:
     \param month Month.
     \param day Day.
     */
-    void push_back_date(int tag, int year, int month, int day) {
-        next_ = details::itoa(tag, next_);
+    void push_back_date(tag_t<detail::timestamp_tag> const tag, int year, int month, int day) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -620,8 +621,8 @@ public:
     \param year Year.
     \param month Month.
     */
-    void push_back_monthyear(int tag, int year, int month) {
-        next_ = details::itoa(tag, next_);
+    void push_back_monthyear(tag_t<detail::timestamp_tag> const tag, int year, int month) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -642,8 +643,8 @@ public:
     \param minute Minute.
     \param second Second.
     */
-    void push_back_timeonly(int tag, int hour, int minute, int second) {
-        next_ = details::itoa(tag, next_);
+    void push_back_timeonly(tag_t<detail::timestamp_tag> const tag, int hour, int minute, int second) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         itoa_padded(hour, next_, next_ + 2);
         next_ += 2;
@@ -667,8 +668,8 @@ public:
     \param second Second.
     \param millisecond Millisecond.
     */
-    void push_back_timeonly(int tag, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(tag, next_);
+    void push_back_timeonly(tag_t<detail::timestamp_tag> const tag, int hour, int minute, int second, int millisecond) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         itoa_padded(hour, next_, next_ + 2);
         next_ += 2;
@@ -699,8 +700,8 @@ public:
     \param minute Minute.
     \param second Second.
     */
-    void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second) {
-        next_ = details::itoa(tag, next_);
+    void push_back_timestamp(tag_t<detail::timestamp_tag> const tag, int year, int month, int day, int hour, int minute, int second) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -734,8 +735,8 @@ public:
     \param second Second.
     \param millisecond Millisecond.
     */
-    void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(tag, next_);
+    void push_back_timestamp(tag_t<detail::timestamp_tag> const tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
+        next_ = details::itoa(static_cast<int>(tag), next_);
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -772,7 +773,7 @@ public:
     \param date Date.
     \see HFFIX_NO_BOOST_DATETIME
     */
-    void push_back_date(int tag, boost::gregorian::date date) {
+    void push_back_date(tag_t<detail::timestamp_tag> const tag, boost::gregorian::date date) {
         if (!date.is_not_a_date())
             push_back_date(tag, date.year(), date.month(), date.day());
     }
@@ -788,7 +789,7 @@ public:
     \param timeonly Time.
     \see HFFIX_NO_BOOST_DATETIME
     */
-    void push_back_timeonly(int tag, boost::posix_time::time_duration timeonly) {
+    void push_back_timeonly(tag_t<detail::timestamp_tag> const tag, boost::posix_time::time_duration timeonly) {
         if (!timeonly.is_not_a_date_time())
             push_back_timeonly(
                 tag,
@@ -810,7 +811,7 @@ public:
     \param timestamp Date and time.
     \see HFFIX_NO_BOOST_DATETIME
     */
-    void push_back_timestamp(int tag, boost::posix_time::ptime timestamp) {
+    void push_back_timestamp(tag_t<detail::timestamp_tag> const tag, boost::posix_time::ptime timestamp) {
         if (!timestamp.is_not_a_date_time())
             push_back_timestamp(
                 tag,
@@ -1273,8 +1274,8 @@ class field {
 public:
 
     /*! \brief Tag of the field. */
-    int tag() const {
-        return tag_;
+    tag_t<> tag() const {
+        return tag_t<>{tag_};
     }
 
     /*! \brief Weakly-typed value of the field. */
@@ -1425,8 +1426,9 @@ private:
  * \brief A predicate closed with a FIX tag which returns true if the tag of the hffix::field passed to the predicate is equal.
  */
 struct tag_equal {
-    tag_equal(int tag) : tag(tag) {}
-    int tag;
+    template <typename ParameterType>
+    tag_equal(tag_t<ParameterType> tag) : tag(tag) {}
+    tag_t<> tag;
     bool operator()(field const& v) const {
         return v.tag() == tag;
     }
@@ -1729,7 +1731,8 @@ public:
      *   std::string targetcompid = i++->as_string();
      * \endcode
      */
-    bool find_with_hint(int tag, const_iterator& i) const {
+    template <typename ParameterType>
+    bool find_with_hint(tag_t<ParameterType> tag, const_iterator& i) const {
         return hffix::find_with_hint(begin(), end(), tag_equal(tag), i);
     }
 
@@ -1912,7 +1915,7 @@ private:
 
 /*! @cond EXCLUDE */
 namespace details {
-bool is_tag_a_data_length(int tag);
+bool is_tag_a_data_length(tag_t<> tag);
 }
 /*! @endcond */
 
@@ -1943,7 +1946,7 @@ inline void message_reader_const_iterator::increment()
 
     while(*(++current_.value_.end_ ) != '\x01') {}
 
-    if (details::is_tag_a_data_length(current_.tag_)) {
+    if (details::is_tag_a_data_length(current_.tag())) {
         size_t data_len = details::atou<size_t>(current_.value_.begin_, current_.value_.end_);
 
         buffer_ = current_.value_.end_ + 1;
@@ -1968,19 +1971,21 @@ inline void message_reader_const_iterator::increment()
 /* @cond EXCLUDE */
 
 namespace details {
-inline bool is_tag_a_data_length(int tag)
+inline bool is_tag_a_data_length(tag_t<> const tag)
 {
-    int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
-    return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
+    // fields are ordered, so this could be std::binary_search.
+    return std::find(std::begin(length_fields), std::end(length_fields), tag) != std::end(length_fields);
 }
 
 // \brief std::ostream-able type returned by hffix::field_name function.
 template <typename AssociativeContainer> struct field_name_streamer {
-    int tag;
+    tag_t<> tag;
     AssociativeContainer const& field_dictionary;
     bool number_alternative;
 
-    field_name_streamer(int tag, AssociativeContainer const& field_dictionary, bool number_alternative) : tag(tag), field_dictionary(field_dictionary), number_alternative(number_alternative) {}
+    template <typename A>
+    field_name_streamer(tag_t<A> tag, AssociativeContainer const& field_dictionary, bool number_alternative)
+        : tag(tag), field_dictionary(field_dictionary), number_alternative(number_alternative) {}
 
     friend std::ostream& operator<<(std::ostream& os, field_name_streamer that) {
         typename AssociativeContainer::const_iterator i = that.field_dictionary.find(that.tag);
@@ -2012,7 +2017,8 @@ template <typename AssociativeContainer> struct field_name_streamer {
   * std::cout << hffix::field_name(1000000, dictionary, false) << '\n';           // Unknown field tag, will print "\n".
   * \endcode
 */
-template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary, bool or_number = true)
+template <typename A, typename AssociativeContainer> details::field_name_streamer<AssociativeContainer>
+field_name(tag_t<A> const tag, AssociativeContainer const& field_dictionary, bool or_number = true)
 {
     return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary, or_number);
 };

@@ -16,7 +16,7 @@ int main(int argc, char** argv)
 {
     int return_code = 0;
 
-    std::map<int, std::string> field_dictionary;
+    std::map<hffix::tag_t<>, std::string> field_dictionary;
     hffix::dictionary_init_field(field_dictionary);
 
     size_t buffer_length(0); // The number of bytes read in buffer[].

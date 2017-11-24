@@ -18,17 +18,17 @@ char buffer[1 << 20]; // Must be larger than the largest FIX message size.
 int main(int argc, char** argv)
 {
     if (argc > 1 && (0 == std::strcmp("-h", argv[1]))) {
-        std::cout << 
+        std::cout <<
             "fixprint [Options]\n\n"
             "Reads raw FIX encoded data from stdin and writes annotated human-readable FIX to stdout.\n\n"
             "Options:\n"
             "  -c --color     Color output.\n";
         exit(0);
     }
-            
+
     bool color = argc > 1 && (0 == std::strcmp("-c", argv[1]) || 0 == std::strcmp("--color", argv[1]));
 
-    std::map<int, std::string> field_dictionary;
+    std::map<hffix::tag_t<>, std::string> field_dictionary;
     hffix::dictionary_init_field(field_dictionary);
     std::map<std::string, std::string> message_dictionary;
     hffix::dictionary_init_message(message_dictionary);
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
                         if (color) std::cout << color_field;
 
-                        std::map<int, std::string>::iterator fname = field_dictionary.find(i->tag());
+                        auto fname = field_dictionary.find(i->tag());
                         if (fname != field_dictionary.end())
                             std::cout << fname->second << '_'; // Print the name of the field, if it's known.
                         std::cout << i->tag();
@@ -82,7 +82,6 @@ int main(int argc, char** argv)
                 catch(std::exception& ex) {
                     std::cerr << "Error reading the fields: " << ex.what() << '\n';
                 }
-                    
 
             } else {
                 // An invalid, corrupted FIX message. Do not try to read fields out of this reader.
