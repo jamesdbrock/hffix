@@ -60,44 +60,6 @@ fields.setdefault(370, []).append(("OnBehalfOfSendingTime", "UTCTimestamp", "4.2
 fields.setdefault(373, []).append(("SessionRejectReason", "int", "4.2",))
 fields.setdefault(383, []).append(("MaxMessageSize", "int", "4.2",))
 
-# this function maps FIX type names tho the internal types
-def tag_type(type_name):
-    return "detail::" + {
-        "int": "number_tag",
-        "Int": "number_tag",
-        "Price": "number_tag",
-        "Qty": "number_tag",
-        "Amt": "number_tag",
-        "float": "number_tag",
-        "Percentage": "number_tag",
-        "SeqNum": "number_tag",
-        "Length": "number_tag",
-        "BlockRepeating": "number_tag",
-        "PriceOffset": "number_tag",
-
-        "String": "string_tag",
-        "Country": "string_tag",
-        "data": "string_tag",
-        "Currency": "string_tag",
-        "MultipleCharValue": "string_tag",
-        "Exchange": "string_tag",
-        "MultipleValueString": "string_tag",
-        "MultipleStringValue": "string_tag",
-        "Language": "string_tag",
-
-        "Boolean": "bool_tag",
-
-        "char": "character_tag",
-
-        "LocalMktDate": "timestamp_tag",
-        "MonthYear": "timestamp_tag",
-        "UTCTimestamp": "timestamp_tag",
-        "UTCDateOnly": "timestamp_tag",
-        "UTCTimeOnly": "timestamp_tag",
-        "TZTimeOnly": "timestamp_tag",
-        "TZTimestamp": "timestamp_tag"
-        }[type_name]
-
 # messagetypes is a dictionary such that
 #    Key is a string
 #    Values is a list of tuples representing FIX message types in the form [(Messagename, Version)]
@@ -162,8 +124,7 @@ namespace tag {
 l = sorted(fields.iteritems(), operator.lt, operator.itemgetter(0))
 for i in l:
   field = i[1][0]
-  sys.stdout.write("constexpr tag_t<{}> {}{{{}}}; //!<".format(
-    tag_type(field[1]), i[1][0][0], i[0]))
+  sys.stdout.write("static const tag_t {}({}); //!<".format(i[1][0][0], i[0]))
   for field in i[1]: sys.stdout.write(" (" + field[1] + " " + field[2] + ")")
   if reduce(lambda x, y: x or (y[0] != i[1][0][0]) or (y[1] != i[1][0][1]), i[1], False): sys.stdout.write(" *Different*") # If the different spec versions have a different data type or different name for this field tag number, then print *Different*.
   sys.stdout.write("\n")
@@ -172,7 +133,7 @@ sys.stdout.write("} // namespace tag\n\n")
 # Write C++ array of all field tags for fields of type Length.
 sys.stdout.write("namespace {\n")
 sys.stdout.write("//! Sorted list of all field tags which are of type Length\n")
-sys.stdout.write("tag_t<detail::number_tag> const length_fields[] = {\n")
+sys.stdout.write("tag_t const length_fields[] = {\n")
 l = sorted(filter(lambda x: any(map(lambda y: y[1] == "Length", x[1])), fields.iteritems()), operator.lt, operator.itemgetter(0))
 for i in l:
   # sys.stdout.write(i[1][0][0])
