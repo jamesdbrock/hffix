@@ -1971,8 +1971,8 @@ inline void message_reader_const_iterator::increment()
 namespace details {
 inline bool is_tag_a_data_length(tag_t const tag)
 {
-    // fields are ordered, so this could be std::binary_search.
-    return std::find(std::begin(length_fields), std::end(length_fields), tag) != std::end(length_fields);
+    tag_t const* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
+    return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
 }
 
 // \brief std::ostream-able type returned by hffix::field_name function.
