@@ -1963,7 +1963,7 @@ inline void message_reader_const_iterator::increment()
         //     message_reader_->invalid(); // in theory this can never happen.
         // }
     }
-};
+}
 
 /* @cond EXCLUDE */
 
@@ -2015,7 +2015,7 @@ template <typename AssociativeContainer> struct field_name_streamer {
 template <typename AssociativeContainer> details::field_name_streamer<AssociativeContainer> field_name(int tag, AssociativeContainer const& field_dictionary, bool or_number = true)
 {
     return details::field_name_streamer<AssociativeContainer>(tag, field_dictionary, or_number);
-};
+}
 
 } // namespace hffix
 
