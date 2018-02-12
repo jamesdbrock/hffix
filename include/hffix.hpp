@@ -63,6 +63,13 @@ namespace hffix {
 
 namespace details {
 
+inline void throw_range_error() {
+    throw std::out_of_range("message_writer buffer full");
+}
+
+template <std::size_t N>
+std::ptrdiff_t len(char const (&)[N]) { return std::ptrdiff_t(N - 1); }
+
 /*
 \brief Internal ascii-to-integer conversion.
 
@@ -125,7 +132,7 @@ Writes an integer out as ascii.
 \param buffer Pointer to location for the ascii to be written.
 \return Pointer to past-the-end of the ascii that was written.
 */
-template<typename Int_type> char* itoa(Int_type number, char* buffer)
+template<typename Int_type> char* itoa(Int_type number, char* buffer, char* end)
 {
     // Write out the digits in reverse order.
     bool isnegative(false);
@@ -136,11 +143,13 @@ template<typename Int_type> char* itoa(Int_type number, char* buffer)
 
     char*b = buffer;
     do {
+        if (b >= end) details::throw_range_error();
         *b++ = '0' + (number % 10);
         number /= 10;
     } while(number);
 
     if (isnegative) {
+        if (b >= end) details::throw_range_error();
         *b++ = '-';
     }
 
@@ -161,11 +170,12 @@ Writes an unsigned integer out as ascii.
 \param buffer Pointer to location for the ascii to be written.
 \return Pointer to past-the-end of the ascii that was written.
 */
-template<typename Uint_type> char* utoa(Uint_type number, char* buffer)
+template<typename Uint_type> char* utoa(Uint_type number, char* buffer, char* end)
 {
     // Write out the digits in reverse order.
     char*b = buffer;
     do {
+        if (b == end) details::throw_range_error();
         *b++ = '0' + (number % 10);
         number /= 10;
     } while(number);
@@ -230,7 +240,7 @@ Non-normalized. The exponent parameter must be less than or equal to zero.
 \param buffer Pointer to location for the ascii to be written.
 \return Pointer to past-the-end of the ascii that was written.
 */
-template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer)
+template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer, char* end)
 {
     // Write out the digits in reverse order.
     bool isnegative(false);
@@ -241,14 +251,17 @@ template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, cha
 
     char*b = buffer;
     do {
+        if (b == end) details::throw_range_error();
         *b++ = '0' + (mantissa % 10);
         mantissa /= 10;
         if (++exponent == 0) {
+            if (b == end) details::throw_range_error();
             *b++ = '.';
         }
     } while(mantissa > 0 || exponent < 1);
 
     if (isnegative) {
+        if (b == end) details::throw_range_error();
         *b++ = '-';
     }
 
@@ -356,7 +369,8 @@ public:
     message_writer(char* buffer, size_t size):
         buffer_(buffer),
         buffer_end_(buffer + size),
-        next_(buffer) {
+        next_(buffer),
+        body_length_(NULL) {
     }
 
     /*!
@@ -367,7 +381,8 @@ public:
     message_writer(char* begin, char* end) :
         buffer_(begin),
         buffer_end_(end),
-        next_(begin) {
+        next_(begin),
+        body_length_(NULL) {
     }
 
 
@@ -419,6 +434,9 @@ public:
      * \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
     */
     void push_back_header(char const* begin_string_version) {
+        if (buffer_end_ - next_ < 2 + std::ptrdiff_t(strlen(begin_string_version)) + 3 + 7) {
+            details::throw_range_error();
+        }
         memcpy(next_, "8=", 2);
         next_ += 2;
         memcpy(next_, begin_string_version, std::strlen(begin_string_version));
@@ -449,10 +467,16 @@ public:
         // Calculate and write out the BodyLength.
         // BodyLength does not include the SOH character after the BodyLength field.
         // BodyLength does not include the SOH character before the CheckSum field.
-        size_t bodylength = next_ - (body_length_ + 7);
-        for(char* b = body_length_ + 5; b >= body_length_; --b) {
-            *b = '0' + (bodylength % 10);
-            bodylength /= 10;
+        if (body_length_) {
+            size_t bodylength = next_ - (body_length_ + 7);
+            for(char* b = body_length_ + 5; b >= body_length_; --b) {
+                *b = '0' + (bodylength % 10);
+                bodylength /= 10;
+            }
+        }
+
+        if (buffer_end_ - next_ < 7) {
+            details::throw_range_error();
         }
 
         // write out the CheckSum after optionally calculating it
@@ -490,7 +514,10 @@ public:
     \param end Pointer to past-the-end of the string.
     */
     void push_back_string(int tag, char const* begin, char const* end) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < (end - begin) + 2) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         memcpy(next_, begin, end - begin);
         next_ += (end - begin);
@@ -503,10 +530,9 @@ public:
     \param cstring Pointer to the beginning of a C-style null-terminated string.
     */
     void push_back_string(int tag, char const* cstring) {
-        next_ = details::itoa(tag, next_);
-        *next_++ = '=';
-        while(*cstring) *next_++ = *cstring++;
-        *next_++ = '\x01';
+        char const* end = cstring;
+        while(*end) ++end;
+        push_back_string(tag, cstring, end);
     }
 
     /*!
@@ -533,7 +559,7 @@ public:
     \param s String.
     */
     void push_back_string(int tag, std::string_view s) {
-        push_back_string(tag, &*cbegin(s), &*cend(s));
+        push_back_string(tag, s.begin(), s.end());
     }
 #endif
 
@@ -543,7 +569,10 @@ public:
     \param character An ascii character.
     */
     void push_back_char(int tag, char character) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < 3) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         *next_++ = character;
         *next_++ = '\x01';
@@ -560,9 +589,11 @@ public:
     \param number Integer value.
     */
     template<typename Int_type> void push_back_int(int tag, Int_type number) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (next_ == buffer_end_) details::throw_range_error();
         *next_++ = '=';
-        next_ = details::itoa(number, next_);
+        next_ = details::itoa(number, next_, buffer_end_);
+        if (next_ == buffer_end_) details::throw_range_error();
         *next_++ = '\x01';
     }
 
@@ -585,9 +616,11 @@ public:
     \param exponent The exponent of the decimal float. Must be less than or equal to zero.
     */
     template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (next_ == buffer_end_) details::throw_range_error();
         *next_++ = '=';
-        next_ = details::dtoa(mantissa, exponent, next_);
+        next_ = details::dtoa(mantissa, exponent, next_, buffer_end_);
+        if (next_ == buffer_end_) details::throw_range_error();
         *next_++ = '\x01';
     }
 //@}
@@ -604,7 +637,10 @@ public:
     \param day Day.
     */
     void push_back_date(int tag, int year, int month, int day) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=YYYYMMDD|")) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -621,7 +657,10 @@ public:
     \param month Month.
     */
     void push_back_monthyear(int tag, int year, int month) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=YYYYMM|")) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -643,7 +682,10 @@ public:
     \param second Second.
     */
     void push_back_timeonly(int tag, int hour, int minute, int second) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=HH:MM:SS|")) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         itoa_padded(hour, next_, next_ + 2);
         next_ += 2;
@@ -668,7 +710,10 @@ public:
     \param millisecond Millisecond.
     */
     void push_back_timeonly(int tag, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=HH:MM:SS.sss|")) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         itoa_padded(hour, next_, next_ + 2);
         next_ += 2;
@@ -700,7 +745,11 @@ public:
     \param second Second.
     */
     void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+
+        if (buffer_end_ - next_ < details::len("=YYYYMMDD-HH:MM:SS|")) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -735,7 +784,10 @@ public:
     \param millisecond Millisecond.
     */
     void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(tag, next_);
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=YYYYMMDD-HH:MM:SS.sss|")) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         itoa_padded(year, next_, next_ + 4);
         next_ += 4;
@@ -856,11 +908,17 @@ public:
     \param end Pointer to after-the-end of the data.
     */
     void push_back_data(int tag_data_length, int tag_data, char const* begin, char const* end) {
-        next_ = details::itoa(tag_data_length, next_);
+        next_ = details::itoa(tag_data_length, next_, buffer_end_);
+        if (next_ == buffer_end_) details::throw_range_error();
         *next_++ = '=';
-        next_ = details::itoa(end - begin, next_);
+        next_ = details::itoa(end - begin, next_, buffer_end_);
+        if (next_ == buffer_end_) details::throw_range_error();
         *next_++ = '\x01';
-        next_ = details::itoa(tag_data, next_);
+        next_ = details::itoa(tag_data, next_, buffer_end_);
+
+        if (buffer_end_ - next_ < (end - begin) + 2) {
+            details::throw_range_error();
+        }
         *next_++ = '=';
         memcpy(next_, begin, end - begin);
         next_ += end - begin;
@@ -878,7 +936,7 @@ private:
     }
 
     char* buffer_;
-    char* buffer_end_; // TODO check in all methods for overflow of buffer and throw.
+    char* buffer_end_;
     char* next_;
     char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
 };
