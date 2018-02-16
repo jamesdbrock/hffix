@@ -11,12 +11,15 @@ using namespace hffix;
 
 BOOST_AUTO_TEST_CASE(basic)
 {
+    // Print the BOOST version, mostly so we can see it in Travis.
+    std::cout << "BOOST version " << BOOST_LIB_VERSION << std::endl;
+
     char b[1024];
-    message_writer w(b, b + sizeof(b));
+    message_writer w(b);
     w.push_back_header("FIX.4.2");
     w.push_back_string(tag::MsgType, "A");
     w.push_back_trailer();
-    message_reader r(b, b + sizeof(b));
+    message_reader r(b);
 
     // A reader constructed from a writer should have the same size.
     BOOST_CHECK(w.message_size() == r.message_size());
@@ -36,6 +39,17 @@ BOOST_AUTO_TEST_CASE(basic)
     BOOST_CHECK(i->value() == "A"sv); // string_view_literals
     BOOST_CHECK(i->value() != "B"sv); // string_view_literals
 #endif
+
+    // message_writer preconditions
+    {
+        message_writer w(b);
+        BOOST_CHECK_THROW(w.push_back_trailer(false), std::logic_error);
+    }
+    {
+        message_writer w(b);
+        w.push_back_header("FIX.4.2");
+        BOOST_CHECK_THROW(w.push_back_header("FIX.4.2"), std::logic_error);
+    }
 }
 
 // find the minimum size buffer the message printed by f() will fit
@@ -67,8 +81,14 @@ BOOST_AUTO_TEST_CASE(message_writer_bounds)
 {
 	using W = message_writer;
 	BOOST_CHECK(test_bound_checking([](W& w) { w.push_back_header("FIX.4.2"); } ) == 19);
-	BOOST_CHECK(test_bound_checking([](W& w) { w.push_back_trailer(false); } ) == 7);
-	BOOST_CHECK(test_bound_checking([](W& w) { w.push_back_trailer(true); } ) == 7);
+	BOOST_CHECK(test_bound_checking([](W& w) {
+                w.push_back_header("FIX.4.2");
+                w.push_back_trailer(false);
+            } ) == 26);
+	BOOST_CHECK(test_bound_checking([](W& w) {
+                w.push_back_header("FIX.4.2");
+                w.push_back_trailer(true);
+            } ) == 26);
 
 	// 14 characters
 	auto const test_string = "string literal";

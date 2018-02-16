@@ -64,7 +64,7 @@ namespace hffix {
 namespace details {
 
 inline void throw_range_error() {
-    throw std::out_of_range("message_writer buffer full");
+    throw std::out_of_range("hffix message_writer buffer full");
 }
 
 template <std::size_t N>
@@ -130,6 +130,7 @@ Writes an integer out as ascii.
 \tparam Int_type Type of integer to be converted.
 \param number Value of the integer to be converted.
 \param buffer Pointer to location for the ascii to be written.
+\param end Past-the-end of the buffer, to check for overflow.
 \return Pointer to past-the-end of the ascii that was written.
 */
 template<typename Int_type> char* itoa(Int_type number, char* buffer, char* end)
@@ -168,6 +169,7 @@ Writes an unsigned integer out as ascii.
 \tparam Int_type Type of integer to be converted.
 \param number Value of the integer to be converted.
 \param buffer Pointer to location for the ascii to be written.
+\param end Past-the-end of the buffer, to check for overflow.
 \return Pointer to past-the-end of the ascii that was written.
 */
 template<typename Uint_type> char* utoa(Uint_type number, char* buffer, char* end)
@@ -175,7 +177,7 @@ template<typename Uint_type> char* utoa(Uint_type number, char* buffer, char* en
     // Write out the digits in reverse order.
     char*b = buffer;
     do {
-        if (b == end) details::throw_range_error();
+        if (b >= end) details::throw_range_error();
         *b++ = '0' + (number % 10);
         number /= 10;
     } while(number);
@@ -238,6 +240,7 @@ Non-normalized. The exponent parameter must be less than or equal to zero.
 \param mantissa The mantissa of the decimal float.
 \param exponent The exponent of the decimal float. Must be less than or equal to zero.
 \param buffer Pointer to location for the ascii to be written.
+\param end Past-the-end of the buffer, to check for overflow.
 \return Pointer to past-the-end of the ascii that was written.
 */
 template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, char* buffer, char* end)
@@ -251,17 +254,17 @@ template<typename Int_type> char* dtoa(Int_type mantissa, Int_type exponent, cha
 
     char*b = buffer;
     do {
-        if (b == end) details::throw_range_error();
+        if (b >= end) details::throw_range_error();
         *b++ = '0' + (mantissa % 10);
         mantissa /= 10;
         if (++exponent == 0) {
-            if (b == end) details::throw_range_error();
+            if (b >= end) details::throw_range_error();
             *b++ = '.';
         }
     } while(mantissa > 0 || exponent < 1);
 
     if (isnegative) {
-        if (b == end) details::throw_range_error();
+        if (b >= end) details::throw_range_error();
         *b++ = '-';
     }
 
@@ -433,6 +436,20 @@ public:
         return next_;
     }
 
+    /*!
+     * \brief Total available buffer size, including buffer already written to by this message.
+     */
+    size_t buffer_size() const {
+        return buffer_end_ - buffer_;
+    }
+
+    /*!
+     * \brief Remaining available buffer size. Excludes buffer already written to by this message.
+     */
+    size_t buffer_size_remaining() const {
+        return buffer_end_ - buffer_;
+    }
+
     //@}
 
     /*! \name Transport Fields */
@@ -445,8 +462,12 @@ public:
      *
      * \pre No other `push_back` method has yet been called.
      * \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
-    */
+     *
+     * \throw std::out_of_range When the remaining buffer size is too small.
+     * \throw std::logic_error When called more than once for a single message.
+     */
     void push_back_header(char const* begin_string_version) {
+        if (body_length_) throw std::logic_error("hffix message_writer.push_back_header called twice");
         if (buffer_end_ - next_ < 2 + std::ptrdiff_t(strlen(begin_string_version)) + 3 + 7) {
             details::throw_range_error();
         }
@@ -475,7 +496,10 @@ public:
      * \param calculate_checksum If this flag is set to false, then instead of iterating over the entire message and
      * calculating the CheckSum, the standard trailer will simply write CheckSum=000. This is fine if you're sending
      * the message to a FIX parser that, like High Frequency FIX Parser, doesn't care about the CheckSum.
-    */
+     *
+     * \throw std::out_of_range When the remaining buffer size is too small.
+     * \throw std::logic_error When called before message_writer::push_back_header()
+     */
     void push_back_trailer(bool calculate_checksum = true) {
         // Calculate and write out the BodyLength.
         // BodyLength does not include the SOH character after the BodyLength field.
@@ -487,6 +511,7 @@ public:
                 bodylength /= 10;
             }
         }
+        else throw std::logic_error("hffix message_writer.push_back_trailer called before message_writer.push_back_header");
 
         if (buffer_end_ - next_ < 7) {
             details::throw_range_error();
@@ -495,7 +520,7 @@ public:
         // write out the CheckSum after optionally calculating it
         if (calculate_checksum) {
             size_t checksum(0);
-            char* b = buffer_;
+            char* b = buffer_; // TODO What if *b is negative? Could totally happen with UTF-8 strings. This should be an unsigned char pointer.
             while(b < next_) checksum += *b++;
             checksum = checksum % 256;
 
@@ -522,9 +547,12 @@ public:
 
     /*!
     \brief Append a string field to the message.
+
     \param tag FIX tag.
     \param begin Pointer to the beginning of the string.
     \param end Pointer to past-the-end of the string.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_string(int tag, char const* begin, char const* end) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -539,13 +567,18 @@ public:
 
     /*!
     \brief Append a string field to the message.
+
     \param tag FIX tag.
     \param cstring Pointer to the beginning of a C-style null-terminated string.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_string(int tag, char const* cstring) {
-        char const* end = cstring;
-        while(*end) ++end;
-        push_back_string(tag, cstring, end);
+        // Find the end of the cstring, like strlen, but throw if the cstring
+        // is longer than the remaining buffer.
+        char const* cstring_end = (char const*)memchr(cstring, 0, buffer_end_ - next_);
+        if (cstring_end) push_back_string(tag, cstring, cstring_end);
+        else details::throw_range_error();
     }
 
     /*!
@@ -556,6 +589,8 @@ public:
 
     \param tag FIX tag.
     \param s String.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_string(int tag, std::string const& s) {
         push_back_string(tag, s.data(), s.data() + s.size());
@@ -570,6 +605,8 @@ public:
 
     \param tag FIX tag.
     \param s String.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_string(int tag, std::string_view s) {
         push_back_string(tag, s.begin(), s.end());
@@ -578,8 +615,11 @@ public:
 
     /*!
     \brief Append a char field to the message.
+
     \param tag FIX tag.
     \param character An ascii character.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_char(int tag, char character) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -597,16 +637,19 @@ public:
 //@{
     /*!
     \brief Append an integer field to the message.
+
     \tparam Int_type Type of integer.
     \param tag FIX tag.
     \param number Integer value.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     template<typename Int_type> void push_back_int(int tag, Int_type number) {
         next_ = details::itoa(tag, next_, buffer_end_);
-        if (next_ == buffer_end_) details::throw_range_error();
+        if (next_ >= buffer_end_) details::throw_range_error();
         *next_++ = '=';
         next_ = details::itoa(number, next_, buffer_end_);
-        if (next_ == buffer_end_) details::throw_range_error();
+        if (next_ >= buffer_end_) details::throw_range_error();
         *next_++ = '\x01';
     }
 
@@ -627,13 +670,15 @@ public:
     \param tag FIX tag.
     \param mantissa The mantissa of the decimal float.
     \param exponent The exponent of the decimal float. Must be less than or equal to zero.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
         next_ = details::itoa(tag, next_, buffer_end_);
-        if (next_ == buffer_end_) details::throw_range_error();
+        if (next_ >= buffer_end_) details::throw_range_error();
         *next_++ = '=';
         next_ = details::dtoa(mantissa, exponent, next_, buffer_end_);
-        if (next_ == buffer_end_) details::throw_range_error();
+        if (next_ >= buffer_end_) details::throw_range_error();
         *next_++ = '\x01';
     }
 //@}
@@ -644,10 +689,13 @@ public:
 
     /*!
     \brief Append a LocalMktDate or UTCDate field to the message.
+
     \param tag FIX tag.
     \param year Year.
     \param month Month.
     \param day Day.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_date(int tag, int year, int month, int day) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -665,9 +713,12 @@ public:
     }
     /*!
     \brief Append a month-year field to the message.
+
     \param tag FIX tag.
     \param year Year.
     \param month Month.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_monthyear(int tag, int year, int month) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -693,6 +744,8 @@ public:
     \param hour Hour.
     \param minute Minute.
     \param second Second.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timeonly(int tag, int hour, int minute, int second) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -721,6 +774,8 @@ public:
     \param minute Minute.
     \param second Second.
     \param millisecond Millisecond.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timeonly(int tag, int hour, int minute, int second, int millisecond) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -756,6 +811,8 @@ public:
     \param hour Hour.
     \param minute Minute.
     \param second Second.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -795,6 +852,8 @@ public:
     \param minute Minute.
     \param second Second.
     \param millisecond Millisecond.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
         next_ = details::itoa(tag, next_, buffer_end_);
@@ -835,6 +894,9 @@ public:
 
     \param tag FIX tag.
     \param date Date.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+
     \see HFFIX_NO_BOOST_DATETIME
     */
     void push_back_date(int tag, boost::gregorian::date date) {
@@ -851,6 +913,9 @@ public:
 
     \param tag FIX tag.
     \param timeonly Time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+
     \see HFFIX_NO_BOOST_DATETIME
     */
     void push_back_timeonly(int tag, boost::posix_time::time_duration timeonly) {
@@ -873,6 +938,9 @@ public:
 
     \param tag FIX tag.
     \param timestamp Date and time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+
     \see HFFIX_NO_BOOST_DATETIME
     */
     void push_back_timestamp(int tag, boost::posix_time::ptime timestamp) {
@@ -919,6 +987,8 @@ public:
     \param tag_data FIX tag for the data field.
     \param begin Pointer to the beginning of the data.
     \param end Pointer to after-the-end of the data.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_data(int tag_data_length, int tag_data, char const* begin, char const* end) {
         next_ = details::itoa(tag_data_length, next_, buffer_end_);
@@ -988,6 +1058,7 @@ public:
     */
     inline friend bool operator==(field_value const& that, char const* cstring) {
         return !strncmp(that.begin(), cstring, that.size()) && !cstring[that.size()];
+        // TODO Is this correct? Maybe getting too fancy here trying to avoid call to strlen.
     }
 
     /*!

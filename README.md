@@ -545,8 +545,10 @@ This library only depends on C++98 because it doesn't need any of the features o
 
 * More support for BlockRepeating NoXXX field types for FIX 5.0 SP2.
 
-* Checks for buffer overflow in hffix::message_writer.
-
 * Lexical cast validation for hffix::message_reader.
 
+* `std::chrono` support.
+
+* Split out the buffer-management features of `message_reader` and
+`message_writer` into separate classes.
 

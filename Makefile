@@ -86,7 +86,7 @@ unit_tests :
 	$(CXX) $(CXXFLAGS) -std=c++11 -o test/bin/unit_tests test/src/unit_tests.cpp
 	@echo -e "${YELLOW}*** Built test/bin/unit_tests ...${NORMAL}"
 	@echo -e "${YELLOW}*** Running test/bin/unit_tests ...${NORMAL}"
-	test/bin/unit_tests
+	test/bin/unit_tests --color_output=true
 	@echo -e "${YELLOW}*** Passed test/bin/unit_tests ...${NORMAL}"
 
 ctags :
