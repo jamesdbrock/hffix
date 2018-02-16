@@ -536,7 +536,7 @@ After *Logon* response from the server, the client may begin sending messages, b
 
 ## C++03|11|14|17
 
-This library only depends on C++98 because it doesn't need any of the features of later C++. However, the library was designed with the intention of interacting well with C++14 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
+This library only depends on C++98 because it doesn't need any of the features of later C++. However, the library was designed with the intention of interacting well with C++11 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
 
 
 ## TODO
