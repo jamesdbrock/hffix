@@ -385,6 +385,19 @@ public:
         body_length_(NULL) {
     }
 
+    /*!
+    \brief Construct on an array reference to a buffer.
+    \tparam N The size of the array.
+    \param buffer An array reference. The writer will write into the entire array of length _N_.
+    */
+    template<size_t N>
+    message_writer(char(&buffer)[N]) :
+        buffer_(buffer),
+        buffer_end_(&(buffer[N])),
+        next_(buffer),
+        body_length_(NULL) {
+    }
+
 
     /*!
      * \brief Owns no resources, so destruction is no-op.
@@ -1641,6 +1654,21 @@ public:
         init();
     }
 
+    /*!
+    \brief Construct on an array reference to a buffer.
+    \tparam N The size of the array.
+    \param buffer An array reference. The reader will read from the entire array of length _N_.
+    */
+    template<size_t N>
+    message_reader(const char(&buffer)[N]) :
+        buffer_(buffer),
+        buffer_end_(&(buffer[N])),
+        begin_(*this, 0),
+        end_(*this, 0),
+        is_complete_(false),
+        is_valid_(true) {
+        init();
+    }
 
     /*!
      * \brief Owns no resources, so destruction is no-op.
