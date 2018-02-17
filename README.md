@@ -44,6 +44,7 @@ To build the Doxygen html documentation in the `doc/html` directory and view it:
 ## Library Design
 
 High Frequency FIX Parser tries to follow the
+<a href="https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md">C++ Core Guidelines</a> and the
 <a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent C++98 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
 
 High Frequency FIX Parser is a header-only library, so there are no binaries to link. It also plays well with Boost. If you are using <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your application, High Frequency FIX Parser will support conversion between FIX fields and Boost Date_Time types.
@@ -63,7 +64,7 @@ The `spec/codegen` script for re-generating the `hffix_fields.hpp` file requires
 
 ### License
 
-The main High Frequency FIX Parser Library is distributed under the open source FreeBSD License, also known as the Simplified BSD License. 
+The main High Frequency FIX Parser Library is distributed under the open source FreeBSD License, also known as the Simplified BSD License.
 
 Some extra components are under the Boost License.
 
@@ -73,18 +74,18 @@ Included FIX specs are copyright FIX Protocol, Limited.
 
 ### Other FIX Implementations
 
-Typical FIX implementations employ object-oriented-style programming to model a FIX message either as an associative key-value container of strongly typed objects that inherit from some field superclass, or as a class type for each message type with member variables for every possible field in the message. 
+Typical FIX implementations employ object-oriented-style programming to model a FIX message either as an associative key-value container of strongly typed objects that inherit from some field superclass, or as a class type for each message type with member variables for every possible field in the message.
 
 There are two disadvantages to this method.
 
 1. Creating these message objects requires free-store memory allocation, which uses a lot of CPU time — typically more CPU time than all the rest of the parsing logic.
-2. Declaring the classes for these objects requires a lot of boilerplate code, and makes it difficult to handle surprising messages at run-time. 
+2. Declaring the classes for these objects requires a lot of boilerplate code, and makes it difficult to handle surprising messages at run-time.
 
-The advantage of object-oriented-style FIX parsers is that with the familiar object API, any field of a message object can be read or written randomly at any point in the program, which may simplify program logic. 
+The advantage of object-oriented-style FIX parsers is that with the familiar object API, any field of a message object can be read or written randomly at any point in the program, which may simplify program logic.
 
 ### High Frequency FIX Parser Implementation
 
-For reading FIX messages, High Frequency FIX Parser presents an STL-style <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a> interface. Writing fields is done serially with an interface similar to an STL-style <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>. Reading and writing are done directly on the I/O buffer, without any intermediate objects.  
+For reading FIX messages, High Frequency FIX Parser presents an STL-style <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a> interface. Writing fields is done serially with an interface similar to an STL-style <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>. Reading and writing are done directly on the I/O buffer, without any intermediate objects.
 
 The disadvantage of this implementation is that the message API provides serial access to fields, not random access. Of course, when we're writing a message, random access isn't important, just write out the fields in order. When we're reading a message, it's easy enough to pretend that we have random access by using iterator algorithms like `std::find`. A convenience algorithm `hffix::message_reader::find_with_hint` is provided by this library for efficiently reading fields when you know approximately what field order to expect. See the examples below for how this works out in practice.
 
@@ -114,6 +115,14 @@ Managing sessions requires making choices about sockets and threads.  High Frequ
 FIX has transport-layer features mixed in with the messages, and most FIX hosts have various quirks in the way they employ the administrative messages. To manage a FIX session your application will need to match the the transport-layer and administrative features of the other FIX host. High Frequency FIX Parser has the flexibility to express any subset or proprietary superset of FIX.
 
 Consult [FIX Session-level Test Cases and Expected Behaviors](http://www.fixtradingcommunity.org/pg/file/fplpo/read/30489/fix-sessionlevel-test-cases-and-expected-behaviors)
+
+### Numerics
+
+No native floating-point numeric types (`double`, `float`) are employed by the library.
+ASCII-encoded decimal numbers are represented by integral mantissa and exponent.
+See hffix::message_writer::push_back_decimal() and hffix::field_value::as_decimal().
+As with every FIX data type, the High Frequency FIX library user has the option to serialize
+and deserialize numeric fields themself rather than use these methods.
 
 ### Encryption
 
@@ -234,7 +243,7 @@ This example program is in the _hffix_ repository at `test/src/reader01.cpp`.
 
 It reads messages from `stdin`. If it finds a _Logon_ message or a _New Order - Single_ message, then it prints out some information about their fields.
 
-~~~cpp 
+~~~cpp
 #include <iostream>
 #include <cstdio>
 #include <map>
@@ -380,7 +389,7 @@ int main(int argc, char** argv)
 The writer example can be piped to the reader example. Running these commands:
 
     make examples
-    test/bin/writer01 | test/bin/reader01 
+    test/bin/writer01 | test/bin/reader01
 
 Should produce output like this:
 
@@ -446,7 +455,7 @@ The Chicago Mercantile Exchange is also a good source of sample data files, but 
 
 Q: I have a bunch of different threads serializing and sending FIX messages out one socket. When each message is sent it needs a *MsgSeqNum*, but at serialization time I don't know what the *MsgSeqNum* will be, I only know that at sending time.
 
-A: That multi-threading model is not a good choice for your software. The performance penalty for that threading model is much greater than the performance advantage of this non-allocating parser library. You should consider redesigning to use a single-threaded simultaneous-wait event loop like *libev* or *Boost Asio*. If you insist on multi-threading, then you could do something like this code example. 
+A: That multi-threading model is not a good choice for your software. The performance penalty for that threading model is much greater than the performance advantage of this non-allocating parser library. You should consider redesigning to use a single-threaded simultaneous-wait event loop like *libev* or *Boost Asio*. If you insist on multi-threading, then you could do something like this code example.
 
 ~~~cpp
 hffix::message_writer m;
@@ -463,7 +472,7 @@ void thread_safe_send(hffix::message_writer const& w) {
   }
 }
 ~~~
-  
+
 ### FIX Repeating Groups
 
 From *FIX-50_SP2_VOL-1_w_Errata_20110818.pdf* page 21:
