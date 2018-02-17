@@ -519,9 +519,12 @@ public:
 
         // write out the CheckSum after optionally calculating it
         if (calculate_checksum) {
-            size_t checksum(0);
-            char* b = buffer_; // TODO What if *b is negative? Could totally happen with UTF-8 strings. This should be an unsigned char pointer.
-            while(b < next_) checksum += *b++;
+            // This char-to-unsigned-int cast may seem odd because chars with
+            // the high bit set, like in UTF8 strings, will overflow. But this
+            // is how the FIX reference implementation works, see
+            // fix-42-with_errata_20010501.pdf Appendix B CheckSum Calculation
+            unsigned int checksum(0);
+            for (char* b = buffer_; b < next_; checksum += (unsigned int)(*b++));
             checksum = checksum % 256;
 
             memcpy(next_, "10=", 3);
