@@ -120,7 +120,7 @@ Consult [FIX Session-level Test Cases and Expected Behaviors](http://www.fixtrad
 
 No native floating-point numeric types (`double`, `float`) are employed by the library.
 ASCII-encoded decimal numbers are represented by integral mantissa and exponent.
-See hffix::message_writer::push_back_decimal() and hffix::field_value::as_decimal().
+See `hffix::message_writer::push_back_decimal()` and `hffix::field_value::as_decimal()`.
 As with every FIX data type, the High Frequency FIX library user has the option to serialize
 and deserialize numeric fields themself rather than use these methods.
 
