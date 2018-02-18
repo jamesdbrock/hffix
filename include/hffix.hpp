@@ -39,11 +39,15 @@ or implied, of T3 IP, LLC.
 #include <cstring>          // for memcpy
 #include <string>           //
 #include <algorithm>        // for is_tag_a_data_length
+#include <numeric>          // for accumulate
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
 #if __cplusplus >= 201703L
 #include <string_view>      // for push_back_string()
+#endif
+#if __cplusplus >= 201103L
+#include <cstdint>          // for std::uint8_t
 #endif
 
 #ifndef HFFIX_NO_BOOST_DATETIME
@@ -504,14 +508,17 @@ public:
         // Calculate and write out the BodyLength.
         // BodyLength does not include the SOH character after the BodyLength field.
         // BodyLength does not include the SOH character before the CheckSum field.
-        if (body_length_) {
-            size_t bodylength = next_ - (body_length_ + 7);
-            for(char* b = body_length_ + 5; b >= body_length_; --b) {
-                *b = '0' + (bodylength % 10);
-                bodylength /= 10;
-            }
+        if (!body_length_) {
+            throw std::logic_error("hffix message_writer.push_back_trailer called before message_writer.push_back_header");
         }
-        else throw std::logic_error("hffix message_writer.push_back_trailer called before message_writer.push_back_header");
+
+        size_t const len = next_ - (body_length_ + 7);
+        body_length_[0] = '0' + (len / 100000) % 10;
+        body_length_[1] = '0' + (len / 10000) % 10;
+        body_length_[2] = '0' + (len / 1000) % 10;
+        body_length_[3] = '0' + (len / 100) % 10;
+        body_length_[4] = '0' + (len / 10) % 10;
+        body_length_[5] = '0' + len % 10;
 
         if (buffer_end_ - next_ < 7) {
             details::throw_range_error();
@@ -519,21 +526,19 @@ public:
 
         // write out the CheckSum after optionally calculating it
         if (calculate_checksum) {
-            // This char-to-unsigned-int cast may seem odd because chars with
-            // the high bit set, like in UTF8 strings, will overflow. But this
-            // is how the FIX reference implementation works, see
-            // fix-42-with_errata_20010501.pdf Appendix B CheckSum Calculation
-            unsigned int checksum(0);
-            for (char* b = buffer_; b < next_; checksum += (unsigned int)(*b++));
-            checksum = checksum % 256;
+#if __cplusplus >= 201103L
+            using std::uint8_t;
+#else
+            typedef unsigned char uint8_t;
+#endif
+            uint8_t const checksum = std::accumulate(buffer_, next_, uint8_t(0));
 
             memcpy(next_, "10=", 3);
             next_ += 3;
+            next_[0] = '0' + ((checksum / 100) % 10);
+            next_[1] = '0' + ((checksum / 10) % 10);
+            next_[2] = '0' + (checksum % 10);
 
-            for (char* b = next_ + 2; b >= next_; --b) {
-                *b = '0' + (checksum % 10);
-                checksum /= 10;
-            }
             next_ += 3;
             *next_++ = '\x01';
         } else {
