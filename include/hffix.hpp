@@ -357,13 +357,16 @@ inline bool atotime(
  * The message_writer interface is patterned after
  * Back Insertion Sequence Containers, with overloads of `push_back` for different FIX field data types.
  *
- * The push_back_header() method will write the _BeginString_ and _BodyLength_ fields to the message,
+ * The `push_back_header()` method will write the _BeginString_ and _BodyLength_ fields to the message,
  * but the FIX Standard Message Header requires also _MsgType_, _SenderCompID_, _TargetCompID_, _MsgSeqNum_ and _SendingTime_.
  * You must write those fields yourself, starting with _MsgType_.
  *
- * After calling all other push_back methods and before sending the message, you must call push_back_trailer(),
+ * After calling all other `push_back` methods and before sending the message, you must call push_back_trailer(),
  * which will write the CheckSum field for you.
  *
+ * Keep in mind that if you don't like the way any of these `push_back` methods
+ * perform serialization, then you can always do your own serialization for any
+ * data type, and then append it to the message by `push_back_string()`.
 */
 class message_writer {
 public:
@@ -1038,9 +1041,13 @@ class message_reader_const_iterator;
 /*!
  * \brief FIX field value for hffix::message_reader.
  *
- * FIX field values are weakly-typed as an array of chars, usually ASCII. Type conversion methods are provided.
- *
  * This class is essentially equivalent to a `boost::range<char*>`.
+ *
+ * FIX field values are weakly-typed as an array of chars, usually ASCII.
+ * Type conversion deserialization methods are provided. Keep in mind that if
+ * you don't like the way the library performs deserialization for a type,
+ * you can deserialize any field yourself.
+ *
 */
 class field_value {
 public:
