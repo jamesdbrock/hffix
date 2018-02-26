@@ -174,6 +174,5 @@ BOOST_AUTO_TEST_CASE(checksum_negative)
     // 58=\x80\x01 = (53+56+61+128+1) % 256 = 43
     // (31 + 156 + 43) % 256 = 230
     test_checksum(writer, "230");
-    std::cout << buffer << "\n";
 }
 
