@@ -7,14 +7,14 @@ High Frequency FIX — C++ Library for Financial Information Exchange Protocol {
 
 The High Frequency FIX Parser library is an open source implementation of <a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the “heap”).
 
-Hffix library is not certified by any industry-leading committees. It is not an “engine.” It is not an “adaptor.” It has no threading, no I/O, no object-oriented inheritance.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++98.
+*hffix* library is not certified by any industry-leading committees. It is not an “engine.” It is not an “adaptor.” It has no threading, no I/O, no object-oriented subtyping.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++98.
 
 ## Hello, FIX! Quick Start
 
 The main repository is at <https://github.com/jamesdbrock/hffix>
 
 ### fixprint
-To see an example of the library in action, enter these four commands at your shell prompt. This example uses the `fixprint` utility which comes with the hffix library. The result will be a colorized and pretty-printed FIX 5.0 test data set.
+To see an example of the library in action, enter these four commands at your shell prompt. This example uses the `fixprint` utility which comes with the *hffix* library. The result will be a colorized and pretty-printed FIX 5.0 test data set.
 
     git clone https://github.com/jamesdbrock/hffix.git
     cd hffix
@@ -142,16 +142,14 @@ The administrative messages *Logon*, *Logout*, *ResendRequest*, *Heartbeat*, *Te
 
 ### User-Defined Fields and Custom Tags
 
-High Frequency FIX Parser does not enforce the data type of the Field Definitions for content fields in the FIX spec, so the developer is free to read or write any tag number with any field data type.
-
-
+High Frequency FIX Parser does not enforce the data type of the Field Definitions for content fields in the FIX spec, so the developer is free to read or write any tag number with any field data type. See `hffix::message_writer` and `hffix::field_value` documentation under Extension for details.
 
 
 ## Using High Frequency FIX Parser
 
 ### Writing a Message Example
 
-This example program is in the _hffix_ repository at `test/src/writer01.cpp`.
+This example program is in the *hffix* repository at `test/src/writer01.cpp`.
 
 It writes a _Logon_ message and a _New Order - Single_ message to `stdout`.
 
@@ -239,7 +237,7 @@ int main(int argc, char** argv)
 
 ### Reading a Message Example
 
-This example program is in the _hffix_ repository at `test/src/reader01.cpp`.
+This example program is in the *hffix* repository at `test/src/reader01.cpp`.
 
 It reads messages from `stdin`. If it finds a _Logon_ message or a _New Order - Single_ message, then it prints out some information about their fields.
 

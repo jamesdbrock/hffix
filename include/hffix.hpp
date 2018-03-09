@@ -354,20 +354,37 @@ inline bool atotime(
  *
  * Given a buffer, the message_writer will write a FIX message to the buffer. message_writer does not take ownership of the buffer.
  *
+ * <h3>Usage</h3>
+ *
  * The message_writer interface is patterned after
  * Back Insertion Sequence Containers, with overloads of `push_back` for different FIX field data types.
  *
  * The `push_back_header()` method will write the _BeginString_ and _BodyLength_ fields to the message,
- * but the FIX Standard Message Header requires also _MsgType_, _SenderCompID_, _TargetCompID_, _MsgSeqNum_ and _SendingTime_.
+ * and the FIX Standard Message Header requires also _MsgType_, _SenderCompID_, _TargetCompID_, _MsgSeqNum_ and _SendingTime_.
  * You must write those fields yourself, starting with _MsgType_.
  *
  * After calling all other `push_back` methods and before sending the message, you must call push_back_trailer(),
  * which will write the CheckSum field for you.
  *
+ * <h3>Extension</h3>
+ *
  * Keep in mind that if you don't like the way any of these `push_back` methods
  * perform serialization, then you can always do your own serialization for any
  * data type, and then append it to the message by `push_back_string()`.
-*/
+ *
+ * For example, these two statements are equivalent for `hffix::message_writer w`.
+ *
+ * \code
+ * w.push_back_int   (hffix::tag::HeartBtInt, 12);
+ * w.push_back_string(hffix::tag::HeartBtInt, "12");
+ * \endcode
+ *
+ * For another example, if a trading peer has extended FIX for femtosecond timestamp precision, then a custom timestamp can be serialized to a string and then written to a field.
+ *
+ * \code
+ * w.push_back_string(hffix::tag::SendingTime, "20180309-13:46:01.0123456789123456");
+ * \endcode
+ */
 class message_writer {
 public:
 
@@ -1041,23 +1058,37 @@ class message_reader_const_iterator;
 /*!
  * \brief FIX field value for hffix::message_reader.
  *
- * This class is essentially equivalent to a `boost::range<char*>`.
+ * <h3>Usage</h3>
  *
- * FIX field values are weakly-typed as an array of chars, usually ASCII.
- * Type conversion deserialization methods are provided. Keep in mind that if
- * you don't like the way the library performs deserialization for a type,
- * you can deserialize any field yourself.
+ * This class is a range `begin(),end()` of pointers into
+ * a `message_reader` buffer which delimit the value for one field.
  *
+ * FIX field values are an array of chars, and are usually ASCII.
+ * Type conversion deserialization is provided by the `as_` family
+ * of methods.
+ *
+ * <h3>Extension</h3>
+ *
+ * Keep in mind that if you don't like the way any of the the `as_` methods
+ * perform deserialization for a type, then you can deserialize the field value
+ * yourself, by reading the string delimited by `begin(),end()`.
+ *
+ * For example, these two statements should be equivalent for a `field_value v`:
+ *
+ * \code
+ * int i = v.as_int();
+ * int i = boost::lexical_cast<int>(v.begin(), v.size());
+ * \endcode
 */
 class field_value {
 public:
 
-    /*! \brief Pointer to the beginning of the field value. */
+    /*! \brief Pointer to the beginning of the field value in the buffer. */
     char const* begin() const {
         return begin_;
     }
 
-    /*! \brief Pointer to past-the-end of the field value. */
+    /*! \brief Pointer to past-the-end of the field value in the buffer. */
     char const* end() const {
         return end_;
     }
