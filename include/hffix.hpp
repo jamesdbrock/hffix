@@ -74,6 +74,12 @@ inline void throw_range_error() {
 template <std::size_t N>
 std::ptrdiff_t len(char const (&)[N]) { return std::ptrdiff_t(N - 1); }
 
+inline std::size_t pow(std::size_t v, std::size_t exp)
+{
+    if (exp == 0) return 1;
+    return v * pow(v, exp - 1);
+}
+
 /*
 \brief Internal ascii-to-integer conversion.
 
@@ -385,7 +391,8 @@ inline bool atotime(
  * w.push_back_string(hffix::tag::SendingTime, "20180309-13:46:01.0123456789123456");
  * \endcode
  */
-class message_writer {
+template <std::size_t BodyLengthDigits = 6>
+class basic_message_writer {
 public:
 
     /*!
@@ -393,7 +400,7 @@ public:
     \param buffer Pointer to the buffer to be written to.
     \param size Size of the buffer in bytes.
     */
-    message_writer(char* buffer, size_t size):
+    basic_message_writer(char* buffer, size_t size):
         buffer_(buffer),
         buffer_end_(buffer + size),
         next_(buffer),
@@ -405,7 +412,7 @@ public:
     \param begin Pointer to the buffer to be written to.
     \param end Pointer to past-the-end of the buffer to be written to.
     */
-    message_writer(char* begin, char* end) :
+    basic_message_writer(char* begin, char* end) :
         buffer_(begin),
         buffer_end_(end),
         next_(begin),
@@ -418,7 +425,7 @@ public:
     \param buffer An array reference. The writer will write into the entire array of length _N_.
     */
     template<size_t N>
-    message_writer(char(&buffer)[N]) :
+    basic_message_writer(char(&buffer)[N]) :
         buffer_(buffer),
         buffer_end_(&(buffer[N])),
         next_(buffer),
@@ -429,7 +436,7 @@ public:
     /*!
      * \brief Owns no resources, so destruction is no-op.
      */
-    ~message_writer() {}
+    ~basic_message_writer() {}
 
     /*! \name Buffer Access */
     //@{
@@ -492,7 +499,7 @@ public:
      */
     void push_back_header(char const* begin_string_version) {
         if (body_length_) throw std::logic_error("hffix message_writer.push_back_header called twice");
-        if (buffer_end_ - next_ < 2 + std::ptrdiff_t(strlen(begin_string_version)) + 3 + 7) {
+        if (buffer_end_ - next_ < std::ptrdiff_t(2 + strlen(begin_string_version) + 3 + BodyLengthDigits + 1)) {
             details::throw_range_error();
         }
         memcpy(next_, "8=", 2);
@@ -503,10 +510,9 @@ public:
         memcpy(next_, "9=", 2);
         next_ += 2;
         body_length_ = next_;
-        next_ += 6; // 6 characters reserved for BodyLength.
+        next_ += BodyLengthDigits; // characters reserved for BodyLength.
         *next_++ = '\x01';
     }
-
 
     /*!
      * \brief Write the _CheckSum_ field to the buffer.
@@ -532,13 +538,14 @@ public:
             throw std::logic_error("hffix message_writer.push_back_trailer called before message_writer.push_back_header");
         }
 
-        size_t const len = next_ - (body_length_ + 7);
-        body_length_[0] = '0' + (len / 100000) % 10;
-        body_length_[1] = '0' + (len / 10000) % 10;
-        body_length_[2] = '0' + (len / 1000) % 10;
-        body_length_[3] = '0' + (len / 100) % 10;
-        body_length_[4] = '0' + (len / 10) % 10;
-        body_length_[5] = '0' + len % 10;
+        size_t const len = next_ - (body_length_ + BodyLengthDigits + 1);
+        for (std::size_t i = 0; i < BodyLengthDigits; ++i) {
+            body_length_[i] = '0' + (len / details::pow(10, BodyLengthDigits - i - 1)) % 10;
+        }
+
+        if (len >= details::pow(10, BodyLengthDigits)) {
+            throw std::out_of_range("hffix message_writer message too large for body-length field");
+        }
 
         if (buffer_end_ - next_ < 7) {
             details::throw_range_error();
@@ -1049,8 +1056,12 @@ private:
     char* buffer_;
     char* buffer_end_;
     char* next_;
-    char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
+    // Pointer to the location at which the BodyLength should be written, once
+    // the length of the message is known.
+    char* body_length_;
 };
+
+typedef basic_message_writer<6> message_writer;
 
 class message_reader;
 class message_reader_const_iterator;

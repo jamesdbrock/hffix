@@ -176,3 +176,34 @@ BOOST_AUTO_TEST_CASE(checksum_negative)
     test_checksum(writer, "230");
 }
 
+BOOST_AUTO_TEST_CASE(power)
+{
+    BOOST_CHECK(details::pow(10, 5) == 100000);
+    BOOST_CHECK(details::pow(10, 4) == 10000);
+    BOOST_CHECK(details::pow(10, 3) == 1000);
+    BOOST_CHECK(details::pow(10, 2) == 100);
+    BOOST_CHECK(details::pow(10, 1) == 10);
+    BOOST_CHECK(details::pow(10, 0) == 1);
+}
+
+BOOST_AUTO_TEST_CASE(body_length_overflow)
+{
+    // one digit lets us fit at most 9 as the body length
+    char buffer[1000] = {};
+    basic_message_writer<1> writer(buffer);
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(58, "1234567890");
+
+    BOOST_CHECK_THROW(writer.push_back_trailer(), std::out_of_range);
+}
+
+BOOST_AUTO_TEST_CASE(body_length)
+{
+    // one digit lets us fit at most 9 as the body length
+    char buffer[1000] = {};
+    basic_message_writer<1> writer(buffer);
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(58, "12345");
+    writer.push_back_trailer();
+    BOOST_CHECK(writer.message_size() == 30);
+}
