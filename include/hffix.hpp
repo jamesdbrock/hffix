@@ -1601,8 +1601,8 @@ public:
 
 private:
     friend class message_reader;
-    message_reader const* message_reader_;
-    char const* buffer_;
+    message_reader const* message_reader_; // pointer to the message_reader for this iterator
+    char const* buffer_; // pointer to the first character of the ascii tag number for the current_ field
     field current_;
 
     void increment();
@@ -2142,10 +2142,10 @@ inline void message_reader_const_iterator::increment()
     }
 
     // move past the '='.
-    current_.value_.end_ = ++current_.value_.begin_;
+    ++current_.value_.begin_;
 
-    while(*(++current_.value_.end_ ) != '\x01') {}
-
+    // find the end of the field value
+    current_.value_.end_ = std::find(current_.value_.begin_, message_reader_->message_end(), '\x01');
     if (details::is_tag_a_data_length(current_.tag_)) {
         size_t data_len = details::atou<size_t>(current_.value_.begin_, current_.value_.end_);
 
