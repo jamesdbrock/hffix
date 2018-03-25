@@ -176,3 +176,19 @@ BOOST_AUTO_TEST_CASE(checksum_negative)
     test_checksum(writer, "230");
 }
 
+// test that null fields can be iterated properly by message_reader
+BOOST_AUTO_TEST_CASE(null_field_value)
+{
+    char buffer[50] = {};
+    message_writer writer(buffer);
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(hffix::tag::MsgType, "A");
+    writer.push_back_string(37, "");
+    writer.push_back_string(38, "whatever");
+    writer.push_back_trailer();
+
+    message_reader reader(writer);
+    message_reader::const_iterator i = reader.begin();
+    BOOST_CHECK(reader.find_with_hint(38, i));
+}
+
