@@ -471,7 +471,7 @@ public:
      * \brief Remaining available buffer size. Excludes buffer already written to by this message.
      */
     size_t buffer_size_remaining() const {
-        return buffer_end_ - buffer_;
+        return buffer_end_ - next_;
     }
 
     //@}
