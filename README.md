@@ -85,7 +85,11 @@ The advantage of object-oriented-style FIX parsers is that with the familiar obj
 
 ### High Frequency FIX Parser Implementation
 
-For reading FIX messages, High Frequency FIX Parser presents an STL-style <a href="http://www.sgi.com/tech/stl/ForwardIterator.html">immutable Forward Iterator</a> interface. Writing fields is done serially with an interface similar to an STL-style <a href="http://www.sgi.com/tech/stl/BackInsertionSequence.html">Back Insertion Sequence Container</a>. Reading and writing are done directly on the I/O buffer, without any intermediate objects.
+For reading FIX messages, High Frequency FIX Parser presents an STL-style
+<a href="http://en.cppreference.com/w/cpp/concept/ForwardIterator">immutable Forward Iterator</a>
+interface. Writing fields is done serially with an interface similar to an STL-style
+<a href="http://en.cppreference.com/w/cpp/concept/SequenceContainer">Back Insertion Sequence Container</a>.
+Reading and writing are done directly on the I/O buffer, without any intermediate objects.
 
 The disadvantage of this implementation is that the message API provides serial access to fields, not random access. Of course, when we're writing a message, random access isn't important, just write out the fields in order. When we're reading a message, it's easy enough to pretend that we have random access by using iterator algorithms like `std::find`. A convenience algorithm `hffix::message_reader::find_with_hint` is provided by this library for efficiently reading fields when you know approximately what field order to expect. See the examples below for how this works out in practice.
 
