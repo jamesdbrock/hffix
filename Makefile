@@ -10,7 +10,7 @@ doc : doc/html/index.html
 
 doc/html/index.html : doc/hffix.css include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
 	@echo -e "${YELLOW}*** Generating Doxygen in doc/html/ ...${NORMAL}"
-	cd doc;doxygen Doxyfile
+	cd doc;rm -r html;doxygen Doxyfile
 	@echo -e "${YELLOW}*** Generated Doxygen in doc/html/${NORMAL}"
 
 clean : clean-bin
