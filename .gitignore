@@ -10,6 +10,5 @@ test/produced
 util/bin
 tags
 README.html
-spec/Codegen
 test/data/*.fix
 

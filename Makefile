@@ -4,7 +4,7 @@ CXXFLAGS += -Wall -Iinclude
 NORMAL=\033[0m
 YELLOW=\033[1;33m
 
-all : doc fixprint examples
+all : specs include/hffix_fields.hpp doc fixprint examples
 
 doc : doc/html/index.html
 
@@ -38,25 +38,31 @@ clean-bin :
 clean-spec :
 
 # Unzip all the specification documents
-specs : spec/fix.4.3/*.dtd spec/fix.4.4/*.dtd spec/fix.5.0.sp2/fixmlschema
+specs : spec/fix.4.2/fix-42-with_errata_20010501.pdf \
+    spec/fix.4.3/fixml4.3v20020920.dtd \
+    spec/fix.4.4/FIXML4.4v20030618.dtd \
+    spec/fix.5.0.sp2/fixmlschema
+
+spec/fix.4.2/fix-42-with_errata_20010501.pdf:
 	cd spec/fix.4.2; unzip -u fix-42-with_errata_20010501_pdf.zip
 
-spec/fix.4.3/*.dtd:
+spec/fix.4.3/fixml4.3v20020920.dtd:
 	cd spec/fix.4.3; unzip -u FIX-43-with_errata_20020920_PDF.ZIP
 
-spec/fix.4.4/*.dtd:
+spec/fix.4.4/FIXML4.4v20030618.dtd:
 	cd spec/fix.4.4; unzip -u fix-44_w_Errata_20030618_PDF.zip
 
 spec/fix.5.0.sp2/fixmlschema:
 	cd spec/fix.5.0.sp2; unzip -u -d fixmlschema fixmlschema_FIX.5.0SP2_Errata_20131209.zip
 
-include/hffix_fields.hpp: spec/codegen spec/fix.4.3/*.dtd spec/fix.4.4/*.dtd spec/fix.5.0.sp2/fixmlschema
+# Check for an executable Haskell Tool Stack, if it doesn't exist,
+# then ignore the error (initial hyphen) and continue without
+# re-generating hffix_fields.hpp.
+# We do this because Travis doesn't have stack.
+include/hffix_fields.hpp: spec/spec-parse-fields/src/Main.hs spec/fix.4.3/fixml4.3v20020920.dtd spec/fix.4.4/FIXML4.4v20030618.dtd spec/fix.5.0.sp2/fixmlschema
 	@echo -e "${YELLOW}*** Generating include/hffix_fields.hpp from FIX specs...${NORMAL}"
-	cd spec/fix.4.2; unzip -u fix-42-with_errata_20010501_pdf.zip
-	cd spec/fix.4.3; unzip -u FIX-43-with_errata_20020920_PDF.ZIP
-	cd spec/fix.4.4; unzip -u fix-44_w_Errata_20030618_PDF.zip
-	cd spec/fix.5.0.sp2; unzip -u -d fixmlschema fixmlschema_FIX.5.0SP2_Errata_20131209.zip
-	cd spec;./codegen > ../include/hffix_fields.hpp
+	-cd spec/spec-parse-fields && stack run --cwd .. > hffix_fields.hpp && mv hffix_fields.hpp ../../include/hffix_fields.hpp
+	touch --no-create include/hffix_fields.hpp
 	@echo -e "${YELLOW}*** Generated include/hffix_fields.hpp from FIX specs${NORMAL}"
 
 fixprint : util/bin/fixprint
