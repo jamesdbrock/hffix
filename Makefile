@@ -8,9 +8,11 @@ all : specs include/hffix_fields.hpp doc fixprint examples
 
 doc : doc/html/index.html
 
-doc/html/index.html : doc/hffix.css include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
+# Insert hffix.style.css into the head of only the index.html file, https://stackoverflow.com/questions/26141347/using-sed-to-insert-file-content-into-a-file-before-a-pattern
+doc/html/index.html : doc/hffix.style.css include/hffix.hpp include/hffix_fields.hpp doc/Doxyfile README.md
 	@echo -e "${YELLOW}*** Generating Doxygen in doc/html/ ...${NORMAL}"
 	cd doc;rm -r html;doxygen Doxyfile
+	cd doc;sed --in-place $$'/<\/head>/{e cat hffix.style.css\n}' html/index.html
 	@echo -e "${YELLOW}*** Generated Doxygen in doc/html/${NORMAL}"
 
 clean : clean-bin
