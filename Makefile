@@ -93,7 +93,7 @@ ctags :
 	ctags include/*
 
 README.html : README.md
-	pandoc --from markdown --to html < README.md > README.html
+	pandoc --standalone --from markdown --to html < README.md > README.html
 
 test : fixprint test01 test02 unit_tests
 
