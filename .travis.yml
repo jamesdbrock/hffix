@@ -6,7 +6,7 @@ compiler:
 
 sudo: required
 
-dist: trusty
+dist: xenial
 
 notifications:
   email: false
@@ -24,12 +24,6 @@ env:
 - CXXFLAGS=-std=c++17
 
 matrix:
-  exclude: # travis service doesn't have new enough gcc and clang for these tests.
-  - compiler: gcc
-    env: CXXFLAGS=-std=c++14
-  - compiler: gcc
-    env: CXXFLAGS=-std=c++17
-  - compiler: clang
-    env: CXXFLAGS=-std=c++14
+  exclude: # travis service doesn't have new compilers for these tests.
   - compiler: clang
     env: CXXFLAGS=-std=c++17
