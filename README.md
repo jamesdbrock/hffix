@@ -65,7 +65,7 @@ See also <a href="https://www.youtube.com/watch?v=NH1Tta7purM">CppCon 2017: Carl
 
 ### Specs Included
 
-All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the `spec` directory. As a convenience for the developer, the High Frequency FIX Parser library includes a program which parses all of the FIX protocol specification documents and generates the `include/hffix_fields.hpp` file. That file has `enum` definitions in a tag namspace and an `hffix::dictionary_init_field` function which allows fields to be referred to by name instead of number during both compile-time and run-time.
+All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the `fixspec` directory. As a convenience for the developer, the High Frequency FIX Parser library includes a program which parses all of the FIX protocol specification documents and generates the `include/hffix_fields.hpp` file. That file has `enum` definitions in a tag namspace and an `hffix::dictionary_init_field` function which allows fields to be referred to by name instead of number during both compile-time and run-time.
 
 ### Platforms
 
@@ -74,7 +74,7 @@ for all versions of C++ on my local machine, and on the [Travis CI service](http
 
 
 
-The `spec/spec-parse-fields` program for re-generating the `hffix_fields.hpp`
+The `fixspec/spec-parse-fields` program for re-generating the `hffix_fields.hpp`
 file requires [The Haskell Tool Stack](https://haskellstack.org).
 
 ### License
