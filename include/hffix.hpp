@@ -2199,7 +2199,7 @@ template <typename AssociativeContainer> struct field_name_streamer {
 
 /*!
   * \brief Given a field tag number and a field name dictionary, returns a type which provides `operator<<`  to write the name of the field to an `std::ostream`.
-  * \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept `AssociativeContainer<int, std::string>`, for example `std::map<int, std::string>` or `std::unordered_map<int, std::string>`. See http://en.cppreference.com/w/cpp/concept/AssociativeContainer
+  * \tparam AssociativeContainer The type of the field name dictionary. Must satisfy concept `AssociativeContainer<int, std::string>`, for example `std::map<int, std::string>` or `std::unordered_map<int, std::string>`. See https://en.cppreference.com/w/cpp/named_req/AssociativeContainer
   *
   * \param tag The field number.
   * \param field_dictionary The field dictionary.
