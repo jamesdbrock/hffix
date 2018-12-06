@@ -1610,7 +1610,7 @@ private:
 
 
 /*!
- * \brief A predicate closed with a FIX tag which returns true if the tag of the hffix::field passed to the predicate is equal.
+ * \brief A predicate constructed with a FIX tag which returns true if the tag of the hffix::field passed to the predicate is equal.
  */
 struct tag_equal {
     tag_equal(int tag) : tag(tag) {}
@@ -2165,10 +2165,36 @@ inline void message_reader_const_iterator::increment()
 /* @cond EXCLUDE */
 
 namespace details {
+
+
+// A predicate constructed with an int which returns true if the int passed to the predicate is less than or equal to the int passed to the constructor.
+struct int_lte {
+    int_lte(int tag) : tag(tag) {}
+    int tag;
+    bool operator()(int that) const {
+        return that <= tag;
+    }
+};
+
+// Returns true if the argument exists in the length_fields array.
+//
+// We have to call this function every time a message_reader iterator
+// is incremented, so we want it to be fast.
+//
+// Instead of doing std::binary_search on the sorted range of length_fields,
+// we'll take advantage of an assumption that most tags are low-numbered
+// tags, and search from the beginning of length_fields, hoping that
+// our search will usually end quickly.
+//
+// TODO: This has not yet been benchmarked against any alternatives.
+// The benchmark results would depend on the distrubution of tags
+// in the FIX data set.
 inline bool is_tag_a_data_length(int tag)
 {
     int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
-    return std::find(length_fields, length_fields_end, tag) != length_fields_end; // fields are ordered, so this could be std::binary_search.
+    int* i = std::find_if(length_fields, length_fields_end, int_lte(tag));
+    if (i == length_fields_end) return false;
+    return (*i == tag);
 }
 
 // \brief std::ostream-able type returned by hffix::field_name function.

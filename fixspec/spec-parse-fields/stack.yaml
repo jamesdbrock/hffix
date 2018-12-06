@@ -1,13 +1,1 @@
-# resolver: lts-12.14
 resolver: lts-11.22
-
-# packages:
-# - /home/jbrock/work/other/dtd-types
-# - /home/jbrock/work/other/hs-dtd-text
-
-  # extra-deps:
-  # - text
-  # - containers
-  # - dtd-types
-  # - dtd-text
-  # - xml-conduit

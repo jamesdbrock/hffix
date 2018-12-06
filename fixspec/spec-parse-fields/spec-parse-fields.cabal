@@ -20,10 +20,8 @@ executable spec-parse-fields
                        , text
                        , text-format
                        , containers
-                       -- , dtd-types -- copied into project until they become
-                       -- , dtd-text  -- available on stackage.com
                        , xml-types
                        , xml-conduit
                        , data-default-class
                        , attoparsec
-  other-modules:       Data.XML.DTD.Types, Data.XML.DTD.Parse
+                       , mtl
