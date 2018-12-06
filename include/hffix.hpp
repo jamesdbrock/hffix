@@ -389,8 +389,8 @@ atotimepoint(
     year -= month <= 2;
     const unsigned era = (year >= 0 ? year : year - 399) / 400;
     const unsigned yoe = static_cast<unsigned>(year - era * 400);
-    const unsigned doy = (153*(month + (month > 2 ? -3 : 9)) + 2)/5 + day - 1;
-    const unsigned doe = yoe * 365 + yoe/4 - yoe/100 + doy;
+    const unsigned doy = (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
+    const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
     const unsigned long days_since_epoch = era * 146097 + static_cast<unsigned>(doe) - 719468;
 
     tp = TimePoint(std::chrono::seconds(days_since_epoch * 24 * 3600) +
@@ -433,8 +433,8 @@ timepointtoparts(TimePoint tp, int& year, int& month, int& day,
     const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
     year = static_cast<unsigned>(yoe) + era * 400;
     const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    const unsigned mp = (5 * doy + 2)/153;
-    day = doy - (153 * mp+2)/5 + 1;
+    const unsigned mp = (5 * doy + 2) / 153;
+    day = doy - (153 * mp + 2) / 5 + 1;
     month = mp + (mp < 10 ? 3 : -9);
     year += month <= 2;
 
@@ -1110,6 +1110,7 @@ public:
     template <typename TimePoint>
     typename std::enable_if<details::is_time_point<TimePoint>::value, void>::type
     push_back_timestamp(int tag, TimePoint tp) {
+        // TODO: with c++20, we can use std::chrono::format
         int year, month, day, hour, minute, second, millisecond;
         details::timepointtoparts(tp, year, month, day, hour, minute, second, millisecond);
         push_back_timestamp(tag, year, month, day, hour, minute, second, millisecond);
