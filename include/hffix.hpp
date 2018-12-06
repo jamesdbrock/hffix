@@ -48,6 +48,7 @@ or implied, of T3 IP, LLC.
 #endif
 #if __cplusplus >= 201103L
 #include <cstdint>          // for std::uint8_t
+#include <chrono>
 #endif
 
 #ifndef HFFIX_NO_BOOST_DATETIME
@@ -344,6 +345,110 @@ inline bool atotime(
 
     return true;
 }
+
+#if __cplusplus >= 201103L
+/*
+\brief SFINAE to check if type is std::chrono::time_point
+
+\tparam Clock the clock on which this time point is measured
+\tparam Duration a std::chrono::duration type used to measure the time since epoch
+*/
+template<typename T>
+struct is_time_point : std::false_type {}; 
+
+template<typename Clock, typename Duration>
+struct is_time_point<std::chrono::time_point<Clock, Duration>> : std::true_type {}; 
+
+/*
+\brief Internal ascii-to-timepoint conversion.
+
+Parses ascii and returns a std::chrono::time_point.
+
+\param begin Pointer to the beginning of the ascii string.
+\param end Pointer to past-the-end of the ascii string.
+\param[out] tp TimePoint.
+\return True if successful and the out arguments were set.
+*/
+template <typename TimePoint>
+inline typename std::enable_if<details::is_time_point<TimePoint>::value, bool>::type
+atotimepoint(
+    char const* begin,
+    char const* end,
+    TimePoint& tp
+)
+{
+    // TODO: after c++20 this simplifies to
+    //       std::chrono::parse("%Y%m%d-%T", tp);
+    int year, month, day, hour, minute, second, millisecond;
+    if (!atotime(begin + 9, end, hour, minute, second, millisecond))
+        return false;
+    if (!atodate(begin, begin + 8, year, month, day))
+        return false;
+
+    // from http://howardhinnant.github.io/date_algorithms.html
+    year -= month <= 2;
+    const unsigned era = (year >= 0 ? year : year - 399) / 400;
+    const unsigned yoe = static_cast<unsigned>(year - era * 400);
+    const unsigned doy = (153*(month + (month > 2 ? -3 : 9)) + 2)/5 + day - 1;
+    const unsigned doe = yoe * 365 + yoe/4 - yoe/100 + doy;
+    const unsigned long days_since_epoch = era * 146097 + static_cast<unsigned>(doe) - 719468;
+
+    tp = TimePoint(std::chrono::seconds(days_since_epoch * 24 * 3600) +
+                   std::chrono::hours(hour) +
+                   std::chrono::minutes(minute) +
+                   std::chrono::seconds(second) +
+                   std::chrono::milliseconds(millisecond));
+
+    return true;
+}
+
+/*
+\brief Internal ascii-to-timepoint conversion.
+
+Parses ascii and returns a std::chrono::time_point.
+
+\param tp TimePoint to parse.
+\param[out] year Year.
+\param[out] month Month.
+\param[out] day Day.
+\param[out] hour Hour.
+\param[out] minute Minute.
+\param[out] second Second.
+\param[out] millisecond Millisecond.
+*/
+template <typename TimePoint>
+inline typename std::enable_if<details::is_time_point<TimePoint>::value, void>::type
+timepointtoparts(TimePoint tp, int& year, int& month, int& day,
+                 int& hour, int& minute, int& second, int& millisecond) noexcept
+{
+    auto epoch_sec = std::chrono::time_point_cast<
+        std::chrono::seconds>(tp).time_since_epoch().count();
+    auto day_sec = epoch_sec - (epoch_sec % 86400);
+    auto days_since_epoch = day_sec / 86400;
+
+    // see http://howardhinnant.github.io/date_algorithms.html
+    days_since_epoch += 719468;
+    const unsigned era = (days_since_epoch >= 0 ? days_since_epoch : days_since_epoch - 146096) / 146097;
+    const unsigned doe = static_cast<unsigned>(days_since_epoch - era * 146097);
+    const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    year = static_cast<unsigned>(yoe) + era * 400;
+    const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    const unsigned mp = (5 * doy + 2)/153;
+    day = doy - (153 * mp+2)/5 + 1;
+    month = mp + (mp < 10 ? 3 : -9);
+    year += month <= 2;
+
+    auto in_day = tp - std::chrono::seconds(day_sec);
+    millisecond = std::chrono::time_point_cast<std::chrono::milliseconds>(
+            in_day).time_since_epoch().count();
+    hour = millisecond / (60 * 60 * 1000);
+    millisecond -= hour * 60 * 60 * 1000;
+    minute = millisecond / (60 * 1000);
+    millisecond -= minute * 60 * 1000;
+    second = millisecond / 1000;
+    millisecond -= second * 1000;
+}
+#endif
 
 } // namespace details
 
@@ -989,6 +1094,29 @@ public:
 //@}
 #endif // HFFIX_BOOST_DATETIME
 
+#if __cplusplus >= 201103L
+    /*!
+    \brief Append a std::chrono::timepoint field to the message.
+
+    No time zone or daylight savings time transformations are done to the timestamp.
+
+    Fractional seconds will be written to the field, rounded to the millisecond.
+
+    \param tag FIX tag.
+    \param timestamp Date and time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    template <typename TimePoint>
+    typename std::enable_if<details::is_time_point<TimePoint>::value, void>::type
+    push_back_timestamp(int tag, TimePoint tp) {
+        int year, month, day, hour, minute, second, millisecond;
+        details::timepointtoparts(tp, year, month, day, hour, minute, second, millisecond);
+        push_back_timestamp(tag, year, month, day, hour, minute, second, millisecond);
+    }
+//@}
+#endif
+
 
     /*! \name Data Fields */
 //@{
@@ -1442,6 +1570,28 @@ public:
 
 
 #endif // HFFIX_BOOST_DATETIME
+
+#if __cplusplus >= 201103L
+    /*! \name std::chrono Date and Time Conversion Methods */
+//@{
+
+    /*!
+     * \brief Ascii-to-time-point conversion.
+     *
+     * Parses ascii and returns a time_point.
+     *
+     * \return Date if parsing was successful, else `boost::posix_time::not_a_date_time`.
+     */
+    template <typename TimePoint>
+    typename std::enable_if<details::is_time_point<TimePoint>::value, bool>::type
+    as_timestamp(TimePoint& tp) const {
+        if (details::atotimepoint(begin(), end(), tp))
+            return true;
+        else
+            return false;
+    }
+//@}
+#endif
 
 
 private:
