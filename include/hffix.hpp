@@ -2159,11 +2159,6 @@ inline void message_reader_const_iterator::increment()
         }
 
         current_.value_.end_ = ++current_.value_.begin_ + data_len;
-
-        // TODO: eliminate this check, along with the message_reader_ member?
-        // if (current_.value_.end_ >= message_reader_->end_.buffer_) {
-        //     message_reader_->invalid(); // in theory this can never happen.
-        // }
     }
 }
 
