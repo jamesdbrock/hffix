@@ -1,15 +1,13 @@
 doc/html
 spec/fix.4.2/*.pdf
 spec/fix.4.3/*.pdf
-spec/fix.4.3/*.dtd
 spec/fix.4.4/*.pdf
-spec/fix.4.4/*.dtd
-spec/fix.5.0.sp2/fixmlschema
+spec/fix.5.0.sp2/fixmlschema/*
+!spec/fix.5.0.sp2/fixmlschema/fixml-fields-base-5-0-SP2.xsd
 test/bin
 test/produced
 util/bin
 tags
 README.html
-spec/Codegen
 test/data/*.fix
 

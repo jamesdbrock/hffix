@@ -27,8 +27,8 @@ To see an example of the library in action, enter these four commands at your sh
 The library is header-only, so there is nothing to link. To use the `hffix.hpp` library for C++ FIX development, place the two header files in your include path and `#include <hffix.hpp>`.
 
     git clone https://github.com/jamesdbrock/hffix.git
-    cp hffix/include/hffix.hpp /usr/local/include/
-    cp hffix/include/hffix_fields.hpp /usr/local/include/
+    cp hffix/include/hffix.hpp /usr/include/
+    cp hffix/include/hffix_fields.hpp /usr/include/
 
 ### Documentation
 
@@ -45,13 +45,27 @@ To build the Doxygen html documentation in the `doc/html` directory and view it:
 
 High Frequency FIX Parser tries to follow the
 <a href="https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md">C++ Core Guidelines</a> and the
-<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent C++98 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
+<a href="http://www.boost.org/development/requirements.html">Boost Library Requirements and Guidelines</a>.  It is modern platform-independent header-only C++98 and depends only on the C++ Standard Library.  It is patterned after the C++ Standard Template Library, and it models each FIX message with Container and Iterator concepts. It employs compile-time generic templates but does not employ object-oriented inheritance.
 
-High Frequency FIX Parser is a header-only library, so there are no binaries to link. It also plays well with Boost. If you are using <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> in your application, High Frequency FIX Parser will support conversion between FIX fields and Boost Date_Time types.
+### Speed
 
-All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the `spec` directory. As a convenience for the developer, the High Frequency FIX Parser library includes a Python script which parses all of the FIX protocol specification documents and generates the `include/hffix_fields.hpp` file. That file has `enum` definitions in a tag namspace and an `hffix::dictionary_init_field` function which allows fields to be referred to by name instead of number both during development, and at run-time.
+The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>. These design criteria follow from the observation that the latency of a trading system depends on the following list of considerations, in descending order of importance.
 
-The design criteria for High Frequency FIX Parser are based on our experience passing messages to various FIX hosts for high frequency quantitative trading at <a href="http://www.t3live.com">T3 Trading Group, LLC</a>.
+1. __Network architecture.__ Most of the latency will be in the network between us and our peer, outside of our control. We should do everything we can to exert some control over the network to shorten our path.
+2. __Operating System I/O syscall usage.__ We should be very careful about which syscalls we're using to do network I/O. Perhaps use an OS bypass NIC.
+3. __Operating System thread usage.__ We should be running a single pinned operating system thread per core with a multiplexed event loop like *Boost Asio* or *libuv* for waiting on I/O events.
+4. __Userspace runtime memory usage.__ Memory allocations can trigger a page fault and a syscall. Complicated object-oriented designs with lots of pointer indirections lead to cache misses and branch prediction failures.
+5. __Userspace algorithms.__ This is the easiest stuff to measure and the most fun to discuss, so a lot of attention is focused here, but it's only important if we get all the other considerations right first.
+
+The *hffix* library assumes that the library user will want to make their own choices about considerations __2__ and __3__, and the *hffix* library focuses on providing good answers for consideration __4__. It does this by using only stack memory and I/O buffer memory, and never allocating on the free store.
+
+In contrast, the popular alternative *QuickFix* library forces the user to use the *QuickFix* solution to considerations __2__ and __3__ for threads and sockets, and most of *QuickFix*'s choices about threads and sockets are not great. *QuickFix* also has an inefficient object-oriented design for consideration __4__.
+
+See also <a href="https://www.youtube.com/watch?v=NH1Tta7purM">CppCon 2017: Carl Cook “When a Microsecond Is an Eternity: High Performance Trading Systems in C++”</a>
+
+### Specs Included
+
+All of the Financial Information Exchange (FIX) protocol specification versions supported by the library are bundled into the the distribution, in the `fixspec` directory. As a convenience for the developer, the High Frequency FIX Parser library includes a program which parses all of the FIX protocol specification documents and generates the `include/hffix_fields.hpp` file. That file has `enum` definitions in a tag namspace and an `hffix::dictionary_init_field` function which allows fields to be referred to by name instead of number during both compile-time and run-time.
 
 ### Platforms
 
@@ -60,30 +74,20 @@ for all versions of C++ on my local machine, and on the [Travis CI service](http
 
 
 
-The `spec/codegen` script for re-generating the `hffix_fields.hpp` file requires Python 2.7.
+The `fixspec/spec-parse-fields` program for re-generating the `hffix_fields.hpp`
+file requires [The Haskell Tool Stack](https://haskellstack.org).
 
 ### License
 
 The main High Frequency FIX Parser Library is distributed under the open source FreeBSD License, also known as the Simplified BSD License.
 
-Some extra components are under the Boost License.
+Some extra components are under the Boost Software License.
 
 Included FIX specs are copyright FIX Protocol, Limited.
 
 ## Features
 
-### Other FIX Implementations
-
-Typical FIX implementations employ object-oriented-style programming to model a FIX message either as an associative key-value container of strongly typed objects that inherit from some field superclass, or as a class type for each message type with member variables for every possible field in the message.
-
-There are two disadvantages to this method.
-
-1. Creating these message objects requires free-store memory allocation, which uses a lot of CPU time — typically more CPU time than all the rest of the parsing logic.
-2. Declaring the classes for these objects requires a lot of boilerplate code, and makes it difficult to handle surprising messages at run-time.
-
-The advantage of object-oriented-style FIX parsers is that with the familiar object API, any field of a message object can be read or written randomly at any point in the program, which may simplify program logic.
-
-### High Frequency FIX Parser Implementation
+### Serial Message Field Access
 
 For reading FIX messages, High Frequency FIX Parser presents an STL-style
 <a href="http://en.cppreference.com/w/cpp/concept/ForwardIterator">immutable Forward Iterator</a>
@@ -118,7 +122,7 @@ Managing sessions requires making choices about sockets and threads.  High Frequ
 
 FIX has transport-layer features mixed in with the messages, and most FIX hosts have various quirks in the way they employ the administrative messages. To manage a FIX session your application will need to match the the transport-layer and administrative features of the other FIX host. High Frequency FIX Parser has the flexibility to express any subset or proprietary superset of FIX.
 
-Consult [FIX Session-level Test Cases and Expected Behaviors](http://www.fixtradingcommunity.org/pg/file/fplpo/read/30489/fix-sessionlevel-test-cases-and-expected-behaviors)
+See also [FIX Session-level Test Cases and Expected Behaviors](http://www.fixtradingcommunity.org/pg/file/fplpo/read/30489/fix-sessionlevel-test-cases-and-expected-behaviors)
 
 ### Numerics
 
@@ -542,7 +546,6 @@ When a FIX client connects to a FIX server, the client doesn't know what sequenc
 Either the client can choose to reset both sequence numbers, in which case the client may miss messages, or not, in which case the client is subject to the *Resend Request* race condition.
 
 After *Logon* response from the server, the client may begin sending messages, but the client has to wait some amount of time because the server may send *Resend Request*. If the client sends any message to the server while the server is preparing to send *Resend Request*, then the server's response is not defined by the *FIX* specification, and some servers implementations may seize up in confusion at that point.
-
 
 
 ## C++03|11|14|17

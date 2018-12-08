@@ -2252,7 +2252,6 @@ private:
     char const* buffer_end_;
     const_iterator begin_;
     const_iterator end_;
-    value_type message_type_;
     bool is_complete_;
     bool is_valid_;
     char const* prefix_end_; // Points after the 8=FIX... Prefix field.
