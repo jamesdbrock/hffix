@@ -9,6 +9,11 @@ using namespace std::literals::string_view_literals;
 #endif
 using namespace hffix;
 
+#if __cplusplus >= 201103L
+#include <chrono>
+#include <iomanip>
+#endif
+
 BOOST_AUTO_TEST_CASE(basic)
 {
     // Print the BOOST version, mostly so we can see it in Travis.
@@ -191,4 +196,40 @@ BOOST_AUTO_TEST_CASE(null_field_value)
     message_reader::const_iterator i = reader.begin();
     BOOST_CHECK(reader.find_with_hint(38, i));
 }
+
+#if __cplusplus >= 201103L
+// test that std::chrono values can be written and read correctly
+BOOST_AUTO_TEST_CASE(chrono)
+{
+    using TimePoint = std::chrono::time_point<
+        std::chrono::system_clock, std::chrono::milliseconds>;
+    // 2017-08-09 12:34:56.123
+    TimePoint tsend(std::chrono::milliseconds(1502282096123ULL));
+
+    char buffer[100] = {};
+    message_writer writer(buffer);
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(hffix::tag::MsgType, "A");
+    writer.push_back_timestamp (hffix::tag::SendingTime, tsend);
+    writer.push_back_trailer();
+
+    message_reader reader(writer);
+    message_reader::const_iterator i = reader.begin();
+    reader.find_with_hint(hffix::tag::SendingTime, i);
+    BOOST_CHECK(i->value().as_string() == std::string("20170809-12:34:56.123"));
+
+    TimePoint trecv;
+    bool parsed = i->value().as_timestamp(trecv);
+
+    BOOST_CHECK(parsed);
+    BOOST_CHECK(tsend == trecv);
+
+    // TODO check this when we have a way to parse milliseconds with put_time.
+    // std::time_t trecv_t = std::chrono::system_clock::to_time_t(trecv);
+    // std::ostringstream oss;
+    // oss << std::put_time(std::localtime(&trecv_t), "%Y%m%d-%T");
+    // std::string tstr = oss.str();
+    // BOOST_CHECK(tstr == i->value().as_string());
+}
+#endif
 

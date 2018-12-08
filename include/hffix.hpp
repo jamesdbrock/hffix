@@ -366,7 +366,7 @@ Parses ascii and returns a std::chrono::time_point.
 
 \param begin Pointer to the beginning of the ascii string.
 \param end Pointer to past-the-end of the ascii string.
-\param[out] tp TimePoint.
+\param[out] tp time_point.
 \return True if successful and the out arguments were set.
 */
 template <typename TimePoint>
@@ -1095,15 +1095,17 @@ public:
 #endif // HFFIX_BOOST_DATETIME
 
 #if __cplusplus >= 201103L
+    /*! \name std::chrono Date and Time Fields */
+
     /*!
-    \brief Append a std::chrono::timepoint field to the message.
+    \brief Append a `std::chrono::time_point` field to the message.
 
     No time zone or daylight savings time transformations are done to the timestamp.
 
     Fractional seconds will be written to the field, rounded to the millisecond.
 
     \param tag FIX tag.
-    \param timestamp Date and time.
+    \param tp `std::chrono::time_point`.
 
     \throw std::out_of_range When the remaining buffer size is too small.
     */
@@ -1579,9 +1581,11 @@ public:
     /*!
      * \brief Ascii-to-time-point conversion.
      *
-     * Parses ascii and returns a time_point.
+     * Parses ascii and returns a `std::chrono::time_point`.
      *
-     * \return Date if parsing was successful, else `boost::posix_time::not_a_date_time`.
+     * \param[out] tp `std::chrono::time_point`.
+     *
+     * \return True if parsing was successful and `tp` was set, else False.
      */
     template <typename TimePoint>
     typename std::enable_if<details::is_time_point<TimePoint>::value, bool>::type
