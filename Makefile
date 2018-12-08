@@ -78,25 +78,13 @@ test/bin/writer01 : test/src/writer01.cpp include/hffix.hpp include/hffix_fields
 	$(CXX) $(CXXFLAGS) -o test/bin/writer01 test/src/writer01.cpp
 	@echo -e "${YELLOW}*** Built test/bin/writer01${NORMAL}"
 
-test/bin/writer02 : test/src/writer02.cpp include/hffix.hpp include/hffix_fields.hpp
-	@echo -e "${YELLOW}*** Building test/bin/writer02 ...${NORMAL}"
-	mkdir -p test/bin
-	$(CXX) $(CXXFLAGS) -std=c++11 -o test/bin/writer02 test/src/writer02.cpp
-	@echo -e "${YELLOW}*** Built test/bin/writer02${NORMAL}"
-
 test/bin/reader01 : test/src/reader01.cpp include/hffix.hpp include/hffix_fields.hpp
 	@echo -e "${YELLOW}*** Building test/bin/reader01 ...${NORMAL}"
 	mkdir -p test/bin
 	$(CXX) $(CXXFLAGS) -o test/bin/reader01 test/src/reader01.cpp
 	@echo -e "${YELLOW}*** Built test/bin/reader01${NORMAL}"
 
-test/bin/reader02 : test/src/reader02.cpp include/hffix.hpp include/hffix_fields.hpp
-	@echo -e "${YELLOW}*** Building test/bin/reader02 ...${NORMAL}"
-	mkdir -p test/bin
-	$(CXX) $(CXXFLAGS) -std=c++11 -o test/bin/reader02 test/src/reader02.cpp
-	@echo -e "${YELLOW}*** Built test/bin/reader02${NORMAL}"
-
-examples : test/bin/writer01 test/bin/writer02 test/bin/reader01 test/bin/reader02
+examples : test/bin/writer01 test/bin/reader01
 
 unit_tests :
 	@echo -e "${YELLOW}*** Building test/bin/unit_tests ...${NORMAL}"
@@ -114,22 +102,18 @@ README.html : README.md
 
 test : fixprint test01 test02 unit_tests
 
-test01 : test/bin/writer01 test/bin/writer02
+test01 : test/bin/writer01
 	@echo -e "${YELLOW}*** Running $@ ...${NORMAL}"
 	mkdir -p test/produced
 	test/bin/writer01 > test/produced/writer01.fix
 	diff test/expected/writer01.fix test/produced/writer01.fix || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
-	test/bin/writer02 > test/produced/writer02.fix
-	diff test/expected/writer02.fix test/produced/writer02.fix || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
 	@echo -e "${YELLOW}*** Passed $@ ${NORMAL}"
 
-test02 : test/bin/reader01 test/bin/reader02 test/bin/writer01
+test02 : test/bin/reader01 test/bin/writer01
 	@echo -e "${YELLOW}*** Running $@ ...${NORMAL}"
 	mkdir -p test/produced
 	test/bin/writer01 | test/bin/reader01 > test/produced/reader01.txt
 	diff test/expected/reader01.txt test/produced/reader01.txt || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
-	test/bin/writer02 | test/bin/reader02 > test/produced/reader02.txt
-	diff test/expected/reader02.txt test/produced/reader02.txt || (echo -e "${YELLOW}*** $@ failed${NORMAL}" && exit 1)
 	@echo -e "${YELLOW}*** Passed $@ ${NORMAL}"
 
 .PHONY : help doc all clean clean-all clean-bin fixprint spec ctags examples test test01 test02 unit_tests
