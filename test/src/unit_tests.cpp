@@ -57,6 +57,8 @@ BOOST_AUTO_TEST_CASE(basic)
     }
 }
 
+#if __cplusplus >= 201103L // message_writer_bounds test requires C++11
+
 // find the minimum size buffer the message printed by f() will fit
 // call the function with a buffer ranging from 100 bytes to 0 bytes
 // record the smallest size where it does not throw an exception, make
@@ -130,6 +132,7 @@ BOOST_AUTO_TEST_CASE(message_writer_bounds)
     // 58=14|59=..............|
     BOOST_CHECK(test_bound_checking([&](W& w) { w.push_back_data(58, 59, test_string, test_string + 14); } ) == 24);
 }
+#endif // message_writer_bounds test requires C++11
 
 void test_checksum(message_writer& mw, char const (&expected)[4])
 {
