@@ -1101,9 +1101,11 @@ public:
     /*!
     \brief Append a `std::chrono::time_point` field to the message.
 
-    No time zone or daylight savings time transformations are done to the timestamp.
-
     Fractional seconds will be written to the field, rounded to the millisecond.
+
+    Uses algorithms from http://howardhinnant.github.io/date_algorithms.html ,
+    which implement a proleptic Gregorian calendar. This will probably be
+    superseded by C++20.
 
     \param tag FIX tag.
     \param tp `std::chrono::time_point`.
@@ -1604,15 +1606,19 @@ public:
     /*! \name std::chrono Date and Time Conversion Methods */
 //@{
 
-    /*!
-     * \brief Ascii-to-time-point conversion.
-     *
-     * Parses ascii and returns a `std::chrono::time_point`.
-     *
-     * \param[out] tp The return value `time_point`.
-     *
-     * \return True if parsing was successful and `tp` was set, else False.
-     */
+   /*!
+    * \brief Ascii-to-time-point conversion.
+    *
+    * Parses ascii and returns a `std::chrono::time_point`.
+    *
+    * Uses algorithms from http://howardhinnant.github.io/date_algorithms.html ,
+    * which implement a proleptic Gregorian calendar. This will probably
+    * be superseded by C++20.
+    *
+    * \param[out] tp The return value `time_point`.
+    *
+    * \return True if parsing was successful and `tp` was set, else False.
+    */
     template<typename Clock, typename Duration>
     bool as_timestamp(std::chrono::time_point<Clock,Duration>& tp) const {
         if (details::atotimepoint(begin(), end(), tp))
@@ -1621,16 +1627,16 @@ public:
             return false;
     }
 
-    /*!
-     * \brief Ascii-to-time conversion.
-     *
-     * Parses ascii and returns a time duration or time-of-day.
-     *
-     * \param[out] dur The return value `duration`.
-     *
-     * \return True if parsing was successful and the return value was set,
-     * else False.
-     */
+   /*!
+    * \brief Ascii-to-time conversion.
+    *
+    * Parses ascii and returns a time duration or time-of-day.
+    *
+    * \param[out] dur The return value `duration`.
+    *
+    * \return True if parsing was successful and the return value was set,
+    * else False.
+    */
     template<typename Rep, typename Period>
     bool as_timeonly(std::chrono::duration<Rep,Period>& dur) const {
         int hour, minute, second, millisecond;

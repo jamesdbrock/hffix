@@ -425,10 +425,12 @@ Which will produce output like this:
 </pre>
 
 
+## Dates and Times Type Support
 
-## Boost Date_Time
+### Boost Date_Time
 
 If the <a href="http://www.boost.org/doc/html/date_time.html">Boost Date_Time</a> library is available in your build environment, `boost::posix_time::ptime`, `boost::posix_time::time_duration`, and `boost::gregorian::date` will be automatically supported for the various FIX date and time field types.
+See `hffix::message_writer` and `hffix::field_value` documentation for details.
 
 To enable High Frequency FIX Parser support for the Boost Date_Time library types, include the Boost libraries before the hffix.hpp library, like this:
 
@@ -444,6 +446,13 @@ To prevent High Frequency FIX Parser support for the Boost Date_Time library, `#
 #define HFFIX_NO_BOOST_DATETIME
 #include <hffix.hpp>
 ~~~
+
+### `std::chrono`
+
+If you are building under C++11 or higher then the `std::chrono::time_point` and
+`std::chrono::duration` types are supported for the various FIX date and time field types.
+See `hffix::message_writer` and `hffix::field_value` documentation for details.
+
 
 ## Test
 
@@ -560,8 +569,6 @@ This library only depends on C++98 because it doesn't need any of the features o
 * More support for BlockRepeating NoXXX field types for FIX 5.0 SP2.
 
 * Lexical cast validation for hffix::message_reader.
-
-* `std::chrono` support.
 
 * Split out the buffer-management features of `message_reader` and
 `message_writer` into separate classes.
