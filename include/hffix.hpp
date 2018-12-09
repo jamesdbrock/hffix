@@ -1109,9 +1109,8 @@ public:
 
     \throw std::out_of_range When the remaining buffer size is too small.
     */
-    template <typename TimePoint>
-    typename std::enable_if<details::is_time_point<TimePoint>::value, void>::type
-    push_back_timestamp(int tag, TimePoint tp) {
+    template<typename Clock, typename Duration>
+    void push_back_timestamp(int tag, std::chrono::time_point<Clock,Duration> tp) {
         // TODO: with c++20, we can use std::chrono::format
         int year, month, day, hour, minute, second, millisecond;
         details::timepointtoparts(tp, year, month, day, hour, minute, second, millisecond);
@@ -1583,13 +1582,12 @@ public:
      *
      * Parses ascii and returns a `std::chrono::time_point`.
      *
-     * \param[out] tp `std::chrono::time_point`.
+     * \param[out] tp The return value `time_point`.
      *
      * \return True if parsing was successful and `tp` was set, else False.
      */
-    template <typename TimePoint>
-    typename std::enable_if<details::is_time_point<TimePoint>::value, bool>::type
-    as_timestamp(TimePoint& tp) const {
+    template<typename Clock, typename Duration>
+    bool as_timestamp(std::chrono::time_point<Clock,Duration>& tp) const {
         if (details::atotimepoint(begin(), end(), tp))
             return true;
         else
