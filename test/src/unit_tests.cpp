@@ -201,35 +201,49 @@ BOOST_AUTO_TEST_CASE(null_field_value)
 // test that std::chrono values can be written and read correctly
 BOOST_AUTO_TEST_CASE(chrono)
 {
-    using TimePoint = std::chrono::time_point<
-        std::chrono::system_clock, std::chrono::milliseconds>;
-    // 2017-08-09 12:34:56.123
-    TimePoint tsend(std::chrono::milliseconds(1502282096123ULL));
+    using namespace std::chrono;
+    using TimePoint = time_point<system_clock, milliseconds>;
+
+    TimePoint tsend(milliseconds(1502282096123ULL)); // 2017-08-09 12:34:56.123
+
+    milliseconds timeofday =
+            hours(12) + minutes(34) + seconds(0) + milliseconds(789);
 
     char buffer[100] = {};
     message_writer writer(buffer);
     writer.push_back_header("FIX.4.2");
     writer.push_back_string(hffix::tag::MsgType, "A");
-    writer.push_back_timestamp (hffix::tag::SendingTime, tsend);
+    writer.push_back_timestamp(hffix::tag::SendingTime, tsend);
+    writer.push_back_timeonly(hffix::tag::MDEntryTime, timeofday);
     writer.push_back_trailer();
 
     message_reader reader(writer);
     message_reader::const_iterator i = reader.begin();
     reader.find_with_hint(hffix::tag::SendingTime, i);
-    BOOST_CHECK(i->value().as_string() == std::string("20170809-12:34:56.123"));
+    BOOST_CHECK_EQUAL(i->value().as_string(), std::string("20170809-12:34:56.123"));
 
     TimePoint trecv;
-    bool parsed = i->value().as_timestamp(trecv);
+    bool tparsed = i->value().as_timestamp(trecv);
 
-    BOOST_CHECK(parsed);
+    BOOST_CHECK(tparsed);
     BOOST_CHECK(tsend == trecv);
+
+    message_reader::const_iterator j = reader.begin();
+    reader.find_with_hint(hffix::tag::MDEntryTime, j);
+    BOOST_CHECK_EQUAL(j->value().as_string(), std::string("12:34:00.789"));
+
+    milliseconds todrecv;
+    bool dparsed = j->value().as_timeonly(todrecv);
+    BOOST_CHECK(dparsed);
+    BOOST_CHECK(timeofday == todrecv);
 
     // TODO check this when we have a way to parse milliseconds with put_time.
     // std::time_t trecv_t = std::chrono::system_clock::to_time_t(trecv);
     // std::ostringstream oss;
     // oss << std::put_time(std::localtime(&trecv_t), "%Y%m%d-%T");
     // std::string tstr = oss.str();
-    // BOOST_CHECK(tstr == i->value().as_string());
+    // BOOST_CHECK_EQUAL(tstr, i->value().as_string());
+
 }
 #endif
 

@@ -1096,6 +1096,7 @@ public:
 
 #if __cplusplus >= 201103L
     /*! \name std::chrono Date and Time Fields */
+//@{
 
     /*!
     \brief Append a `std::chrono::time_point` field to the message.
@@ -1116,6 +1117,32 @@ public:
         details::timepointtoparts(tp, year, month, day, hour, minute, second, millisecond);
         push_back_timestamp(tag, year, month, day, hour, minute, second, millisecond);
     }
+
+    /*!
+    \brief Append a UTCTimeOnly field to the message.
+
+    No time zone or daylight savings time transformations are done to the time.
+
+    Fractional seconds will be written to the field, rounded to the millisecond.
+
+    \param tag FIX tag.
+    \param timeonly Time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    template<typename Rep, typename Period>
+    void push_back_timeonly(int tag, std::chrono::duration<Rep,Period> timeonly) {
+        using namespace std::chrono;
+
+        push_back_timeonly(
+            tag,
+            duration_cast<hours>       (timeonly).count(),
+            duration_cast<minutes>     (timeonly %   hours(1)).count(),
+            duration_cast<seconds>     (timeonly % minutes(1)).count(),
+            duration_cast<milliseconds>(timeonly % seconds(1)).count()
+            );
+    }
+
 //@}
 #endif
 
@@ -1593,6 +1620,31 @@ public:
         else
             return false;
     }
+
+    /*!
+     * \brief Ascii-to-time conversion.
+     *
+     * Parses ascii and returns a time duration or time-of-day.
+     *
+     * \param[out] dur The return value `duration`.
+     *
+     * \return True if parsing was successful and the return value was set,
+     * else False.
+     */
+    template<typename Rep, typename Period>
+    bool as_timeonly(std::chrono::duration<Rep,Period>& dur) const {
+        int hour, minute, second, millisecond;
+        if (as_timeonly(hour, minute, second, millisecond)) {
+            dur = std::chrono::hours(hour) +
+                  std::chrono::minutes(minute) +
+                  std::chrono::seconds(second) +
+                  std::chrono::milliseconds(millisecond);
+            return true;
+        }
+        else
+            return false;
+    }
+
 //@}
 #endif
 
