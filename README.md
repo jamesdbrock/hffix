@@ -624,5 +624,3 @@ Replace the Python `codegen` spec parser with a Haskell
 
 * Split out the buffer-management features of `message_reader` and
 `message_writer` into separate classes.
-
-* Checksum validation for hffix::message_reader.
