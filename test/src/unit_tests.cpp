@@ -184,6 +184,18 @@ BOOST_AUTO_TEST_CASE(checksum_negative)
     test_checksum(writer, "230");
 }
 
+BOOST_AUTO_TEST_CASE(checksum_calc)
+{
+    char buffer[50] = {};
+    message_writer writer(buffer);
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(tag::MsgType, "A");
+    writer.push_back_trailer();
+
+    message_reader mr(writer);
+    BOOST_CHECK_EQUAL(mr.calculate_check_sum(), mr.check_sum()->value().as_int<unsigned char>());
+}
+
 // test that null fields can be iterated properly by message_reader
 BOOST_AUTO_TEST_CASE(null_field_value)
 {

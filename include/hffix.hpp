@@ -2060,6 +2060,32 @@ public:
         return message_reader(end_.current_.value_.end_ + 1, buffer_end_);
     }
 
+   /*!
+    \brief Calulate the checksum for this message.
+
+    Note that the *hffix* library never does this calculation implicitly
+    for messages read. For checksum calculation this function must be
+    explicitly called.
+
+    The only thing to do after calculating the checksum for this message
+    is to compare it to the CheckSum field that the message reports for
+    itself, like so:
+
+    \code
+    hffix::message_reader r;
+    if (r.calculate_check_sum() == r.check_sum()->value()as_int<unsigned char>()) {}
+    \endcode
+
+    \return The calculated checksum.
+
+    \throw std::logic_error if called on an invalid message. Check for `is_valid()` before calling.
+    */
+    unsigned char calculate_check_sum() {
+        // return iterator for beginning of nonmutable sequence
+        if (!is_valid_) throw std::logic_error("hffix Cannot calculate checksum for an invalid message.");
+        return std::accumulate(buffer_, end_.buffer_, (unsigned char)(0));
+    }
+
     /*! \name Field Access */
 //@{
     /*!
