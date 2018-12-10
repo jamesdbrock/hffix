@@ -5,7 +5,9 @@ High Frequency FIX — C++ Library for Financial Information Exchange Protocol {
 
 ## Introduction
 
-The High Frequency FIX Parser library is an open source implementation of <a href="http://www.fixtradingcommunity.org/pg/structure/tech-specs/fix-protocol">Financial Information Exchange protocol versions 4.2, 4.3, 4.4, and 5.0 SP2.</a> intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the “heap”).
+The High Frequency FIX Parser library is an open source implementation of
+<a href="https://www.fixtrading.org/standards/">tagvalue FIX (classic FIX)</a>
+intended for use by developers of high frequency, low latency financial software.  The purpose of the library is to do fast, efficient encoding and decoding of FIX in place, at the location of the I/O buffer. The library does not use intermediate message objects, and it does **no memory allocation** on the free store (the “heap”).
 
 *hffix* library is not certified by any industry-leading committees. It is not an “engine.” It is not an “adaptor.” It has no threading, no I/O, no object-oriented subtyping.  It is just a superfast parser and serializer in plain modern generic-iterator-style C++98.
 
@@ -545,7 +547,6 @@ Pull requests welcome. `make test` to run the test suite.
 
 
 
-
 ## Notes on the Design of FIX Protocol
 
 ### The *Logon* - *Resend Request* Race Condition
@@ -557,10 +558,61 @@ Either the client can choose to reset both sequence numbers, in which case the c
 After *Logon* response from the server, the client may begin sending messages, but the client has to wait some amount of time because the server may send *Resend Request*. If the client sends any message to the server while the server is preparing to send *Resend Request*, then the server's response is not defined by the *FIX* specification, and some servers implementations may seize up in confusion at that point.
 
 
-## C++03|11|14|17
+## C++03|11|14|17|20
 
-This library only depends on C++98 because it doesn't need any of the features of later C++. However, the library was designed with the intention of interacting well with C++11 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`.
+This library only depends on C++98.
 
+The library was designed with the intention of interacting well with C++11 features such as, for example, `auto`, or anonymous inline functions passed as the `UnaryPredicate` to `hffix::find_with_hint`. All the classes own no resources and are optimized for pass-by-value so move semantics are
+mostly irrelevent.
+
+`std::chrono` is supported in a `-std=c++11` build environment.
+
+`std::string_view` is supported in a `-std=c++17` build environment.
+
+## Change Log
+
+<table>
+<caption>Change Log</caption>
+<tr>
+<th> 2018-12-09 `std::chrono`</th>
+<td>
+Added support for `std::chrono`.
+</td>
+</tr>
+<tr>
+<th>2018-12-09 Field Tags</th>
+<td>
+Replace parsing of all the old FIX specs with parsing of
+the FIX Repository https://www.fixtrading.org/standards/fix-repository/
+to generate `hffix_fields.hpp`.
+
+This results in a lot more `length_fields` in `hffix_fields.hpp`, so change
+the algorithm for `is_tag_a_data_length()`.
+
+Keep all the old FIX spec documents in the repo for reference.
+
+#### Breaking Changes
+
+Some field names in `hffix::tag` were from the abbreviated
+FIX field name because the old specs were weird and difficult to parse.
+Field names now come from the FIX Repository and so all of the
+`hffix::tag` field names have become full field names. If your code fails
+to compile because it can't find, for example, `hffix::tag::NoReltdSym`,
+then change the symbol to `hffix::tag::NoRelatedSym`.
+</td>
+</tr>
+<tr>
+<th>2018-10-24 Spec Parser</th>
+<td>
+Replace the Python `codegen` spec parser with a Haskell
+`spec-parse-fields` spec parser.
+</td>
+</tr>
+<tr>
+<th>2017-09-12 `string_view`</th>
+<td>Added support for `std::string_view`.</td>
+</tr>
+</table>
 
 ## TODO
 
@@ -573,3 +625,4 @@ This library only depends on C++98 because it doesn't need any of the features o
 * Split out the buffer-management features of `message_reader` and
 `message_writer` into separate classes.
 
+* Checksum validation for hffix::message_reader.
