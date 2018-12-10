@@ -66,13 +66,15 @@ test/bin/reader01 : test/src/reader01.cpp include/hffix.hpp include/hffix_fields
 
 examples : test/bin/writer01 test/bin/reader01
 
-unit_tests :
-	@echo -e "${YELLOW}*** Building test/bin/unit_tests ...${NORMAL}"
-	$(CXX) $(CXXFLAGS) -o test/bin/unit_tests test/src/unit_tests.cpp
-	@echo -e "${YELLOW}*** Built test/bin/unit_tests ...${NORMAL}"
+unit_tests : test/bin/unit_tests
 	@echo -e "${YELLOW}*** Running test/bin/unit_tests ...${NORMAL}"
 	test/bin/unit_tests --color_output=true
 	@echo -e "${YELLOW}*** Passed test/bin/unit_tests ...${NORMAL}"
+
+test/bin/unit_tests : include/hffix.hpp include/hffix_fields.hpp test/src/unit_tests.cpp
+	@echo -e "${YELLOW}*** Building test/bin/unit_tests ...${NORMAL}"
+	$(CXX) $(CXXFLAGS) -o test/bin/unit_tests test/src/unit_tests.cpp
+	@echo -e "${YELLOW}*** Built test/bin/unit_tests ...${NORMAL}"
 
 ctags :
 	ctags include/*
