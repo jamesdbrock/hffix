@@ -54,8 +54,8 @@ main = do
 
     -- Step 1. Read and parse the spec files
 
-    fixrepoFields <- XML.readFile def "FIXRepository/Basic/Fields.xml"
-    fixrepoMsgs   <- XML.readFile def "FIXRepository/Basic/Messages.xml"
+    fixrepoFields <- XML.readFile def "../FIXRepository/Basic/Fields.xml"
+    fixrepoMsgs   <- XML.readFile def "../FIXRepository/Basic/Messages.xml"
 
     -- All the FIX fields
     let fields :: Fields
