@@ -212,6 +212,52 @@ BOOST_AUTO_TEST_CASE(null_field_value)
     BOOST_CHECK(reader.find_with_hint(38, i));
 }
 
+BOOST_AUTO_TEST_CASE(data_length)
+{
+    char buffer[100] = {};
+    message_writer writer(buffer);
+    std::string datum("datum");
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(tag::MsgType, "A");
+    writer.push_back_data(
+        tag::RawDataLength,
+        tag::RawData,
+        &*datum.begin(),
+        &*datum.end()
+        );
+    writer.push_back_data(
+        tag::EncodedUnderlyingProvisionTextLen,
+        tag::EncodedUnderlyingProvisionText,
+        &*datum.begin(),
+        &*datum.end()
+        );
+    writer.push_back_trailer();
+
+    message_reader reader(writer);
+    message_reader::const_iterator i;
+
+    bool found;
+
+    i = reader.begin();
+    found = reader.find_with_hint(tag::RawDataLength, i);
+    BOOST_REQUIRE(!found);
+
+    i = reader.begin();
+    found = reader.find_with_hint(tag::EncodedUnderlyingProvisionTextLen, i);
+    BOOST_REQUIRE(!found);
+
+    i = reader.begin();
+    found = reader.find_with_hint(tag::RawData, i);
+    BOOST_REQUIRE(found);
+    BOOST_REQUIRE(i != reader.end());
+    BOOST_CHECK_EQUAL(i->value().as_string(), datum);
+
+    found = reader.find_with_hint(tag::EncodedUnderlyingProvisionText, i);
+    BOOST_REQUIRE(found);
+    BOOST_REQUIRE(i != reader.end());
+    BOOST_CHECK_EQUAL(i->value().as_string(), datum);
+}
+
 #if __cplusplus >= 201103L
 // test that std::chrono values can be written and read correctly
 BOOST_AUTO_TEST_CASE(chrono)

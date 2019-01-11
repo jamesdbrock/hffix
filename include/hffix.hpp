@@ -2404,12 +2404,13 @@ inline void message_reader_const_iterator::increment()
 namespace details {
 
 
-// A predicate constructed with an int which returns true if the int passed to the predicate is less than or equal to the int passed to the constructor.
-struct int_lte {
-    int_lte(int tag) : tag(tag) {}
+// A predicate constructed with an int which returns true if the int passed to
+// the predicate is greater than or equal to the int passed to the constructor.
+struct int_gte {
+    int_gte(int tag) : tag(tag) {}
     int tag;
     bool operator()(int that) const {
-        return that <= tag;
+        return that >= tag;
     }
 };
 
@@ -2429,7 +2430,7 @@ struct int_lte {
 inline bool is_tag_a_data_length(int tag)
 {
     int* length_fields_end = length_fields + (sizeof(length_fields)/sizeof(length_fields[0]));
-    int* i = std::find_if(length_fields, length_fields_end, int_lte(tag));
+    int* i = std::find_if(length_fields, length_fields_end, int_gte(tag));
     if (i == length_fields_end) return false;
     return (*i == tag);
 }
