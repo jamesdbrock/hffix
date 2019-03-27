@@ -57,9 +57,27 @@ main = do
     fixrepoFields <- XML.readFile def "../FIXRepository/Basic/Fields.xml"
     fixrepoMsgs   <- XML.readFile def "../FIXRepository/Basic/Messages.xml"
 
-    -- All the FIX fields
+    -- Extra FIX fields omitted by the spec
+    let extraflds = Map.fromList [
+            ( 20
+            , Field
+                { fname    = "ExecTransType"
+                , ftype    = "char"
+                , fversion = "FIX.4.2" -- just a guess
+                , fdesc =
+                    "Identifies transaction type\n\n" <>
+                    "Valid values:\n" <>
+                    "   0 = New\n" <>
+                    "   1 = Cancel\n" <>
+                    "   2 = Correct\n" <>
+                    "   3 = Status\n"
+                }
+            )
+            ]
+
+    -- All the FIX fields from the spec, plus the extraflds
     let fields :: Fields
-        fields = foldl' (flip addFieldRepo) Map.empty $
+        fields = foldl' (flip addFieldRepo) extraflds $
             XML.fromDocument fixrepoFields
             $| element "Fields" &/ element "Field"
           where
@@ -76,7 +94,7 @@ main = do
                     listToMaybe $ curs $/ element "Description" &// content
                 return (ftag, Field{..})
 
-    -- All the FIX MessageTypes
+    -- All the FIX MessageTypes from the spec
     let msgTypes :: [MsgType]
         msgTypes = mapMaybe mkMsg $ XML.fromDocument fixrepoMsgs
             $| element "Messages" &/ element "Message"

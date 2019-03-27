@@ -57,6 +57,21 @@ ExecInst                                           = 18, /*!< 18 (MultipleCharVa
 ExecRefID                                          = 19, /*!< 19 (String FIX.2.7) Reference identifier used with Trade, Trade Cancel and Trade Correct execution types.
 
 (Prior to FIX 4.1 this field was of type int)*/
+ExecTransType                                      = 20, /*!< 20 (char FIX.4.2) Identifies transaction type
+
+
+
+Valid values:
+
+   0 = New
+
+   1 = Cancel
+
+   2 = Correct
+
+   3 = Status
+
+*/
 HandlInst                                          = 21, /*!< 21 (char FIX.2.7) Instructions for order handling on Broker trading floor*/
 SecurityIDSource                                   = 22, /*!< 22 (String FIX.2.7) Identifies class or source of the SecurityID(48) value. */
 IOIID                                              = 23, /*!< 23 (String FIX.2.7) Unique identifier of IOI message.
@@ -7943,6 +7958,7 @@ dictionary[tag::EndSeqNo]                          = "EndSeqNo";                
 dictionary[tag::ExecID]                            = "ExecID";                                          // (String FIX.2.7)
 dictionary[tag::ExecInst]                          = "ExecInst";                                        // (MultipleCharValue FIX.2.7)
 dictionary[tag::ExecRefID]                         = "ExecRefID";                                       // (String FIX.2.7)
+dictionary[tag::ExecTransType]                     = "ExecTransType";                                   // (char FIX.4.2)
 dictionary[tag::HandlInst]                         = "HandlInst";                                       // (char FIX.2.7)
 dictionary[tag::SecurityIDSource]                  = "SecurityIDSource";                                // (String FIX.2.7)
 dictionary[tag::IOIID]                             = "IOIID";                                           // (String FIX.2.7)
