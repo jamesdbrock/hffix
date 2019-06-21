@@ -13,6 +13,8 @@ fixspec/FIXRepository/*
 !fixspec/FIXRepository/FIXRepository_FIX.5.0SP2_EP240.zip
 !fixspec/FIXRepository/Basic/Fields.xml
 !fixspec/FIXRepository/Basic/Messages.xml
+fixspec/spec-parse-fields/.stack-work
+fixspec/spec-parse-fields/stack.yaml.lock
 test/bin
 test/produced
 util/bin
