@@ -35,7 +35,7 @@ or implied, of T3 IP, LLC.
 #ifndef HFFIX_HPP
 #define HFFIX_HPP
 
-#include <hffix_fields.hpp> // for field and message tag names and properties. Needed for length_fields[].
+#include "hffix_fields.hpp" // for field and message tag names and properties. Needed for length_fields[].
 #include <cstring>          // for memcpy
 #include <string>           //
 #include <algorithm>        // for is_tag_a_data_length
