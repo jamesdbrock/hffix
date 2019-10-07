@@ -454,6 +454,169 @@ timepointtoparts(TimePoint tp, int& year, int& month, int& day,
 
 /* @endcond*/
 
+
+/*!
+ * \brief Managed buffer type for hffix::message_writer.
+ *
+ * Based on a pre-allocated buffer (i.e., a contiguous memory chunk),
+ * this class provides some typical buffer management features, without
+ * taking ownership of the underlying buffer memory.
+ *
+ * In most use cases, the FIX message is expected to have its components
+ * serialized and appended to the buffer.
+ * It maintains a pointer (i.e., pos_) to record the current buffer position,
+ * which indicates the earliest available location to put new data.
+ * The new data can be written to the buffer via a chainable method `append`,
+ * with certain bounds check functionality supported.
+ */
+class write_buffer {
+public:
+
+    /*!
+     \brief Construct by buffer begin and end.
+     \param begin Pointer to the buffer to be written to.
+     \param end Pointer to past-the-end of the buffer to be written to.
+     */
+    write_buffer(char* begin, char* end) :
+        begin_(begin),
+        end_(end),
+        pos_(begin) {
+    }
+
+    /*!
+     * \brief Owns no resources, so destruction is no-op.
+     */
+    ~write_buffer() {}
+
+    /// \name Member variable queries
+    ///@{
+    char* begin() const { return begin_; }
+    char* end() const { return end_; }
+    char* operator()() const { return pos_; }
+    ///@}
+
+    /*!
+     * \brief Total size (in bytes) of the buffer.
+     */
+    size_t size() const {
+        return end_ - begin_;
+    }
+
+    /*!
+     * \brief Check if the buffer has a given remaining size available.
+     *
+     * This method is often used as a bounds checker before appending new data to the buffer.
+     *
+     * \param size Size to check.
+     * \throw std::out_of_range When the remaining buffer size is less than input.
+     */
+    write_buffer& ensure_remaining_size(size_t size) {
+        if (end_ - pos_ < size) details::throw_range_error();
+        return *this;
+    }
+
+    /*!
+     * \brief Move the maintained pointer to a specified offset.
+     *
+     * \param n Offset the pos_ pointer to be moved with. It can be either
+     * positive or negative.
+     */
+    write_buffer& offset(int n) {
+        pos_ += n;
+        return *this;
+    }
+
+    /*!
+     * \brief Append new data to the buffer.
+     *
+     * This method does not perform bounds check. User has to make sure there
+     * is enough remaining buffer in advance (e.g., by calling
+     * `ensure_remaining_size(size)`).
+     *
+     * \param from Pointer of input data.
+     * \param size Size of the data to be copied.
+     */
+    write_buffer& append(const char* from, size_t size) {
+        memcpy(pos_, from, size);
+        pos_ += size;
+        return *this;
+    }
+
+    /*!
+     * \brief Append a character to the buffer.
+     *
+     * This method does not perform bounds check. User has to make sure there
+     * is enough remaining buffer in advance (e.g., by calling
+     * `ensure_remaining_size(1)`)
+     *
+     * \param ch Character to append.
+     */
+    write_buffer& append(const char ch) {
+        *pos_++ = ch;
+        return *this;
+    }
+
+    /*!
+     * \brief Append an integer represented in a fixed width to the buffer.
+     *
+     * The leading slots are padded with '0's if not occupied. If the input
+     * integer does not fit the width, the less significant digits are kept.
+     * This method does not perform bounds check. User has to make sure there
+     * is enough remaining buffer in advance (e.g., by calling
+     * `ensure_remaining_size(len)`)
+     *
+     * \param x Input integer.
+     * \param len Size of the integer representation (in bytes).
+     */
+    template<typename Int_type>
+    write_buffer& append_integer_padded(Int_type x, size_t len) {
+        char *e = pos_ + len;
+        while (e > pos_) {
+            *--e = '0' + (x % 10);
+            x /= 10;
+        }
+        pos_ += len;
+        return *this;
+    }
+
+    /*!
+     * \brief Append an integer in an ascii representation to the buffer.
+     *
+     * This method performs bounds check when converting the integer to
+     * ascii digit-by-digit.
+     *
+     * \param n Input integer.
+     * \throw std::out_of_range When the remaining buffer size is not sufficient.
+     */
+    template<typename Int_type>
+    write_buffer& append_integer(Int_type n) {
+        pos_ = details::itoa(n, pos_, end_);
+        return *this;
+    }
+
+    /*!
+     * \brief Append a decimal float in an ascii representation to the buffer.
+     *
+     * The decimal float is in the form of
+     * \htmlonly mantissa&times;10<sup>exponent</sup>\endhtmlonly.
+     * This method performs bounds check when converting the decimal float to
+     * ascii digit-by-digit.
+     *
+     * \throw std::out_of_range When the remaining buffer size is not sufficient.
+     */
+    template<typename Int_type>
+    write_buffer& append_decimal(Int_type mantissa, Int_type exponent) {
+        pos_ = details::dtoa(mantissa, exponent, pos_, end_);
+        return *this;
+    }
+
+private:
+    char* const begin_; ///< Pointer to the beginning of the buffer
+    char* const end_;   ///< Pointer to the past-the-end of the buffer
+    char* pos_;         ///< Pointer to the current buffer element
+};
+
+
 /*!
  * \brief One FIX message for writing.
  *
@@ -499,9 +662,7 @@ public:
     \param size Size of the buffer in bytes.
     */
     message_writer(char* buffer, size_t size):
-        buffer_(buffer),
-        buffer_end_(buffer + size),
-        next_(buffer),
+        buffer_(buffer, buffer + size),
         body_length_(NULL) {
     }
 
@@ -511,9 +672,7 @@ public:
     \param end Pointer to past-the-end of the buffer to be written to.
     */
     message_writer(char* begin, char* end) :
-        buffer_(begin),
-        buffer_end_(end),
-        next_(begin),
+        buffer_(begin, end),
         body_length_(NULL) {
     }
 
@@ -524,12 +683,9 @@ public:
     */
     template<size_t N>
     message_writer(char(&buffer)[N]) :
-        buffer_(buffer),
-        buffer_end_(&(buffer[N])),
-        next_(buffer),
+        buffer_(buffer, &(buffer[N])),
         body_length_(NULL) {
     }
-
 
     /*!
      * \brief Owns no resources, so destruction is no-op.
@@ -545,7 +701,7 @@ public:
      * \pre push_back_trailer() has been called.
     */
     size_t message_size() const {
-        return next_ - buffer_;
+        return buffer_() - buffer_.begin();
     }
 
     /*!
@@ -554,7 +710,7 @@ public:
      * \pre None.
      */
     char* message_begin() const {
-        return buffer_;
+        return buffer_.begin();
     }
     /*!
      * \brief Pointer to past-the-end of the message.
@@ -562,21 +718,21 @@ public:
      * \pre push_back_trailer() has been called.
      */
     char* message_end() const {
-        return next_;
+        return buffer_();
     }
 
     /*!
      * \brief Total available buffer size, including buffer already written to by this message.
      */
     size_t buffer_size() const {
-        return buffer_end_ - buffer_;
+        return buffer_.size();
     }
 
     /*!
      * \brief Remaining available buffer size. Excludes buffer already written to by this message.
      */
     size_t buffer_size_remaining() const {
-        return buffer_end_ - next_;
+        return buffer_.end() - buffer_();
     }
 
     //@}
@@ -597,19 +753,13 @@ public:
      */
     void push_back_header(char const* begin_string_version) {
         if (body_length_) throw std::logic_error("hffix message_writer.push_back_header called twice");
-        if (buffer_end_ - next_ < 2 + std::ptrdiff_t(strlen(begin_string_version)) + 3 + 7) {
-            details::throw_range_error();
-        }
-        memcpy(next_, "8=", 2);
-        next_ += 2;
-        memcpy(next_, begin_string_version, std::strlen(begin_string_version));
-        next_ += std::strlen(begin_string_version);
-        *(next_++) = '\x01';
-        memcpy(next_, "9=", 2);
-        next_ += 2;
-        body_length_ = next_;
-        next_ += 6; // 6 characters reserved for BodyLength.
-        *next_++ = '\x01';
+        buffer_.ensure_remaining_size(2 + std::ptrdiff_t(strlen(begin_string_version)) + 3 + 7);
+        buffer_.append("8=", 2)
+                .append(begin_string_version, std::strlen(begin_string_version))
+                .append("\x01" "9=", 3);
+        body_length_ = buffer_();
+        buffer_.offset(6) // 6 characters reserved for BodyLength.
+                .append('\x01');
     }
 
 
@@ -637,7 +787,7 @@ public:
             throw std::logic_error("hffix message_writer.push_back_trailer called before message_writer.push_back_header");
         }
 
-        size_t const len = next_ - (body_length_ + 7);
+        size_t const len = buffer_() - (body_length_ + 7);
         body_length_[0] = '0' + (len / 100000) % 10;
         body_length_[1] = '0' + (len / 10000) % 10;
         body_length_[2] = '0' + (len / 1000) % 10;
@@ -645,9 +795,7 @@ public:
         body_length_[4] = '0' + (len / 10) % 10;
         body_length_[5] = '0' + len % 10;
 
-        if (buffer_end_ - next_ < 7) {
-            details::throw_range_error();
-        }
+        buffer_.ensure_remaining_size(7);
 
         // write out the CheckSum after optionally calculating it
         if (calculate_checksum) {
@@ -656,19 +804,13 @@ public:
 #else
             typedef unsigned char uint8_t;
 #endif
-            uint8_t const checksum = std::accumulate(buffer_, next_, uint8_t(0));
+            uint8_t const checksum = std::accumulate(buffer_.begin(), buffer_(), uint8_t(0));
 
-            memcpy(next_, "10=", 3);
-            next_ += 3;
-            next_[0] = '0' + ((checksum / 100) % 10);
-            next_[1] = '0' + ((checksum / 10) % 10);
-            next_[2] = '0' + (checksum % 10);
-
-            next_ += 3;
-            *next_++ = '\x01';
+            buffer_.append("10=", 3)
+                    .append_integer_padded(checksum, 3)
+                    .append('\x01');
         } else {
-            memcpy(next_, "10=000\x01", 7);
-            next_ += 7;
+            buffer_.append("10=000\x01", 7);
         }
 
     }
@@ -688,14 +830,11 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_string(int tag, char const* begin, char const* end) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < (end - begin) + 2) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        memcpy(next_, begin, end - begin);
-        next_ += (end - begin);
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size((end - begin) + 2)
+                .append('=')
+                .append(begin, end - begin)
+                .append('\x01');
     }
 
     /*!
@@ -709,7 +848,7 @@ public:
     void push_back_string(int tag, char const* cstring) {
         // Find the end of the cstring, like strlen, but throw if the cstring
         // is longer than the remaining buffer.
-        char const* cstring_end = (char const*)memchr(cstring, 0, buffer_end_ - next_);
+        char const* cstring_end = (char const*)memchr(cstring, 0, buffer_size_remaining());
         if (cstring_end) push_back_string(tag, cstring, cstring_end);
         else details::throw_range_error();
     }
@@ -755,13 +894,11 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_char(int tag, char character) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < 3) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        *next_++ = character;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(3)
+                .append('=')
+                .append(character)
+                .append('\x01');
     }
 //@}
 
@@ -778,12 +915,12 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     template<typename Int_type> void push_back_int(int tag, Int_type number) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (next_ >= buffer_end_) details::throw_range_error();
-        *next_++ = '=';
-        next_ = details::itoa(number, next_, buffer_end_);
-        if (next_ >= buffer_end_) details::throw_range_error();
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(1)
+                .append('=')
+                .append_integer(number)
+                .ensure_remaining_size(1)
+                .append('\x01');
     }
 
 //@}
@@ -807,12 +944,12 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     template<typename Int_type> void push_back_decimal(int tag, Int_type mantissa, Int_type exponent) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (next_ >= buffer_end_) details::throw_range_error();
-        *next_++ = '=';
-        next_ = details::dtoa(mantissa, exponent, next_, buffer_end_);
-        if (next_ >= buffer_end_) details::throw_range_error();
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(1)
+                .append('=')
+                .append_decimal(mantissa, exponent)
+                .ensure_remaining_size(1)
+                .append('\x01');
     }
 //@}
 
@@ -831,18 +968,13 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_date(int tag, int year, int month, int day) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < details::len("=YYYYMMDD|")) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        itoa_padded(year, next_, next_ + 4);
-        next_ += 4;
-        itoa_padded(month, next_, next_ + 2);
-        next_ += 2;
-        itoa_padded(day, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(details::len("=YYYYMMDD|"))
+                .append('=')
+                .append_integer_padded(year, 4)
+                .append_integer_padded(month, 2)
+                .append_integer_padded(day, 2)
+                .append('\x01');
     }
     /*!
     \brief Append a month-year field to the message.
@@ -854,16 +986,12 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_monthyear(int tag, int year, int month) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < details::len("=YYYYMM|")) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        itoa_padded(year, next_, next_ + 4);
-        next_ += 4;
-        itoa_padded(month, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(details::len("=YYYYMM|"))
+                .append('=')
+                .append_integer_padded(year, 4)
+                .append_integer_padded(month, 2)
+                .append('\x01');
     }
 
     /*!
@@ -881,20 +1009,15 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timeonly(int tag, int hour, int minute, int second) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < details::len("=HH:MM:SS|")) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        itoa_padded(hour, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(minute, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(second, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(details::len("=HH:MM:SS|"))
+                .append('=')
+                .append_integer_padded(hour, 2)
+                .append(':')
+                .append_integer_padded(minute, 2)
+                .append(':')
+                .append_integer_padded(second, 2)
+                .append('\x01');
     }
 
     /*!
@@ -911,23 +1034,17 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timeonly(int tag, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < details::len("=HH:MM:SS.sss|")) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        itoa_padded(hour, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(minute, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(second, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '.';
-        itoa_padded(millisecond, next_, next_ + 3);
-        next_ += 3;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(details::len("=HH:MM:SS.sss|"))
+                .append('=')
+                .append_integer_padded(hour, 2)
+                .append(':')
+                .append_integer_padded(minute, 2)
+                .append(':')
+                .append_integer_padded(second, 2)
+                .append('.')
+                .append_integer_padded(millisecond, 3)
+                .append('\x01');
     }
 
     /*!
@@ -948,28 +1065,19 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-
-        if (buffer_end_ - next_ < details::len("=YYYYMMDD-HH:MM:SS|")) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        itoa_padded(year, next_, next_ + 4);
-        next_ += 4;
-        itoa_padded(month, next_, next_ + 2);
-        next_ += 2;
-        itoa_padded(day, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '-';
-        itoa_padded(hour, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(minute, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(second, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(details::len("=YYYYMMDD-HH:MM:SS|"))
+                .append('=')
+                .append_integer_padded(year, 4)
+                .append_integer_padded(month, 2)
+                .append_integer_padded(day, 2)
+                .append('-')
+                .append_integer_padded(hour, 2)
+                .append(':')
+                .append_integer_padded(minute, 2)
+                .append(':')
+                .append_integer_padded(second, 2)
+                .append('\x01');
     }
 
     /*!
@@ -989,30 +1097,21 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_timestamp(int tag, int year, int month, int day, int hour, int minute, int second, int millisecond) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (buffer_end_ - next_ < details::len("=YYYYMMDD-HH:MM:SS.sss|")) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        itoa_padded(year, next_, next_ + 4);
-        next_ += 4;
-        itoa_padded(month, next_, next_ + 2);
-        next_ += 2;
-        itoa_padded(day, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '-';
-        itoa_padded(hour, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(minute, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = ':';
-        itoa_padded(second, next_, next_ + 2);
-        next_ += 2;
-        *next_++ = '.';
-        itoa_padded(millisecond, next_, next_ + 3);
-        next_ += 3;
-        *next_++ = '\x01';
+        buffer_.append_integer(tag)
+                .ensure_remaining_size(details::len("=YYYYMMDD-HH:MM:SS.sss|"))
+                .append('=')
+                .append_integer_padded(year, 4)
+                .append_integer_padded(month, 2)
+                .append_integer_padded(day, 2)
+                .append('-')
+                .append_integer_padded(hour, 2)
+                .append(':')
+                .append_integer_padded(minute, 2)
+                .append(':')
+                .append_integer_padded(second, 2)
+                .append('.')
+                .append_integer_padded(millisecond, 3)
+                .append('\x01');
     }
 
 //@}
@@ -1178,37 +1277,26 @@ public:
     \throw std::out_of_range When the remaining buffer size is too small.
     */
     void push_back_data(int tag_data_length, int tag_data, char const* begin, char const* end) {
-        next_ = details::itoa(tag_data_length, next_, buffer_end_);
-        if (next_ == buffer_end_) details::throw_range_error();
-        *next_++ = '=';
-        next_ = details::itoa(end - begin, next_, buffer_end_);
-        if (next_ == buffer_end_) details::throw_range_error();
-        *next_++ = '\x01';
-        next_ = details::itoa(tag_data, next_, buffer_end_);
-
-        if (buffer_end_ - next_ < (end - begin) + 2) {
-            details::throw_range_error();
-        }
-        *next_++ = '=';
-        memcpy(next_, begin, end - begin);
-        next_ += end - begin;
-        *next_++ = '\x01';
+        // Data length field
+        buffer_.append_integer(tag_data_length)
+                .ensure_remaining_size(1)
+                .append('=')
+                .append_integer(end - begin)
+                .ensure_remaining_size(1)
+                .append('\x01');
+        // Data field
+        buffer_.append_integer(tag_data)
+                .ensure_remaining_size((end - begin) + 2)
+                .append('=')
+                .append(begin, end - begin)
+                .append('\x01');
     }
 
 
 //@}
 private:
-    static void itoa_padded(int x, char* b, char* e) {
-        while (e > b) {
-            *--e = '0' + (x % 10);
-            x /= 10;
-        }
-    }
-
-    char* buffer_;
-    char* buffer_end_;
-    char* next_;
-    char* body_length_; // Pointer to the location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
+    write_buffer buffer_; // Managed buffer for writing
+    char* body_length_; // Pointer to the buffer location at which the BodyLength should be written, once the length of the message is known. 6 chars, which allows for messagelength up to 999,999.
 };
 
 class message_reader;
@@ -1962,7 +2050,8 @@ public:
         begin_(that.begin_),
         end_(that.end_),
         is_complete_(that.is_complete_),
-        is_valid_(that.is_valid_) {
+        is_valid_(that.is_valid_),
+        prefix_end_(that.prefix_end_) {
     }
 
     /*!
