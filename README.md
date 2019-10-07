@@ -576,12 +576,15 @@ mostly irrelevent.
 <tr>
 <th> 2018-12-09 `std::chrono`</th>
 <td>
+    
 Added support for `std::chrono`.
+
 </td>
 </tr>
 <tr>
 <th>2018-12-09 Field Tags</th>
 <td>
+
 Replace parsing of all the old FIX specs with parsing of
 the FIX Repository https://www.fixtrading.org/standards/fix-repository/
 to generate `hffix_fields.hpp`.
@@ -599,18 +602,25 @@ Field names now come from the FIX Repository and so all of the
 `hffix::tag` field names have become full field names. If your code fails
 to compile because it can't find, for example, `hffix::tag::NoReltdSym`,
 then change the symbol to `hffix::tag::NoRelatedSym`.
+
 </td>
 </tr>
 <tr>
 <th>2018-10-24 Spec Parser</th>
 <td>
+    
 Replace the Python `codegen` spec parser with a Haskell
 `spec-parse-fields` spec parser.
+
 </td>
 </tr>
 <tr>
 <th>2017-09-12 `string_view`</th>
-<td>Added support for `std::string_view`.</td>
+<td>
+
+Added support for `std::string_view`.
+
+</td>
 </tr>
 </table>
 
