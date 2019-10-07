@@ -574,7 +574,7 @@ mostly irrelevent.
 <table>
 <caption>Change Log</caption>
 <tr>
-<th> 2018-12-09 `std::chrono`</th>
+<th> 2018-12-09 std::chrono</th>
 <td>
     
 Added support for `std::chrono`.
@@ -615,7 +615,7 @@ Replace the Python `codegen` spec parser with a Haskell
 </td>
 </tr>
 <tr>
-<th>2017-09-12 `string_view`</th>
+<th>2017-09-12 string_view</th>
 <td>
 
 Added support for `std::string_view`.
