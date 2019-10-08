@@ -140,7 +140,7 @@ High Frequency FIX Parser supports the binary data field types such as *SecureDa
 
 ### CheckSum
 
-High Frequency FIX Parser can calculate CheckSums and add the *CheckSum* field for all messages that you encode.  It does not validate the *CheckSum* of messages decoded.
+High Frequency FIX Parser will calculate the *CheckSum* field for all messages that you encode.  It can validate the *CheckSum* of messages decoded, but does not do that calculation unless you explicitly ask for it.
 
 ### Sequence Numbers
 
