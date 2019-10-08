@@ -623,14 +623,3 @@ Added support for `std::string_view`.
 </td>
 </tr>
 </table>
-
-## TODO
-
-* `dictionary_init_mdentrytype()` function.
-
-* More support for BlockRepeating NoXXX field types for FIX 5.0 SP2.
-
-* Lexical cast validation for hffix::message_reader.
-
-* Split out the buffer-management features of `message_reader` and
-`message_writer` into separate classes.
