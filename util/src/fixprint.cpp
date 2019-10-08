@@ -8,7 +8,7 @@
 
 const char color_field[]   = "\x1b" "[33m"; // Yellow
 const char color_value[]   = "\x1b" "[37m"; // White
-const char color_msgtype[] = "\x1b" "[31m"; // Red
+const char color_msgtype[] = "\x1b" "[32m"; // Green
 const char color_default[] = "\x1b" "[39m"; // Default Foreground
 
 enum { chunksize = 4096 }; // Choose a preferred I/O chunk size.
@@ -17,7 +17,7 @@ char buffer[1 << 20]; // Must be larger than the largest FIX message size.
 
 int main(int argc, char** argv)
 {
-    if (argc > 1 && (0 == std::strcmp("-h", argv[1]))) {
+    if (argc > 1 && ((0 == std::strcmp("-h", argv[1])) || (0 == std::strcmp("--help", argv[1])))) {
         std::cout << 
             "fixprint [Options]\n\n"
             "Reads raw FIX encoded data from stdin and writes annotated human-readable FIX to stdout.\n\n"
@@ -25,7 +25,7 @@ int main(int argc, char** argv)
             "  -c --color     Color output.\n";
         exit(0);
     }
-            
+
     bool color = argc > 1 && (0 == std::strcmp("-c", argv[1]) || 0 == std::strcmp("--color", argv[1]));
 
     std::map<int, std::string> field_dictionary;
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
                 catch(std::exception& ex) {
                     std::cerr << "Error reading the fields: " << ex.what() << '\n';
                 }
-                    
+
 
             } else {
                 // An invalid, corrupted FIX message. Do not try to read fields out of this reader.
