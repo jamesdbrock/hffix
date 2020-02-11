@@ -96,6 +96,8 @@ template<typename Int_type> Int_type atoi(char const* begin, char const* end)
     }
 
     for(; begin<end; ++begin) {
+       // Support case of double being converted to int
+        if (*begin == '.') break;
         val *= 10;
         val += (Int_type)(*begin - '0');
     }
@@ -119,6 +121,8 @@ template<typename Uint_type> Uint_type atou(char const* begin, char const* end)
     Uint_type val(0);
 
     for(; begin<end; ++begin) {
+        // Support the case of double being converted to int
+        if (*begin == '.') break;
         val *= 10u;
         val += (Uint_type)(*begin - '0');
     }
@@ -2286,7 +2290,7 @@ private:
             return;
         }
 
-        if (*b != '3' || b[1] != '5') { // next field must be tag 35 MsgType
+        if (*b != '3' || b[1] != '5' || b[2] != '=') {  // next field must be tag 35= 
             invalid();
             return;
         }
@@ -2314,10 +2318,27 @@ private:
             return;
         }
 
+        // Added check for expected CheckSum tag '10='
+        if (*checksum != '1' || checksum[1] != '0' || checksum[2] != '=') {
+            invalid();
+            return;
+        }           
+          
         begin_.buffer_ = b;
         begin_.current_.tag_ = 35; // MsgType
         b += 3;
         begin_.current_.value_.begin_ = b;
+  
+        // Handle case of MsgType value could be empty
+        if (*b != '\x01') { 
+            while(*++b != '\x01') {
+                if (b >= checksum) {
+                    invalid();
+                    return;
+                }
+            }
+        }
+
         while(*++b != '\x01') {
             if (b >= checksum) {
                 invalid();
