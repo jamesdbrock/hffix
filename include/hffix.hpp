@@ -2339,12 +2339,6 @@ private:
             }
         }
 
-        while(*++b != '\x01') {
-            if (b >= checksum) {
-                invalid();
-                return;
-            }
-        }
         begin_.current_.value_.end_ = b;
 
         end_.buffer_ = checksum;
