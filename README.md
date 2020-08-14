@@ -577,7 +577,7 @@ mostly irrelevent.
 <th> 2018-12-09 std::chrono</th>
 <td>
     
-Added support for `std::chrono`.
+Added support for `std::chrono`, by [@msherman13](https://github.com/msherman13)
 
 </td>
 </tr>
@@ -618,8 +618,20 @@ Replace the Python `codegen` spec parser with a Haskell
 <th>2017-09-12 string_view</th>
 <td>
 
-Added support for `std::string_view`.
+Added support for `std::string_view`, by [Arvid Norberg @arvidn](https://github.com/arvidn)
 
 </td>
 </tr>
 </table>
+
+## Contributors
+
+Thank you to the following contributors, who mostly don't show up in the Github
+*Contributors* list because of my old habit of adding “cleanup” commits to other
+people's pull requests.
+
+- [Arvid Norberg @arvidn](https://github.com/arvidn)
+- [@msherman13](https://github.com/msherman13)
+- [@j0nnyw](https://github.com/j0nnyw)
+- [Kyle Roth @kylrth](https://github.com/kylrth)
+- [Adam Kelly @aqk](https://github.com/aqk)
