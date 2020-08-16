@@ -7,5 +7,5 @@ stdenv.mkDerivation {
   name = "hffix";
   src = ./.;
 
-  buildInputs = [ boost doxygen ];
+  buildInputs = [ boost doxygen stack gmp zlib ];
 }

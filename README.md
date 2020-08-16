@@ -545,6 +545,12 @@ Want to talk? Email me at <jamesbrock@gmail.com>.
 
 Pull requests welcome. `make test` to run the test suite.
 
+The file `shell.nix` declares a *Nix* shell environment which provides all
+dependencies for every target in the `Makefile`, including *Doxygen* and the
+*Haskell Stack*. Enter the *Nix* shell by
+[installing *Nix*](https://nixos.org/download.html)
+and then running `nix-shell` in this directory.
+
 
 
 ## Notes on the Design of FIX Protocol
