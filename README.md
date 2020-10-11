@@ -633,7 +633,7 @@ Added support for `std::string_view`, by [Arvid Norberg @arvidn](https://github.
 ## Contributors
 
 Thank you to the following contributors, who mostly don't show up in the Github
-*Contributors* list because of my old habit of adding “cleanup” commits to other
+*Contributors* list because of my habit of adding “cleanup” commits to other
 people's pull requests.
 
 - [Arvid Norberg @arvidn](https://github.com/arvidn)
@@ -641,3 +641,4 @@ people's pull requests.
 - [@j0nnyw](https://github.com/j0nnyw)
 - [Kyle Roth @kylrth](https://github.com/kylrth)
 - [Adam Kelly @aqk](https://github.com/aqk)
+- [Michiel van Slobbe @mvanslobbe](https://github.com/mvanslobbe)
