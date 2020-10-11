@@ -4,8 +4,10 @@
 with import <nixpkgs> {};
 
 stdenv.mkDerivation {
+# clangStdenv.mkDerivation { -- TODO clang
   name = "hffix";
   src = ./.;
 
   buildInputs = [ boost doxygen stack gmp zlib ];
+#   buildInputs = [ boost doxygen stack gmp zlib clang]; -- TODO clang
 }
