@@ -1968,15 +1968,14 @@ public:
     }
 
     /*!
-     * \brief Assignment operator.
-     *
-     * This can't be the default assignment operator because begin_ and end_ are const_iterators which
-     * point back to 'this'. If we copy them as is they will point back to the previous 'that'.
-    */
+     * \brief Copy assignment operator. The hffix::message_reader is immutable, so copying it is fine.
+     */
     message_reader& operator = (const message_reader& that)
     {
         buffer_= that.buffer_;
         buffer_end_ = that.buffer_end_;
+        // This can't be the default assignment operator because begin_ and end_ are const_iterators which
+        // point back to 'this'. If we copy them as is they will point back to the previous 'that'.
         begin_ = const_iterator(*this, 0);
         end_ = const_iterator(*this, 0);
         is_complete_ = that.is_complete_;
