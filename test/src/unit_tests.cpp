@@ -13,6 +13,7 @@ using namespace hffix;
 #include <chrono>
 #include <iomanip>
 #endif
+#include <iterator>
 
 BOOST_AUTO_TEST_CASE(basic)
 {
@@ -256,6 +257,30 @@ BOOST_AUTO_TEST_CASE(data_length)
     BOOST_REQUIRE(found);
     BOOST_REQUIRE(i != reader.end());
     BOOST_CHECK_EQUAL(i->value().as_string(), datum);
+}
+
+BOOST_AUTO_TEST_CASE(iterating)
+{
+    char b[1024];
+    char* ptr = b;
+    unsigned num = 0;
+    for(size_t i = 0; i < 10; i++ ) {
+      message_writer w(ptr, 1024 - (ptr - b));
+      w.push_back_header("FIX.4.2");
+      w.push_back_string(tag::MsgType, "A");
+      w.push_back_trailer();
+      ptr += w.message_size();
+    }
+
+    for (message_reader reader(b);
+        reader.is_complete();
+        reader = reader.next_message_reader()) {
+        if(reader.is_complete() && reader.is_valid()) {
+          BOOST_CHECK_EQUAL(std::distance(reader.begin(), reader.end()), 1);
+          num++;
+        }
+    }
+    BOOST_CHECK_EQUAL(num, 10u);
 }
 
 #if __cplusplus >= 201103L
