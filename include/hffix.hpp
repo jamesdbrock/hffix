@@ -2068,10 +2068,9 @@ public:
 
         if (!is_valid_) { // this message isn't valid, so we have to try to search for the beginning of the next message.
             char const* b = buffer_ + 1;
-            while(b < buffer_end_ - 10) {
-                if (!std::memcmp(b, "8=FIX", 5))
+            while(b < buffer_end_ - 11) {
+                if (!std::memcmp(b++, "\18=FIX", 6))
                     break;
-                ++b;
             }
             return message_reader(b, buffer_end_);
         }
