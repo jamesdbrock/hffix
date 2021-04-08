@@ -537,21 +537,40 @@ for (; group1_begin != r.end(); group1_begin = group1_end) {
 
 ## Support
 
-Want to talk? Email me at <jamesbrock@gmail.com>.
-
+Please make an issue on this repository if you have any questions about how the
+library works or suggestions about how to improve it.
+If you want to talk privately then email me at <jamesbrock@gmail.com>.
 
 
 ## Contributing
 
-Pull requests welcome. `make test` to run the test suite.
+### Makefile
+
+Our build system is `make`. The `Makefile` provides targets and pseudo-targets
+for various parts of the library.
+
+`make test` to run the test suite.
+
+`make doc` to build the documentation.
+
+### Nix
 
 The file `shell.nix` declares a *Nix* shell environment which provides all
 dependencies for every target in the `Makefile`, including *Doxygen* and the
 *Haskell Stack*. Enter the *Nix* shell by
 [installing *Nix*](https://nixos.org/download.html)
-and then running `nix-shell` in this directory.
+and then running `nix-shell` in this directory. From the `nix-shell` prompt,
+you will be able to build all `Makefile` targets.
 
+### Pull Requests
 
+Pull requests welcome!
+
+If you want to submit a bugfix pull request, then I would be grateful if you would
+break the pull request up into two commits:
+
+1. A commit that adds a test which fails because of the bug.
+2. A commit that fixes the bug and causes the new test to pass.
 
 ## Notes on the Design of FIX Protocol
 

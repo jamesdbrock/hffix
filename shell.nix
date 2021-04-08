@@ -10,4 +10,11 @@ stdenv.mkDerivation {
 
   buildInputs = [ boost doxygen stack gmp zlib ];
 #   buildInputs = [ boost doxygen stack gmp zlib clang]; -- TODO clang
+  shellHook = ''
+    export LANG=C.UTF-8
+    echo ""
+    echo '  hffix Development Environment'
+    echo '  To run the test suite: make test'
+    echo ""
+  '';
 }
