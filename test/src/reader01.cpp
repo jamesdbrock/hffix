@@ -37,7 +37,7 @@ int main(int argc, char** argv)
         hffix::message_reader reader(buffer, buffer + buffer_length);
 
         // Try to read as many complete messages as there are in the buffer.
-        for (; reader.is_complete(); reader = reader.next_message_reader()) {
+        for (int i = 0; reader.is_complete(); reader = reader.next_message_reader(), ++i) {
             if (reader.is_valid()) {
 
                 // Here is a complete message. Read fields out of the reader.
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
                     std::cerr << "Error reading fields: " << ex.what() << '\n';
                 }
 
-            } else {
+            } else if (i != 1) {
                 // An invalid, corrupted FIX message. Do not try to read fields
                 // out of this reader. The beginning of the invalid message is
                 // at location reader.message_begin() in the buffer, but the

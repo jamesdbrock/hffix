@@ -36,9 +36,27 @@ int main(int argc, char** argv)
 
     // Now the Logon message is written to the buffer.
 
-    // Add a FIX New Order - Single message to the buffer, after the Logon
+    // Add a FIX MsgType - Single message to the buffer, after the Logon
     // message.
-    hffix::message_writer new_order(logon.message_end(), buffer + sizeof(buffer));
+    hffix::message_writer test_req(logon.message_end(), buffer + sizeof(buffer));
+    test_req.push_back_header("FIX.4.2");
+
+    // Required Standard Header field.
+    test_req.push_back_string    (hffix::tag::SenderCompID, "AAAA");
+    test_req.push_back_string    (hffix::tag::TargetCompID, "BBBB");
+    test_req.push_back_int       (hffix::tag::MsgSeqNum, seq_send++);
+    test_req.push_back_timestamp (hffix::tag::SendingTime, tsend);
+
+    // TestRequest MsgType.
+    test_req.push_back_string    (hffix::tag::MsgType, "1");
+
+    test_req.push_back_string    (hffix::tag::Text, "FIX Hellow");
+
+    test_req.push_back_trailer(); // write CheckSum.
+
+    // Add a FIX New Order - Single message to the buffer, after the MsgType
+    // message.
+    hffix::message_writer new_order(test_req.message_end(), buffer + sizeof(buffer));
 
     new_order.push_back_header("FIX.4.2");
 
@@ -71,7 +89,7 @@ int main(int argc, char** argv)
 
     //Now the New Order message is in the buffer after the Logon message.
 
-    // Write both messages to stdout.
+    // Write all messages to stdout.
     std::cout.write(buffer, new_order.message_end() - buffer);
 
     return 0;
