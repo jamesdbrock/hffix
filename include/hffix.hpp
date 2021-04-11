@@ -2292,12 +2292,12 @@ private:
             bodylength += tmp - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
         }
 
-        if (b + 3 >= buffer_end_) return;
-
-        if (*b != '3' || b[1] != '5') { // next field must be tag 35 MsgType
-            invalid();
-            return;
-        }
+        if (b >= buffer_end_) return;
+        if (*b != '3') { invalid(); return; }
+        if (b + 1 >= buffer_end_) return;
+        if (b[1] != '5') { invalid(); return; }
+        if (b + 2 >= buffer_end_) return;
+        if (b[2] != '=') { invalid(); return; }
 
         char const* checksum = b + bodylength;
 
