@@ -2253,23 +2253,25 @@ private:
     friend class message_reader_const_iterator;
 
     void init() {
+        char const* b = buffer_; 
 
-        // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
-        char const* b = buffer_ + 9; // look for the first '\x01'
+        if (b >= buffer_end_) return;
+        if (*b++ != '8') { invalid(); return; }
+        if (b >= buffer_end_) return;
+        if (*b++ != '=') { invalid(); return; }
 
-        while(true) {
-            if (b >= buffer_end_) return;
+        const std::ptrdiff_t max_begin_string_len = details::len("FIXT.1.1");
+        const std::ptrdiff_t max_find_len = std::min(max_begin_string_len + 1, buffer_end_ - b);
 
-            if (*b == '\x01') {
-                prefix_end_ = b;
-                break;
-            }
-            if (b - buffer_ > 11) {
+        // look for the first '\x01'
+        char const* end = b + max_find_len + 1;
+        b = std::find(b, end, '\x01');
+        if (b == end) {
+            if (max_find_len == (max_begin_string_len + 1))
                 invalid();
-                return;
-            }
-            ++b;
+            return;
         }
+        prefix_end_ = b;
 
         if (b + 1 >= buffer_end_) return;
 
