@@ -16,8 +16,11 @@ int main(int argc, char** argv)
 
     ptime tsend(date(2017,8,9), time_duration(12,34,56));
 
+    char some_data[] = "... 8=FIX ... 8=FIX ... 8=FIX ...";
+    memcpy(buffer, some_data, sizeof(some_data));
+
     // We'll put a FIX Logon message in the buffer.
-    hffix::message_writer logon(buffer, buffer + sizeof(buffer));
+    hffix::message_writer logon(buffer + sizeof(some_data), buffer + sizeof(buffer));
 
     logon.push_back_header("FIX.4.2"); // Write BeginString and BodyLength.
 
