@@ -2271,31 +2271,27 @@ private:
                 invalid();
             return;
         }
-        prefix_end_ = b;
+        prefix_end_ = b++;
 
-        if (b + 1 >= buffer_end_) return;
-
-        if (b[1] != '9') { // next field must be tag 9 BodyLength
-            invalid();
-            return;
-        }
-        b += 3; // skip the " 9=" for tag 9 BodyLength
+        if (b >= buffer_end_) return;
+        // next field must be tag 9 BodyLength
+        if (*b++ != '9') { invalid(); return; }
+        if (b >= buffer_end_) return;
+        if (*b++ != '=') { invalid(); return; }
 
         size_t bodylength(0); // the value of tag 9 BodyLength
 
         while(true) {
             if (b >= buffer_end_) return;
-
-            if (*b == '\x01') break;
-            if (*b < '0' || *b > '9') { // this is the only time we need to check for numeric ascii.
-                invalid();
-                return;
-            }
+            char tmp = *b++;
+ 
+            if (tmp == '\x01') break;
+            // this is the only time we need to check for numeric ascii.
+            if (tmp < '0' || tmp > '9') { invalid(); return; }
             bodylength *= 10;
-            bodylength += *b++ - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
+            bodylength += tmp - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
         }
 
-        ++b;
         if (b + 3 >= buffer_end_) return;
 
         if (*b != '3' || b[1] != '5') { // next field must be tag 35 MsgType
