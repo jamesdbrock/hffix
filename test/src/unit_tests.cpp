@@ -329,7 +329,53 @@ BOOST_AUTO_TEST_CASE(chrono)
     // oss << std::put_time(std::localtime(&trecv_t), "%Y%m%d-%T");
     // std::string tstr = oss.str();
     // BOOST_CHECK_EQUAL(tstr, i->value().as_string());
+}
 
+// test that std::chrono values can be written and read correctly
+BOOST_AUTO_TEST_CASE(chrono_nano)
+{
+    using namespace std::chrono;
+    using TimePoint = time_point<system_clock, nanoseconds>;
+
+    TimePoint tsend(nanoseconds(1502282096123456789ULL)); // 2017-08-09 12:34:56.123456789
+
+    nanoseconds timeofday =
+            hours(12) + minutes(34) + seconds(0) + nanoseconds(789456123);
+
+    char buffer[100] = {};
+    message_writer writer(buffer);
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(hffix::tag::MsgType, "A");
+    writer.push_back_timestamp_nano(hffix::tag::SendingTime, tsend);
+    writer.push_back_timeonly_nano(hffix::tag::MDEntryTime, timeofday);
+    writer.push_back_trailer();
+
+    message_reader reader(writer);
+    message_reader::const_iterator i = reader.begin();
+    reader.find_with_hint(hffix::tag::SendingTime, i);
+    BOOST_CHECK_EQUAL(i->value().as_string(), std::string("20170809-12:34:56.123456789"));
+
+    TimePoint trecv;
+    bool tparsed = i->value().as_timestamp_nano(trecv);
+
+    BOOST_CHECK(tparsed);
+    BOOST_CHECK(tsend == trecv);
+
+    message_reader::const_iterator j = reader.begin();
+    reader.find_with_hint(hffix::tag::MDEntryTime, j);
+    BOOST_CHECK_EQUAL(j->value().as_string(), std::string("12:34:00.789456123"));
+
+    nanoseconds todrecv;
+    bool dparsed = j->value().as_timeonly_nano(todrecv);
+    BOOST_CHECK(dparsed);
+    BOOST_CHECK(timeofday == todrecv);
+
+    // TODO check this when we have a way to parse nanoseconds with put_time.
+    // std::time_t trecv_t = std::chrono::system_clock::to_time_t(trecv);
+    // std::ostringstream oss;
+    // oss << std::put_time(std::localtime(&trecv_t), "%Y%m%d-%T");
+    // std::string tstr = oss.str();
+    // BOOST_CHECK_EQUAL(tstr, i->value().as_string());
 }
 #endif
 

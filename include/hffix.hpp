@@ -1027,7 +1027,7 @@ public:
     }
 
     /*!
-    \brief Append a UTCTimeOnly field to the message.
+    \brief Append a UTCTimeOnly field to the message with millisecond precision.
 
     No time zone or daylight savings time transformations are done to the time.
 
@@ -1056,6 +1056,39 @@ public:
         *next_++ = '.';
         itoa_padded(millisecond, next_, next_ + 3);
         next_ += 3;
+        *next_++ = '\x01';
+    }
+
+    /*!
+    \brief Append a UTCTimeOnly field to the message with up to nanosecond precision.
+
+    No time zone or daylight savings time transformations are done to the time.
+
+    \param tag FIX tag.
+    \param hour Hour.
+    \param minute Minute.
+    \param second Second.
+    \param nanosecond Nanosecond.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    void push_back_timeonly_nano(int tag, int hour, int minute, int second, int nanosecond) {
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=HH:MM:SS.sssssssss|")) {
+            details::throw_range_error();
+        }
+        *next_++ = '=';
+        itoa_padded(hour, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(minute, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(second, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '.';
+        itoa_padded(nanosecond, next_, next_ + 9);
+        next_ += 9;
         *next_++ = '\x01';
     }
 
@@ -1102,7 +1135,7 @@ public:
     }
 
     /*!
-    \brief Append a UTCTimestamp field to the message.
+    \brief Append a UTCTimestamp field to the message with millisecond precision.
 
     No time zone or daylight savings time transformations are done to the timestamp.
 
@@ -1144,6 +1177,48 @@ public:
         *next_++ = '\x01';
     }
 
+    /*!
+    \brief Append a UTCTimestamp field to the message with nanosecond precision.
+
+    No time zone or daylight savings time transformations are done to the timestamp.
+
+    \param tag FIX tag.
+    \param year Year.
+    \param month Month.
+    \param day Day.
+    \param hour Hour.
+    \param minute Minute.
+    \param second Second.
+    \param nanosecond Nanosecond.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    void push_back_timestamp_nano(int tag, int year, int month, int day, int hour, int minute, int second, int nanosecond) {
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (buffer_end_ - next_ < details::len("=YYYYMMDD-HH:MM:SS.sssssssss|")) {
+            details::throw_range_error();
+        }
+        *next_++ = '=';
+        itoa_padded(year, next_, next_ + 4);
+        next_ += 4;
+        itoa_padded(month, next_, next_ + 2);
+        next_ += 2;
+        itoa_padded(day, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '-';
+        itoa_padded(hour, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(minute, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = ':';
+        itoa_padded(second, next_, next_ + 2);
+        next_ += 2;
+        *next_++ = '.';
+        itoa_padded(nanosecond, next_, next_ + 9);
+        next_ += 9;
+        *next_++ = '\x01';
+    }
 //@}
 
 #ifdef HFFIX_BOOST_DATETIME
@@ -1167,7 +1242,7 @@ public:
     }
 
     /*!
-    \brief Append a UTCTimeOnly field to the message.
+    \brief Append a UTCTimeOnly field to the message with millisecond precision.
 
     No time zone or daylight savings time transformations are done to the time.
 
@@ -1187,12 +1262,37 @@ public:
                 timeonly.hours(),
                 timeonly.minutes(),
                 timeonly.seconds(),
-                int(timeonly.fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
+                static_cast<int>(timeonly.fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
             );
     }
 
     /*!
-    \brief Append a UTCTimestamp field to the message.
+    \brief Append a UTCTimeOnly field to the message with nanosecond precision.
+
+    No time zone or daylight savings time transformations are done to the time.
+
+    Fractional seconds will be written to the field, rounded to the nanosecond.
+
+    \param tag FIX tag.
+    \param timeonly Time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+
+    \see HFFIX_NO_BOOST_DATETIME
+    */
+    void push_back_timeonly_nano(int tag, boost::posix_time::time_duration timeonly) {
+        if (!timeonly.is_not_a_date_time())
+            push_back_timeonly_nano(
+                tag,
+                timeonly.hours(),
+                timeonly.minutes(),
+                timeonly.seconds(),
+                static_cast<int>(timeonly.fractional_seconds() * 1000000000L / boost::posix_time::time_duration::ticks_per_second())
+            );
+    }
+
+    /*!
+    \brief Append a UTCTimestamp field to the message with millisecond precision.
 
     No time zone or daylight savings time transformations are done to the timestamp.
 
@@ -1215,10 +1315,40 @@ public:
                 timestamp.time_of_day().hours(),
                 timestamp.time_of_day().minutes(),
                 timestamp.time_of_day().seconds(),
-                int(timestamp.time_of_day().fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
+                static_cast<int>(timestamp.time_of_day().fractional_seconds() * 1000 / boost::posix_time::time_duration::ticks_per_second())
             );
         else
             throw std::logic_error("push_back_timestamp called with not_a_date_time.");
+    }
+
+    /*!
+    \brief Append a UTCTimestamp field to the message with nanosecond precision.
+
+    No time zone or daylight savings time transformations are done to the timestamp.
+
+    Fractional seconds will be written to the field, rounded to the nanosecond.
+
+    \param tag FIX tag.
+    \param timestamp Date and time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+
+    \see HFFIX_NO_BOOST_DATETIME
+    */
+    void push_back_timestamp_nano(int tag, boost::posix_time::ptime timestamp) {
+        if (!timestamp.is_not_a_date_time())
+            push_back_timestamp_nano(
+                tag,
+                timestamp.date().year(),
+                timestamp.date().month(),
+                timestamp.date().day(),
+                timestamp.time_of_day().hours(),
+                timestamp.time_of_day().minutes(),
+                timestamp.time_of_day().seconds(),
+                static_cast<int>(timestamp.time_of_day().fractional_seconds() * 1000000000L / boost::posix_time::time_duration::ticks_per_second())
+            );
+        else
+            throw std::logic_error("push_back_timestamp_nano called with not_a_date_time.");
     }
 //@}
 #endif // HFFIX_BOOST_DATETIME
@@ -1228,7 +1358,7 @@ public:
 //@{
 
     /*!
-    \brief Append a `std::chrono::time_point` field to the message.
+    \brief Append a `std::chrono::time_point` field to the message with millisecond precision.
 
     Fractional seconds will be written to the field, rounded to the millisecond.
 
@@ -1250,7 +1380,29 @@ public:
     }
 
     /*!
-    \brief Append a UTCTimeOnly field to the message.
+    \brief Append a `std::chrono::time_point` field to the message with nanosecond precision.
+
+    Fractional seconds will be written to the field, rounded to the nanosecond.
+
+    Uses algorithms from http://howardhinnant.github.io/date_algorithms.html ,
+    which implement a proleptic Gregorian calendar. This will probably be
+    superseded by C++20.
+
+    \param tag FIX tag.
+    \param tp `std::chrono::time_point`.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    template<typename Clock, typename Duration>
+    void push_back_timestamp_nano(int tag, std::chrono::time_point<Clock,Duration> tp) {
+        // TODO: with c++20, we can use std::chrono::format
+        int year, month, day, hour, minute, second, nanosecond;
+        details::timepointtoparts_nano(tp, year, month, day, hour, minute, second, nanosecond);
+        push_back_timestamp_nano(tag, year, month, day, hour, minute, second, nanosecond);
+    }
+
+    /*!
+    \brief Append a UTCTimeOnly field to the message with millisecond precision.
 
     No time zone or daylight savings time transformations are done to the time.
 
@@ -1274,6 +1426,30 @@ public:
             );
     }
 
+    /*!
+    \brief Append a UTCTimeOnly field to the message with nanosecond precision.
+
+    No time zone or daylight savings time transformations are done to the time.
+
+    Fractional seconds will be written to the field, rounded to the nanosecond.
+
+    \param tag FIX tag.
+    \param timeonly Time.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    template<typename Rep, typename Period>
+    void push_back_timeonly_nano(int tag, std::chrono::duration<Rep,Period> timeonly) {
+        using namespace std::chrono;
+
+        push_back_timeonly_nano(
+            tag,
+            duration_cast<hours>      (timeonly).count(),
+            duration_cast<minutes>    (timeonly %   hours(1)).count(),
+            duration_cast<seconds>    (timeonly % minutes(1)).count(),
+            duration_cast<nanoseconds>(timeonly % seconds(1)).count()
+            );
+    }
 //@}
 #endif
 
