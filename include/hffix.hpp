@@ -311,9 +311,9 @@ inline bool atodate(
 
 
 /*
-\brief Internal ascii-to-time conversion.
+\brief Internal ascii-to-time conversion with millisecond precision.
 
-Parses ascii and returns a time.
+Parses ascii and returns a time with millisecond precision.
 
 \param begin Pointer to the beginning of the ascii string.
 \param end Pointer to past-the-end of the ascii string.
@@ -342,7 +342,44 @@ inline bool atotime(
         millisecond = details::atoi<int>(begin + 9, begin + 12);
     else
         millisecond = 0;
+    return true;
+}
 
+/*
+\brief Internal ascii-to-time conversion with nanosecond precision.
+
+Parses ascii and returns a time with nanosecond precision.
+
+\param begin Pointer to the beginning of the ascii string.
+\param end Pointer to past-the-end of the ascii string.
+\param[out] hour Hour.
+\param[out] minute Minute.
+\param[out] second Second.
+\param[out] nanosecond Nanosecond.
+\return True if successful and the out arguments were set.
+*/
+inline bool atotime_nano(
+    char const* begin,
+    char const* end,
+    int& hour,
+    int& minute,
+    int& second,
+    int& nanosecond
+)
+{
+    if (end - begin < 8)
+        return false;
+
+    hour = details::atoi<int>(begin, begin + 2);
+    minute = details::atoi<int>(begin + 3, begin + 5);
+    second = details::atoi<int>(begin + 6, begin + 8);
+
+    switch (end - begin) {
+    case 12: nanosecond = details::atoi<int>(begin + 9, begin + 12) * 1000000L; break;
+    case 15: nanosecond = details::atoi<int>(begin + 9, begin + 15) * 1000L; break;
+    case 18: nanosecond = details::atoi<int>(begin + 9, begin + 18); break;
+    default: nanosecond = 0;
+    }
     return true;
 }
 
@@ -360,7 +397,7 @@ template<typename Clock, typename Duration>
 struct is_time_point<std::chrono::time_point<Clock, Duration>> : std::true_type {}; 
 
 /*
-\brief Internal ascii-to-timepoint conversion.
+\brief Internal ascii-to-timepoint conversion with millisecond precision.
 
 Parses ascii and returns a std::chrono::time_point.
 
@@ -403,7 +440,50 @@ atotimepoint(
 }
 
 /*
-\brief Internal ascii-to-timepoint conversion.
+\brief Internal ascii-to-timepoint conversion with nanosecond precision.
+
+Parses ascii and returns a std::chrono::time_point.
+
+\param begin Pointer to the beginning of the ascii string.
+\param end Pointer to past-the-end of the ascii string.
+\param[out] tp time_point.
+\return True if successful and the out arguments were set.
+*/
+template <typename TimePoint>
+inline typename std::enable_if<details::is_time_point<TimePoint>::value, bool>::type
+atotimepoint_nano(
+    char const* begin,
+    char const* end,
+    TimePoint& tp
+)
+{
+    // TODO: after c++20 this simplifies to
+    //       std::chrono::parse("%Y%m%d-%T", tp);
+    int year, month, day, hour, minute, second, nanosecond;
+    if (!atotime_nano(begin + 9, end, hour, minute, second, nanosecond))
+        return false;
+    if (!atodate(begin, begin + 8, year, month, day))
+        return false;
+
+    // from http://howardhinnant.github.io/date_algorithms.html
+    year -= month <= 2;
+    const unsigned era = (year >= 0 ? year : year - 399) / 400;
+    const unsigned yoe = static_cast<unsigned>(year - era * 400);
+    const unsigned doy = (153 * (month + (month > 2 ? -3 : 9)) + 2) / 5 + day - 1;
+    const unsigned doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    const unsigned long days_since_epoch = era * 146097 + static_cast<unsigned>(doe) - 719468;
+
+    tp = TimePoint(std::chrono::seconds(days_since_epoch * 24 * 3600) +
+                   std::chrono::hours(hour) +
+                   std::chrono::minutes(minute) +
+                   std::chrono::seconds(second) +
+                   std::chrono::nanoseconds(nanosecond));
+
+    return true;
+}
+
+/*
+\brief Internal ascii-to-timepoint conversion with millisecond precision.
 
 Parses ascii and returns a std::chrono::time_point.
 
@@ -447,6 +527,55 @@ timepointtoparts(TimePoint tp, int& year, int& month, int& day,
     millisecond -= minute * 60 * 1000;
     second = millisecond / 1000;
     millisecond -= second * 1000;
+}
+
+/*
+\brief Internal ascii-to-timepoint conversion with nanosecond precision.
+
+Parses ascii and returns a std::chrono::time_point.
+
+\param tp TimePoint to parse.
+\param[out] year Year.
+\param[out] month Month.
+\param[out] day Day.
+\param[out] hour Hour.
+\param[out] minute Minute.
+\param[out] second Second.
+\param[out] nanosecond Nanosecond.
+*/
+template <typename TimePoint>
+inline typename std::enable_if<details::is_time_point<TimePoint>::value, void>::type
+timepointtoparts_nano(TimePoint tp, int& year, int& month, int& day,
+                      int& hour, int& minute, int& second, int& nanosecond) noexcept
+{
+    auto epoch_sec = std::chrono::time_point_cast<
+        std::chrono::seconds>(tp).time_since_epoch().count();
+    auto day_sec = epoch_sec - (epoch_sec % 86400);
+    auto days_since_epoch = day_sec / 86400;
+
+    // see http://howardhinnant.github.io/date_algorithms.html
+    days_since_epoch += 719468;
+    const unsigned era = (days_since_epoch >= 0 ? days_since_epoch : days_since_epoch - 146096) / 146097;
+    const unsigned doe = static_cast<unsigned>(days_since_epoch - era * 146097);
+    const unsigned yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    year = static_cast<unsigned>(yoe) + era * 400;
+    const unsigned doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    const unsigned mp = (5 * doy + 2) / 153;
+    day = doy - (153 * mp + 2) / 5 + 1;
+    month = mp + (mp < 10 ? 3 : -9);
+    year += month <= 2;
+
+    // the math here must be in higher precision, but at the end it fits in an int
+    auto in_day = tp - std::chrono::seconds(day_sec);
+    long lnanosecond = std::chrono::time_point_cast<std::chrono::nanoseconds>(
+            in_day).time_since_epoch().count();
+    hour = lnanosecond / (60 * 60 * 1000000000L);
+    lnanosecond -= hour * 60 * 60 * 1000000000L;
+    minute = lnanosecond / (60 * 1000000000L);
+    lnanosecond -= minute * 60 * 1000000000L;
+    second = lnanosecond / 1000000000L;
+    lnanosecond -= second * 1000000000L;
+    nanosecond = static_cast<int>(lnanosecond);
 }
 #endif
 
@@ -1482,9 +1611,9 @@ public:
 
 
     /*!
-    \brief Ascii-to-time conversion.
+    \brief Ascii-to-time conversion with millisecond precision.
 
-    Parses ascii and returns a time.
+    Parses ascii and returns a time with millisecond precision.
 
     \param[out] hour Hour.
     \param[out] minute Minute.
@@ -1502,9 +1631,29 @@ public:
     }
 
     /*!
-    \brief Ascii-to-timestamp conversion.
+    \brief Ascii-to-time conversion with nanosecond precision.
 
-    Parses ascii and returns a timestamp.
+    Parses ascii and returns a time with nanosecond precision.
+
+    \param[out] hour Hour.
+    \param[out] minute Minute.
+    \param[out] second Second.
+    \param[out] nanosecond Nanosecond.
+    \return True if successful and the out arguments were set.
+    */
+    bool as_timeonly_nano(
+        int& hour,
+        int& minute,
+        int& second,
+        int& nanosecond
+    ) const {
+        return details::atotime_nano(begin(), end(), hour, minute, second, nanosecond);
+    }
+
+    /*!
+    \brief Ascii-to-timestamp conversion with millisecond precision.
+
+    Parses ascii and returns a timestamp with millisecond precision.
 
     \param[out] year Year.
     \param[out] month Month.
@@ -1526,6 +1675,34 @@ public:
     ) const {
         return
             details::atotime(begin() + 9, end(), hour, minute, second, millisecond)
+            && details::atodate(begin(), begin() + 8, year, month, day); // take advantage of short-circuit && to check field length
+    }
+
+    /*!
+    \brief Ascii-to-timestamp conversion with nanosecond precision.
+
+    Parses ascii and returns a timestamp with nanosecond precision.
+
+    \param[out] year Year.
+    \param[out] month Month.
+    \param[out] day Day.
+    \param[out] hour Hour.
+    \param[out] minute Minute.
+    \param[out] second Second.
+    \param[out] nanosecond Nanosecond.
+    \return True if successful and the out arguments were set.
+    */
+    bool as_timestamp_nano(
+        int& year,
+        int& month,
+        int& day,
+        int& hour,
+        int& minute,
+        int& second,
+        int& nanosecond
+    ) const {
+        return
+            details::atotime_nano(begin() + 9, end(), hour, minute, second, nanosecond)
             && details::atodate(begin(), begin() + 8, year, month, day); // take advantage of short-circuit && to check field length
     }
 
@@ -1556,7 +1733,7 @@ public:
     }
 
     /*!
-     * \brief Ascii-to-time conversion.
+     * \brief Ascii-to-time conversion with millisecond precision.
      *
      * Parses ascii and returns a time.
      *
@@ -1575,9 +1752,28 @@ public:
     }
 
     /*!
-     * \brief Ascii-to-timestamp conversion.
+     * \brief Ascii-to-time conversion with nanosecond precision.
      *
-     * Parses ascii and returns a timestamp.
+     * Parses ascii and returns a time.
+     *
+     * \return Time if parsing was successful, else boost::posix_time::not_a_date_time.
+     */
+    boost::posix_time::time_duration as_timeonly_nano() const {
+        int hour, minute, second, nanosecond;
+        if (as_timeonly_nano(hour, minute, second, nanosecond)) {
+            try {
+                return boost::posix_time::time_duration(hour, minute, second, boost::posix_time::time_duration::ticks_per_second() * nanosecond / 1000000000L);
+            } catch(std::exception& ex) {
+                return boost::posix_time::time_duration(boost::posix_time::not_a_date_time);
+            }
+        } else
+            return boost::posix_time::time_duration(boost::posix_time::not_a_date_time);
+    }
+
+    /*!
+     * \brief Ascii-to-timestamp conversion with millisecond precision.
+     *
+     * Parses ascii and returns a timestamp with millisecond precision.
      *
      * \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
     */
@@ -1597,6 +1793,30 @@ public:
         } else
             return boost::posix_time::not_a_date_time;
     }
+
+    /*!
+     * \brief Ascii-to-timestamp conversion with nanosecond precision.
+     *
+     * Parses ascii and returns a timestamp with nanosecond precision.
+     *
+     * \return Date and Time if parsing was successful, else boost::posix_time::not_a_date_time.
+    */
+    boost::posix_time::ptime as_timestamp_nano() const {
+        int year, month, day, hour, minute, second, nanosecond;
+
+        if (details::atotime_nano(begin() + 9, end(), hour, minute, second, nanosecond)
+                && details::atodate(begin(), begin() + 8, year, month, day)) {
+            try {
+                return boost::posix_time::ptime(
+                           boost::gregorian::date(year, month, day),
+                           boost::posix_time::time_duration(hour, minute, second, boost::posix_time::time_duration::ticks_per_second() * nanosecond / 1000000000L)
+                       );
+            } catch(std::exception& ex) {
+                return boost::posix_time::not_a_date_time;
+            }
+        } else
+            return boost::posix_time::not_a_date_time;
+    }
 //@}
 
 
@@ -1607,7 +1827,7 @@ public:
 //@{
 
    /*!
-    * \brief Ascii-to-time-point conversion.
+    * \brief Ascii-to-time-point conversion with millisecond precision.
     *
     * Parses ascii and returns a `std::chrono::time_point`.
     *
@@ -1622,6 +1842,27 @@ public:
     template<typename Clock, typename Duration>
     bool as_timestamp(std::chrono::time_point<Clock,Duration>& tp) const {
         if (details::atotimepoint(begin(), end(), tp))
+            return true;
+        else
+            return false;
+    }
+
+   /*!
+    * \brief Ascii-to-time-point conversion with nanosecond precision.
+    *
+    * Parses ascii and returns a `std::chrono::time_point`.
+    *
+    * Uses algorithms from http://howardhinnant.github.io/date_algorithms.html ,
+    * which implement a proleptic Gregorian calendar. This will probably
+    * be superseded by C++20.
+    *
+    * \param[out] tp The return value `time_point`.
+    *
+    * \return True if parsing was successful and `tp` was set, else False.
+    */
+    template<typename Clock, typename Duration>
+    bool as_timestamp_nano(std::chrono::time_point<Clock,Duration>& tp) const {
+        if (details::atotimepoint_nano(begin(), end(), tp))
             return true;
         else
             return false;
@@ -1651,6 +1892,29 @@ public:
             return false;
     }
 
+   /*!
+    * \brief Ascii-to-time conversion with nanosecond precision.
+    *
+    * Parses ascii and returns a time duration or time-of-day.
+    *
+    * \param[out] dur The return value `duration`.
+    *
+    * \return True if parsing was successful and the return value was set,
+    * else False.
+    */
+    template<typename Rep, typename Period>
+    bool as_timeonly_nano(std::chrono::duration<Rep,Period>& dur) const {
+        int hour, minute, second, nanosecond;
+        if (as_timeonly_nano(hour, minute, second, nanosecond)) {
+            dur = std::chrono::hours(hour) +
+                  std::chrono::minutes(minute) +
+                  std::chrono::seconds(second) +
+                  std::chrono::nanoseconds(nanosecond);
+            return true;
+        }
+        else
+            return false;
+    }
 //@}
 #endif
 
