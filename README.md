@@ -598,16 +598,50 @@ mostly irrelevent.
 
 <table>
 <caption>Change Log</caption>
+
 <tr>
-<th> 2018-12-09 std::chrono</th>
+<th>2021-05-17</th>
+<th>v1.1.0</th>
 <td>
-    
+
+Added support for nanosecond-precision timestamps, by [Evan Wies @neomantra](https://github.com/neomantra)
+
+</td>
+</tr>
+
+<tr>
+<th>2020-10-11</th>
+<th>v1.0.1</th>
+<td>
+
+Changed the `message_reader` copy-assignment operator so that Address Sanitizer doesn't complain that `ERROR: AddressSanitizer: stack-use-after-scope`.
+By [Michiel van Slobbe @mvanslobbe](https://github.com/mvanslobbe)
+
+</td>
+</tr>
+<tr>
+
+<th>2020-08-15</th>
+<th>v1.0.0</th>
+<td>
+
+Version 1.
+
+</td>
+</tr>
+
+<tr>
+<th> 2018-12-09</th>
+<th></th>
+<td>
+
 Added support for `std::chrono`, by [@msherman13](https://github.com/msherman13)
 
 </td>
 </tr>
 <tr>
-<th>2018-12-09 Field Tags</th>
+<th>2018-12-09</th>
+<th></th>
 <td>
 
 Replace parsing of all the old FIX specs with parsing of
@@ -631,16 +665,18 @@ then change the symbol to `hffix::tag::NoRelatedSym`.
 </td>
 </tr>
 <tr>
-<th>2018-10-24 Spec Parser</th>
+<th>2018-10-24</th>
+<th></th>
 <td>
-    
+
 Replace the Python `codegen` spec parser with a Haskell
 `spec-parse-fields` spec parser.
 
 </td>
 </tr>
 <tr>
-<th>2017-09-12 string_view</th>
+<th>2017-09-12</th>
+<th></th>
 <td>
 
 Added support for `std::string_view`, by [Arvid Norberg @arvidn](https://github.com/arvidn)
@@ -661,3 +697,5 @@ people's pull requests.
 - [Kyle Roth @kylrth](https://github.com/kylrth)
 - [Adam Kelly @aqk](https://github.com/aqk)
 - [Michiel van Slobbe @mvanslobbe](https://github.com/mvanslobbe)
+- [Evan Wies @neomantra](https://github.com/neomantra)
+
