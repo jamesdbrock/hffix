@@ -600,6 +600,16 @@ mostly irrelevent.
 <caption>Change Log</caption>
 
 <tr>
+<th>2021-10-11</th>
+<th>v1.1.1</th>
+<td>
+
+Bugfix: `message_reader::prefix_size()` return `size_t` instead of `ssize_t`.</td>
+
+</td>
+</tr>
+
+<tr>
 <th>2021-05-17</th>
 <th>v1.1.0</th>
 <td>
