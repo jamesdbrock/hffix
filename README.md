@@ -482,9 +482,9 @@ m.push_back_string(hffix::tag::MsgSeqNum, "00000000"); // Make a placeholder val
 void thread_safe_send(hffix::message_writer const& w) {
   lock l(send_mutex_); // Serialize access to this function.
   hffix::message_reader r(w); // Construct a reader from the writer.
-  hffix::message_reader::const_iterator i = std::find(r.begin(), r.end(), hffix::tag_equal(hffix::tag::MsgSeqNum)); // Find the MsgSeqNum field.
+  hffix::message_reader::const_iterator i = std::find_if(r.begin(), r.end(), hffix::tag_equal(hffix::tag::MsgSeqNum)); // Find the MsgSeqNum field.
   if (i != r.end()) {
-    std::snprintf(const_cast<char*>(i->begin()), i->size(), "%.8i", next_sequence_number++); // Overwrite the "00000000" string with the next_sequence_number.
+    std::snprintf(const_cast<char*>(i->value().begin()), i->value().size(), "%.8i", next_sequence_number++); // Overwrite the "00000000" string with the next_sequence_number.
     write(fd, w.message_begin(), w.message_size()); // Send the message to the socket.
   }
 }
