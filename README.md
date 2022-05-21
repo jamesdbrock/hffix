@@ -600,6 +600,16 @@ mostly irrelevent.
 <caption>Change Log</caption>
 
 <tr>
+<th>2022-05-22</th>
+<th>v1.2.0</th>
+<td>
+
+Bugfix: `MaxMessageSize` is not a data length field (#45)
+
+</td>
+</tr>
+
+<tr>
 <th>2021-10-11</th>
 <th>v1.1.1</th>
 <td>
