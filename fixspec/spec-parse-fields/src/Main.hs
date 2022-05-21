@@ -165,6 +165,7 @@ main = do
         let lengthFields = fields
                 & Map.filter ((== "Length") . ftype)
                 & Map.delete 9 -- lol BodyLength is not a field length
+                & Map.delete 383 -- Not a field length https://github.com/jamesdbrock/hffix/issues/44
 
         tell $ flip foldMap (markbounds $ Map.toAscList lengthFields)
             $ \((ftag, Field{..}), _, isLast) ->

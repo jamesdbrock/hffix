@@ -7868,7 +7868,6 @@ tag::EncodedHeadlineLen,            // 358 Length FIX.4.2
 tag::EncodedAllocTextLen,           // 360 Length FIX.4.2
 tag::EncodedUnderlyingIssuerLen,    // 362 Length FIX.4.2
 tag::EncodedUnderlyingSecurityDescLen, // 364 Length FIX.4.2
-tag::MaxMessageSize,                // 383 Length FIX.4.2
 tag::EncodedListStatusTextLen,      // 445 Length FIX.4.2
 tag::EncodedLegIssuerLen,           // 618 Length FIX.4.3
 tag::EncodedLegSecurityDescLen,     // 621 Length FIX.4.3

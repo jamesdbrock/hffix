@@ -41,7 +41,7 @@ include/hffix_fields.hpp: \
     fixspec/FIXRepository/Basic/Fields.xml \
     fixspec/FIXRepository/Basic/Messages.xml
 	@echo -e "${YELLOW}*** Generating include/hffix_fields.hpp from FIX specs...${NORMAL}"
-	-cd fixspec/spec-parse-fields && stack run > hffix_fields.hpp && mv hffix_fields.hpp ../../include/hffix_fields.hpp
+	-cd fixspec/spec-parse-fields && stack --no-nix run > hffix_fields.hpp && mv hffix_fields.hpp ../../include/hffix_fields.hpp
 	@echo -e "${YELLOW}*** Generated include/hffix_fields.hpp from FIX specs${NORMAL}"
 
 fixprint : util/bin/fixprint
