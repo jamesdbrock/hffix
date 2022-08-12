@@ -8127,10 +8127,8 @@ X(AllocationInstructionAlertRequest,       "DU") /* (FIX.5.0SP2) */
 \brief Namespace for all field tag name enums.
 */
 namespace msg_type {
-enum {
-#define HFFIX_dummy(name, value) name = value,
+#define HFFIX_dummy(name, value) static constexpr const char* const name = value;
 HFFIX_FIX_MSGTYPE(HFFIX_dummy)
-};
 } // namespace tag
 
 
