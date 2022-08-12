@@ -8129,7 +8129,11 @@ X(AllocationInstructionAlertRequest,       "DU") /* (FIX.5.0SP2) */
 \brief Namespace for all message types.
 */
 namespace msg_type {
+#if __cplusplus >= 201103L
+#define HFFIX_dummy(name, value) static constexpr const char* const name = value;
+#else
 #define HFFIX_dummy(name, value) static const char* const name = value;
+#endif
 HFFIX_FIX_MSGTYPE(HFFIX_dummy)
 #undef HFFIX_dummy
 } // namespace tag
