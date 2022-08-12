@@ -7857,6 +7857,7 @@ namespace tag {
 enum {
 #define HFFIX_dummy(name, value) name = value,
 HFFIX_FIX_FIELDS(HFFIX_dummy)
+#undef HFFIX_dummy
 };
 } // namespace tag
 
@@ -7956,6 +7957,7 @@ tag::UnderlyingPaymentStreamFormulaImageLength // 42947 Length FIX.5.0SP2
 template <typename AssociativeContainer> void dictionary_init_field(AssociativeContainer& dictionary) {
 #define HFFIX_dummy(name, value) dictionary[tag::name] = #value;
 HFFIX_FIX_FIELDS(HFFIX_dummy)
+#undef HFFIX_dummy
 }
 
 
@@ -8124,11 +8126,12 @@ X(AllocationInstructionAlertRequest,       "DU") /* (FIX.5.0SP2) */
 
 
 /*!
-\brief Namespace for all field tag name enums.
+\brief Namespace for all message types.
 */
 namespace msg_type {
-#define HFFIX_dummy(name, value) static constexpr const char* const name = value;
+#define HFFIX_dummy(name, value) static const char* const name = value;
 HFFIX_FIX_MSGTYPE(HFFIX_dummy)
+#undef HFFIX_dummy
 } // namespace tag
 
 
@@ -8141,6 +8144,7 @@ HFFIX_FIX_MSGTYPE(HFFIX_dummy)
 template <typename AssociativeContainer> void dictionary_init_message(AssociativeContainer& dictionary) {
 #define HFFIX_dummy(name, value) dictionary[value] = #name;
 HFFIX_FIX_MSGTYPE(HFFIX_dummy)
+#undef HFFIX_dummy
 }
 
 } // namespace hffix
