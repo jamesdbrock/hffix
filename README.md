@@ -1,8 +1,6 @@
 High Frequency FIX — C++ Library for Financial Information Exchange Protocol {#mainpage}
 ==========================================================================
 
-[![Build Status](https://api.travis-ci.org/jamesdbrock/hffix.svg?branch=master)](https://travis-ci.org/jamesdbrock/hffix)
-
 ## Introduction
 
 The High Frequency FIX Parser library is an open source implementation of
@@ -71,13 +69,10 @@ All of the Financial Information Exchange (FIX) protocol specification versions 
 
 ### Platforms
 
-The library is platform-independent C++98, and is tested on Linux with *gcc* and *clang*
-for all versions of C++ on my local machine, and on the [Travis CI service](https://travis-ci.org/jamesdbrock/hffix).
+The library is platform-independent C++98, and is tested on Linux
+with *gcc* and *clang* on
+[Github Actions](https://github.com/jamesdbrock/hffix/actions/workflows/ci.yml).
 
-
-
-The `fixspec/spec-parse-fields` program for re-generating the `hffix_fields.hpp`
-file requires [The Haskell Tool Stack](https://haskellstack.org).
 
 ### License
 
