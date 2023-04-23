@@ -600,6 +600,16 @@ mostly irrelevent.
 <caption>Change Log</caption>
 
 <tr>
+<th>2023-04-28</th>
+<th>v1.3.0</th>
+<td>
+
+Add `hffix::msg_type` to `hffix_fields.hpp` (#47)
+
+</td>
+</tr>
+
+<tr>
 <th>2022-05-22</th>
 <th>v1.2.1</th>
 <td>

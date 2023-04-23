@@ -283,6 +283,11 @@ BOOST_AUTO_TEST_CASE(iterating)
     BOOST_CHECK_EQUAL(num, 10u);
 }
 
+BOOST_AUTO_TEST_CASE(msg_type_string)
+{
+    BOOST_CHECK_EQUAL(msg_type::AccountSummaryReport, std::string("CQ"));
+}
+
 #if __cplusplus >= 201103L
 // test that std::chrono values can be written and read correctly
 BOOST_AUTO_TEST_CASE(chrono)
