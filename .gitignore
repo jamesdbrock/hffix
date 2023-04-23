@@ -14,7 +14,7 @@ fixspec/FIXRepository/*
 !fixspec/FIXRepository/Basic/Fields.xml
 !fixspec/FIXRepository/Basic/Messages.xml
 fixspec/spec-parse-fields/.stack-work
-fixspec/spec-parse-fields/stack.yaml.lock
+fixspec/spec-parse-fields/dist-newstyle
 test/bin
 test/produced
 util/bin
