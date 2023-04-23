@@ -1,0 +1,44 @@
+name: hffix test
+
+# Controls when the action will run. Triggers the workflow on push
+on:
+  push:
+  # pull_request:
+  # release:
+    # tags:
+    # - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+jobs:
+  test:
+    runs-on:
+      - ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler:
+        - cxx: "g++"
+        - cxx: "clang++"
+        flags:
+        - cxxflags: "-std=c++98"
+        - cxxflags: "-std=c++11"
+        - cxxflags: "-std=c++17"
+        - cxxflags: "-std=c++20"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install Boost
+        uses: MarkusJx/install-boost@v2.4.4
+        id:   install-boost
+        with:
+          boost_version: 1.81.0
+      - name: Test
+        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+        shell: bash
+        env:
+          CPLUS_INCLUDE_PATH: ${{steps.install-boost.outputs.BOOST_ROOT}}/include
+          LIBRARY_PATH: ${{steps.install-boost.outputs.BOOST_ROOT}}/lib
+          CXX: ${{matrix.compiler.cxx}}
+          CXXFLAGS: ${{matrix.flags.cxxflags}}
+        run: |
+           $CXX --version
+           make test
