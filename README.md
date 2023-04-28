@@ -550,8 +550,8 @@ for various parts of the library.
 ### Nix
 
 The file `shell.nix` declares a *Nix* shell environment which provides all
-dependencies for every target in the `Makefile`, including *Doxygen* and the
-*Haskell Stack*. Enter the *Nix* shell by
+dependencies for every target in the `Makefile`, including *Doxygen*.
+Enter the *Nix* shell by
 [installing *Nix*](https://nixos.org/download.html)
 and then running `nix-shell` in this directory. From the `nix-shell` prompt,
 you will be able to build all `Makefile` targets.
