@@ -26,9 +26,8 @@ To see an example of the library in action, enter these four commands at your sh
 
 The library is header-only, so there is nothing to link. To use the `hffix.hpp` library for C++ FIX development, place the two header files in your include path and `#include <hffix.hpp>`.
 
-    git clone https://github.com/jamesdbrock/hffix.git
-    cp hffix/include/hffix.hpp /usr/include/
-    cp hffix/include/hffix_fields.hpp /usr/include/
+* `hffix/include/hffix.hpp`
+* `hffix/include/hffix_fields.hpp`
 
 ### Documentation
 
