@@ -43,6 +43,10 @@ or implied, of T3 IP, LLC.
 #include <iostream>         // for operator<<()
 #include <limits>           // for numeric_limits<>::is_signed
 #include <stdexcept>        // for exceptions
+#if __cplusplus >= 202002L
+#include <concepts>         // for push_back_floating()
+#include <format>           // for push_back_floating()
+#endif
 #if __cplusplus >= 201703L
 #include <string_view>      // for push_back_string()
 #endif
@@ -391,10 +395,10 @@ inline bool atotime_nano(
 \tparam Duration a std::chrono::duration type used to measure the time since epoch
 */
 template<typename T>
-struct is_time_point : std::false_type {}; 
+struct is_time_point : std::false_type {};
 
 template<typename Clock, typename Duration>
-struct is_time_point<std::chrono::time_point<Clock, Duration>> : std::true_type {}; 
+struct is_time_point<std::chrono::time_point<Clock, Duration>> : std::true_type {};
 
 /*
 \brief Internal ascii-to-timepoint conversion with millisecond precision.
@@ -943,8 +947,31 @@ public:
         if (next_ >= buffer_end_) details::throw_range_error();
         *next_++ = '\x01';
     }
-//@}
 
+#if __cplusplus >= 202002L
+    /*!
+    \brief Append a floating point to the message.
+
+    \param tag FIX tag.
+    \param number Floating point number.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    void push_back_floating(int tag, std::floating_point auto number)
+    {
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (next_ >= buffer_end_) details::throw_range_error();
+        *next_++ = '=';
+
+        const auto req_buffer_size = std::formatted_size("{}", number);
+        if (buffer_end_ - next_ < req_buffer_size) details::throw_range_error();
+        std::format_to(next_, "{}", number);
+        next_ += req_buffer_size;
+
+        *next_++ = '\x01';
+    }
+#endif
+//@}
 
     /*! \name Date and Time Fields */
 //@{
