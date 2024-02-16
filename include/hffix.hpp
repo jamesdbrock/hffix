@@ -741,6 +741,24 @@ public:
         *next_++ = '\x01';
     }
 
+#if __cplusplus >= 201703L
+    void push_back_header(std::string_view begin_string_version) {
+        if (body_length_) throw std::logic_error("hffix message_writer.push_back_header called twice");
+        if (buffer_end_ - next_ < 2 + std::ptrdiff_t(begin_string_version.size()) + 3 + 7) {
+            details::throw_range_error();
+        }
+        memcpy(next_, "8=", 2);
+        next_ += 2;
+        memcpy(next_, begin_string_version.data(), begin_string_version.size());
+        next_ += begin_string_version.size();
+        *(next_++) = '\x01';
+        memcpy(next_, "9=", 2);
+        next_ += 2;
+        body_length_ = next_;
+        next_ += 6; // 6 characters reserved for BodyLength.
+        *next_++ = '\x01';
+    }
+#endif
 
     /*!
      * \brief Write the _CheckSum_ field to the buffer.
@@ -894,6 +912,23 @@ public:
     }
 //@}
 
+    /*!
+    \brief Append a boolean field to the message.
+
+    \param tag FIX tag.
+    \param bool.
+
+    \throw std::out_of_range When the remaining buffer size is too small.
+    */
+    void push_back_bool(int tag, bool v) {
+        next_ = details::itoa(tag, next_, buffer_end_);
+        if (next_ >= buffer_end_) details::throw_range_error();
+        *next_++ = '=';
+        *next_++ = v ? 'Y' : 'N';
+        if (next_ >= buffer_end_) details::throw_range_error();
+        *next_++ = '\x01';
+    }
+//@}
 
     /*! \name Integer Fields */
 //@{
@@ -1671,6 +1706,17 @@ public:
     std::string as_string() const {
         return std::string(begin(), end());
     }
+
+#if __cplusplus >= 201703L
+    /*!
+     * \brief Ascii value as std::string_view.
+     *
+     * \return An std::string_view that contains the ascii value of the field.
+    */
+    std::string_view as_string_view() const {
+        return std::string_view(begin(), size());
+    }
+#endif
 
     /*!
      * \brief Ascii value as char.
