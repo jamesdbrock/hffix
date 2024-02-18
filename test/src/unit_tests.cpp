@@ -382,5 +382,45 @@ BOOST_AUTO_TEST_CASE(chrono_nano)
     // std::string tstr = oss.str();
     // BOOST_CHECK_EQUAL(tstr, i->value().as_string());
 }
+
 #endif
 
+#if __cplusplus >= 201703L
+// test that setting header unsing char pointer and string view are equivalent
+BOOST_AUTO_TEST_CASE(header)
+{
+    const char*      begstr_cp = "FIX.4.2";
+    std::string_view begstr_sv = begstr_cp;
+
+    char buffer_cp[100] = {};
+    char buffer_sv[100] = {};
+
+    message_writer writer_cp(buffer_cp);
+    message_writer writer_sv(buffer_sv);
+
+    writer_cp.push_back_header(begstr_cp);
+    writer_sv.push_back_header(begstr_sv);
+
+    BOOST_REQUIRE(writer_cp.message_size() == writer_sv.message_size());
+    BOOST_REQUIRE(std::memcmp(writer_cp.message_begin(), writer_sv.message_begin(), writer_cp.message_size()) == 0);
+}
+
+BOOST_AUTO_TEST_CASE(read_string)
+{
+    char buffer[100] = {};
+
+    message_writer writer(buffer);
+
+    writer.push_back_header("FIX.4.2");
+    writer.push_back_string(hffix::tag::MsgType, "A");
+    writer.push_back_trailer();
+
+    message_reader reader(buffer);
+
+    auto i = reader.begin();
+    BOOST_CHECK(reader.find_with_hint(tag::MsgType, i));
+    BOOST_CHECK(i->value() == "A");
+
+    BOOST_REQUIRE(i->value().as_string() == i->value().as_string_view());
+}
+#endif

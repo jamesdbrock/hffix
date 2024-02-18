@@ -912,24 +912,6 @@ public:
     }
 //@}
 
-    /*!
-    \brief Append a boolean field to the message.
-
-    \param tag FIX tag.
-    \param bool.
-
-    \throw std::out_of_range When the remaining buffer size is too small.
-    */
-    void push_back_bool(int tag, bool v) {
-        next_ = details::itoa(tag, next_, buffer_end_);
-        if (next_ >= buffer_end_) details::throw_range_error();
-        *next_++ = '=';
-        *next_++ = v ? 'Y' : 'N';
-        if (next_ >= buffer_end_) details::throw_range_error();
-        *next_++ = '\x01';
-    }
-//@}
-
     /*! \name Integer Fields */
 //@{
     /*!
