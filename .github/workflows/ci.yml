@@ -3,7 +3,7 @@ name: hffix test
 # Controls when the action will run. Triggers the workflow on push
 on:
   push:
-  # pull_request:
+  pull_request:
   # release:
     # tags:
     # - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
