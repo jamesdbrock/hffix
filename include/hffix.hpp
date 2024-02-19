@@ -391,10 +391,10 @@ inline bool atotime_nano(
 \tparam Duration a std::chrono::duration type used to measure the time since epoch
 */
 template<typename T>
-struct is_time_point : std::false_type {}; 
+struct is_time_point : std::false_type {};
 
 template<typename Clock, typename Duration>
-struct is_time_point<std::chrono::time_point<Clock, Duration>> : std::true_type {}; 
+struct is_time_point<std::chrono::time_point<Clock, Duration>> : std::true_type {};
 
 /*
 \brief Internal ascii-to-timepoint conversion with millisecond precision.
@@ -742,6 +742,17 @@ public:
     }
 
 #if __cplusplus >= 201703L
+    /*!
+     * \brief Write the _BeginString_ and _BodyLength_ fields to the buffer.
+     *
+     * This method must be called before any other `push_back` method. It may only be called once for each message_writer.
+     *
+     * \pre No other `push_back` method has yet been called.
+     * \param begin_string_version The value for the BeginString FIX field. Should probably be "FIX.4.2" or "FIX.4.3" or "FIX.4.4" or "FIXT.1.1" (for FIX 5.0).
+     *
+     * \throw std::out_of_range When the remaining buffer size is too small.
+     * \throw std::logic_error When called more than once for a single message.
+     */
     void push_back_header(std::string_view begin_string_version) {
         if (body_length_) throw std::logic_error("hffix message_writer.push_back_header called twice");
         if (buffer_end_ - next_ < 2 + std::ptrdiff_t(begin_string_version.size()) + 3 + 7) {

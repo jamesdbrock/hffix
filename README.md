@@ -594,6 +594,19 @@ mostly irrelevent.
 <caption>Change Log</caption>
 
 <tr>
+<th>2024-02-19</th>
+<th>v1.4.0</th>
+<td>
+
+Add `hffix::message_writer::push_back_header()` for `string_view`,
+and `hffix::field_value::as_string_view()`
+by [Slawomir Kuzniar @skuzniar](https://github.com/skuzniar)
+(#51)
+
+</td>
+</tr>
+
+<tr>
 <th>2023-04-28</th>
 <th>v1.3.0</th>
 <td>
