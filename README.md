@@ -549,11 +549,11 @@ for various parts of the library.
 
 ### Nix
 
-The file `shell.nix` declares a *Nix* shell environment which provides all
+The file `flake.nix` declares a *Nix* shell development environment which provides all
 dependencies for every target in the `Makefile`, including *Doxygen*.
 Enter the *Nix* shell by
 [installing *Nix*](https://nixos.org/download.html)
-and then running `nix-shell` in this directory. From the `nix-shell` prompt,
+and then running `nix develop` in this directory. From the `nix develop` prompt,
 you will be able to build all `Makefile` targets.
 
 ### Pull Requests
