@@ -18,15 +18,24 @@ char buffer[1 << 20]; // Must be larger than the largest FIX message size.
 int main(int argc, char** argv)
 {
     if (argc > 1 && ((0 == std::strcmp("-h", argv[1])) || (0 == std::strcmp("--help", argv[1])))) {
-        std::cout << 
+        std::cout <<
             "fixprint [Options]\n\n"
             "Reads raw FIX encoded data from stdin and writes annotated human-readable FIX to stdout.\n\n"
             "Options:\n"
-            "  -c --color     Color output.\n";
+            "  -c --color     Color output.\n"
+            "     --no-color  No color output.\n\n";
         exit(0);
     }
 
-    bool color = argc > 1 && (0 == std::strcmp("-c", argv[1]) || 0 == std::strcmp("--color", argv[1]));
+    bool color = true;
+    if (argc > 1) {
+        if (0 == std::strcmp("-c", argv[1]))
+            color = true;
+        if (0 == std::strcmp("--color", argv[1]))
+            color = true;
+        if (0 == std::strcmp("--no-color", argv[1]))
+            color = false;
+    }
 
     std::map<int, std::string> field_dictionary;
     hffix::dictionary_init_field(field_dictionary);

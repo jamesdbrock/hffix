@@ -549,12 +549,32 @@ for various parts of the library.
 
 ### Nix
 
-The file `flake.nix` declares a *Nix* shell development environment which provides all
+We have a `flake.nix`.
+
+```
+nix flake show github:jamesdbrock/hffix
+```
+
+#### Development
+
+The `flake.nix` declares a *Nix* shell development environment which provides all
 dependencies for every target in the `Makefile`, including *Doxygen*.
 Enter the *Nix* shell by
 [installing *Nix*](https://nixos.org/download.html)
 and then running `nix develop` in this directory. From the `nix develop` prompt,
 you will be able to build all `Makefile` targets.
+
+#### Package
+
+The *Nix* `hffix` package will provide the `hffix` C++ library.
+
+#### Apps
+
+Run the `fixprint` utility:
+
+```
+nix run github:jamesdbrock/hffix#fixprint
+```
 
 ### Pull Requests
 
