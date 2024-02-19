@@ -3,6 +3,8 @@ name: hffix test
 # Controls when the action will run. Triggers the workflow on push
 on:
   push:
+    branches:
+      - master
   pull_request:
   # release:
     # tags:
@@ -17,7 +19,8 @@ jobs:
       matrix:
         compiler:
         - cxx: "g++"
-        - cxx: "clang++"
+        # https://stackoverflow.com/questions/76859275/error-compiling-a-cpp-containing-stdchrono-errorstatic-constexpr-unsigned-fra
+        - cxx: "clang++ -stdlib=libc++"
         flags:
         - cxxflags: "-std=c++98"
         - cxxflags: "-std=c++11"
