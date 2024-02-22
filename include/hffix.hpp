@@ -2732,69 +2732,55 @@ private:
     friend class message_reader_const_iterator;
 
     void init() {
+        char const* b = buffer_; 
 
-        // Skip the version prefix string "8=FIX.4.2" or "8=FIXT.1.1", et cetera.
-        char const* b = buffer_ + 9; // look for the first '\x01'
+        if (b >= buffer_end_) return;
+        if (*b++ != '8') { invalid(); return; }
+        if (b >= buffer_end_) return;
+        if (*b++ != '=') { invalid(); return; }
 
-        while(true) {
-            if (b >= buffer_end_) {
-                is_complete_ = false;
-                return;
-            }
-            if (*b == '\x01') {
-                prefix_end_ = b;
-                break;
-            }
-            if (b - buffer_ > 11) {
+        const std::ptrdiff_t max_begin_string_len = details::len("FIXT.1.1");
+        const std::ptrdiff_t max_find_len = std::min(max_begin_string_len + 1, buffer_end_ - b);
+
+        // look for the first '\x01'
+        char const* end = b + max_find_len + 1;
+        b = std::find(b, end, '\x01');
+        if (b == end) {
+            if (max_find_len == (max_begin_string_len + 1))
                 invalid();
-                return;
-            }
-            ++b;
+            return;
         }
+        prefix_end_ = b++;
 
-        if (b + 1 >= buffer_end_) {
-            is_complete_ = false;
-            return;
-        }
-        if (b[1] != '9') { // next field must be tag 9 BodyLength
-            invalid();
-            return;
-        }
-        b += 3; // skip the " 9=" for tag 9 BodyLength
+        if (b >= buffer_end_) return;
+        // next field must be tag 9 BodyLength
+        if (*b++ != '9') { invalid(); return; }
+        if (b >= buffer_end_) return;
+        if (*b++ != '=') { invalid(); return; }
 
         size_t bodylength(0); // the value of tag 9 BodyLength
 
         while(true) {
-            if (b >= buffer_end_) {
-                is_complete_ = false;
-                return;
-            }
-            if (*b == '\x01') break;
-            if (*b < '0' || *b > '9') { // this is the only time we need to check for numeric ascii.
-                invalid();
-                return;
-            }
+            if (b >= buffer_end_) return;
+            char tmp = *b++;
+ 
+            if (tmp == '\x01') break;
+            // this is the only time we need to check for numeric ascii.
+            if (tmp < '0' || tmp > '9') { invalid(); return; }
             bodylength *= 10;
-            bodylength += *b++ - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
+            bodylength += tmp - '0'; // we know that 0 <= (*b - '0') <= 9, so rvalue will be positive.
         }
 
-        ++b;
-        if (b + 3 >= buffer_end_) {
-            is_complete_ = false;
-            return;
-        }
-
-        if (*b != '3' || b[1] != '5') { // next field must be tag 35 MsgType
-            invalid();
-            return;
-        }
+        if (b >= buffer_end_) return;
+        if (*b != '3') { invalid(); return; }
+        if (b + 1 >= buffer_end_) return;
+        if (b[1] != '5') { invalid(); return; }
+        if (b + 2 >= buffer_end_) return;
+        if (b[2] != '=') { invalid(); return; }
 
         char const* checksum = b + bodylength;
 
-        if (checksum + 7 > buffer_end_) {
-            is_complete_ = false;
-            return;
-        }
+        if (checksum + 7 > buffer_end_) return;
 
         if (*(checksum - 1) != '\x01') { // check for SOH before the checksum.
                                          // this guarantees that at least
