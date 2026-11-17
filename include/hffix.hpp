@@ -51,6 +51,19 @@ or implied, of T3 IP, LLC.
 #include <chrono>
 #endif
 
+/*
+Force inlining of the integer-to-ascii helpers. Nearly every field begins with its tag, a compile-time
+constant, and once inlined the compiler converts it at compile time. Without the hint, GCC at -O2 keeps
+itoa out of line and converts every constant tag at run time.
+*/
+#ifndef HFFIX_ALWAYS_INLINE
+#if defined(__GNUC__) || defined(__clang__)
+#define HFFIX_ALWAYS_INLINE inline __attribute__((always_inline))
+#else
+#define HFFIX_ALWAYS_INLINE inline
+#endif
+#endif
+
 #ifndef HFFIX_NO_BOOST_DATETIME
 #ifdef DATE_TIME_TIME_HPP___ // The header include guard from boost/date_time/time.hpp
 #ifdef DATE_TIME_DATE_HPP___ // The header include guard from boost/date_time/date.hpp
@@ -138,7 +151,7 @@ Writes an integer out as ascii.
 \param end Past-the-end of the buffer, to check for overflow.
 \return Pointer to past-the-end of the ascii that was written.
 */
-template<typename Int_type> char* itoa(Int_type number, char* buffer, char* end)
+template<typename Int_type> HFFIX_ALWAYS_INLINE char* itoa(Int_type number, char* buffer, char* end)
 {
     // Write out the digits in reverse order.
     bool isnegative(false);
@@ -177,7 +190,7 @@ Writes an unsigned integer out as ascii.
 \param end Past-the-end of the buffer, to check for overflow.
 \return Pointer to past-the-end of the ascii that was written.
 */
-template<typename Uint_type> char* utoa(Uint_type number, char* buffer, char* end)
+template<typename Uint_type> HFFIX_ALWAYS_INLINE char* utoa(Uint_type number, char* buffer, char* end)
 {
     // Write out the digits in reverse order.
     char*b = buffer;
